@@ -119,3 +119,13 @@ export const getItemsByCategoryPublic =
 
     return response.data;
   };
+
+
+
+export const getItemsPublic = async () => {
+  const response = await api.get(
+    "/menu/public/items/"
+  );
+
+  return response.data;
+};

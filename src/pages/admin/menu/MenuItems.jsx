@@ -203,7 +203,7 @@ const MenuItems = () => {
                       </td>
 
                       <td>
-                        ₹{item.price}
+                        ₹{item.base_price}
                       </td>
 
                       <td>
