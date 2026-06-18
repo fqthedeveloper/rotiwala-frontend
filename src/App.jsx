@@ -1,0 +1,122 @@
+import { Routes, Route } from "react-router-dom";
+
+// Global Styles
+import "./index.css";
+import "./styles/responsive.css";
+import "./styles/forms.css";
+import "./styles/pages.css";
+import "./styles/theme.css";
+
+// Layouts
+import MainLayout from "./components/layout/MainLayout";
+import AdminLayout from "./components/admin/AdminLayout";
+
+// Auth
+import ProtectedRoute from "./routes/ProtectedRoute";
+import RoleRoute from "./routes/RoleRoute";
+
+// Public Pages
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Menu from "./pages/Menu";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Cart from "./pages/Cart";
+import NotFound from "./pages/NotFound";
+
+// Admin Pages
+import Dashboard from "./pages/admin/Dashboard";
+import Orders from "./pages/admin/Orders";
+import Products from "./pages/admin/Products";
+import Users from "./pages/admin/Users";
+import AddProduct from "./pages/admin/AddProduct";
+import Shops from "./pages/admin/Shop/Shops";
+import AddShop from "./pages/admin/Shop/AddShop";
+import EditShop from "./pages/admin/Shop/EditShop";
+import Managers from "./pages/admin/Shop/Managers/Managers";
+import AddManager from "./pages/admin/Shop/Managers/AddManager";
+import EditManager from "./pages/admin/Shop/Managers/EditManager";
+import AddCategory from "./pages/admin/menu/AddCategory";
+import Categories from "./pages/admin/menu/Categories";
+import MenuItems from "./pages/admin/menu/MenuItems";
+import AddMenuItem from "./pages/admin/menu/AddMenuItem";
+import EditCategory from "./pages/admin/menu/EditCategory";
+import EditMenuItem from "./pages/admin/menu/EditMenuItem";
+
+function App() {
+  return (
+    <Routes>
+      {/* PUBLIC ROUTES */}
+
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+
+        <Route path="/menu" element={<Menu />} />
+
+        <Route path="/about" element={<About />} />
+
+        <Route path="/contact" element={<Contact />} />
+
+        <Route path="/cart" element={<Cart />} />
+      </Route>
+
+      {/* ADMIN ROUTES */}
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <RoleRoute role="super_admin">
+              <AdminLayout />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="shops" element={<Shops />} />
+
+        <Route path="shops/add-shop" element={<AddShop />} />
+
+        <Route path="shops/edit/:id" element={<EditShop />} />
+
+        <Route path="managers" element={<Managers />} />
+
+        <Route path="managers/add" element={<AddManager />} />
+
+        <Route path="managers/edit/:id" element={<EditManager />} />
+
+        <Route path="categories" element={<Categories />} />
+
+        <Route path="categories/add" element={<AddCategory />} />
+
+        <Route path="menu-items" element={<MenuItems />} />
+
+        <Route path="menu-items/add" element={<AddMenuItem />} />
+
+        <Route path="categories/edit/:id" element={<EditCategory />} />
+
+        <Route path="menu-items/edit/:id" element={<EditMenuItem />} />
+
+        <Route path="products/create" element={<AddProduct />} />
+
+        <Route path="dashboard" element={<Dashboard />} />
+
+        <Route path="orders" element={<Orders />} />
+
+        <Route path="products" element={<Products />} />
+
+        <Route path="users" element={<Users />} />
+      </Route>
+
+      {/* 404 */}
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+export default App;
