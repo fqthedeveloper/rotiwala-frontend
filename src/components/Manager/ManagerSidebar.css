@@ -1,0 +1,109 @@
+.admin-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.admin-sidebar {
+  width: 270px;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: .3s;
+}
+
+.sidebar-logo {
+  padding: 25px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.sidebar-logo h3 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sidebar-logo p {
+  margin: 0;
+  opacity: .7;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.sidebar-nav a {
+  color: white;
+  text-decoration: none;
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: .3s;
+}
+
+.sidebar-nav a:hover {
+  background: rgba(255,255,255,.1);
+}
+
+.sidebar-nav a.active {
+  background: #f7c600;
+  color: black;
+  font-weight: 600;
+}
+
+.sidebar-section {
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: .7;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.admin-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.admin-topbar {
+  height: 70px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 15px;
+}
+
+.admin-page-content {
+  padding: 20px;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 991px) {
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    height: 100%;
+    z-index: 1050;
+  }
+
+  .admin-sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay.show {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1040;
+  }
+}

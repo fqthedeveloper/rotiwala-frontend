@@ -9,6 +9,9 @@ import {
 
 import { getItemsPublic } from "../service/menuItemService";
 
+import { addToCart } from "../service/cartService";
+
+import Swal from "sweetalert2";
 
 const Menu = () => {
   const [items, setItems] = useState([]);
@@ -22,6 +25,7 @@ const Menu = () => {
 
   useEffect(() => {
     loadMenu();
+    document.title = "Menu - Roti Wala";
   }, []);
 
   const loadMenu = async () => {
@@ -125,6 +129,66 @@ const Menu = () => {
     maxPrice,
     availableOnly,
 ]);
+
+const handleAddCart = async (item) => {
+  try {
+
+    await addToCart(
+      item.id,
+      1
+    );
+
+    // Refresh Header Cart Badge
+    window.dispatchEvent(
+      new Event("cartUpdated")
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Added To Cart",
+      text: `${item.name} added successfully`,
+      timer: 1200,
+      showConfirmButton: false,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    Swal.fire({
+      icon: "error",
+      title: "Failed",
+      text:
+        error.response?.data?.error ||
+        "Unable to add item",
+    });
+
+  }
+};
+
+const updateCartCount = async () => {
+
+  try {
+
+    const data =
+      await getCartCount();
+
+    console.log(
+      "Cart Count Response:",
+      data
+    );
+
+    setCartCount(
+      data.count || 0
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+};
 
   return (
     <div className="container-fluid px-3 px-md-4 py-4 py-md-5">
@@ -359,7 +423,7 @@ const Menu = () => {
                   </span>
                 </div>
 
-                <button className="btn btn-warning mt-3">
+                <button className="btn btn-warning mt-3" onClick={() => handleAddCart(item) || updateCartCount(item)} >
                   <FaShoppingCart className="me-2" />
                   Add To Cart
                 </button>

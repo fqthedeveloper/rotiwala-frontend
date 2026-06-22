@@ -1,349 +1,194 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import Swal from "sweetalert2";
 
-import {
-  getManager,
-  updateManager,
-} from "../../../../service/managerService";
+import { getManager, updateManager } from "../../../../service/managerService";
 
-import {
-  getShops,
-} from "../../../../service/shopService";
+import { getShops } from "../../../../service/shopService";
 
 const EditManager = () => {
+  const { id } = useParams();
 
-  const { id } =
-    useParams();
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [shops, setShops] = useState([]);
 
-  const [shops,setShops] =
-    useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const [loading,setLoading] =
-    useState(false);
-
-  const [formData,setFormData] =
-    useState({
-
-      first_name:"",
-      last_name:"",
-      phone:"",
-      email:"",
-      password:"",
-      shop_id:"",
-
-    });
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    phone: "",
+    email: "",
+    password: "",
+    shop_id: "",
+  });
 
   useEffect(() => {
-
     loadData();
-
+    document.title = "Edit Manager | Roti Wala";
   }, []);
 
-  const loadData =
-    async () => {
+  const loadData = async () => {
+    const manager = await getManager(id);
 
-      const manager =
-        await getManager(id);
+    const shopsData = await getShops();
 
-      const shopsData =
-        await getShops();
+    setShops(shopsData);
 
-      setShops(
-        shopsData
-      );
+    setFormData({
+      first_name: manager.first_name,
 
-      setFormData({
+      last_name: manager.last_name,
 
-        first_name:
-          manager.first_name,
+      phone: manager.phone,
 
-        last_name:
-          manager.last_name,
+      email: manager.email,
 
-        phone:
-          manager.phone,
+      password: "",
 
-        email:
-          manager.email,
+      shop_id: "",
+    });
+  };
 
-        password:"",
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
 
-        shop_id:"",
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      await updateManager(id, formData);
+
+      Swal.fire({
+        icon: "success",
+
+        title: "Updated",
+
+        text: "Manager Updated Successfully",
       });
-    };
 
-  const handleChange =
-    (e) => {
+      navigate("/admin/managers");
+    } catch {
+      Swal.fire({
+        icon: "error",
 
-      setFormData({
+        title: "Error",
 
-        ...formData,
-
-        [e.target.name]:
-          e.target.value,
-
+        text: "Update Failed",
       });
-    };
-
-  const handleSubmit =
-    async (e) => {
-
-      e.preventDefault();
-
-      try {
-
-        setLoading(true);
-
-        await updateManager(
-          id,
-          formData
-        );
-
-        Swal.fire({
-
-          icon:"success",
-
-          title:"Updated",
-
-          text:
-          "Manager Updated Successfully",
-
-        });
-
-        navigate(
-          "/admin/managers"
-        );
-
-      } catch {
-
-        Swal.fire({
-
-          icon:"error",
-
-          title:"Error",
-
-          text:
-          "Update Failed",
-
-        });
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-
     <div className="container-fluid">
-
       <div className="row justify-content-center">
-
         <div className="col-lg-8">
-
           <div className="card shadow-sm border-0">
-
             <div className="card-header bg-white">
-
-              <h4>
-                Edit Manager
-              </h4>
-
+              <h4>Edit Manager</h4>
             </div>
 
             <div className="card-body">
-
-              <form
-                onSubmit={
-                  handleSubmit
-                }
-              >
-
+              <form onSubmit={handleSubmit}>
                 <div className="row">
-
                   <div className="col-md-6 mb-3">
-
-                    <label>
-                      First Name
-                    </label>
+                    <label>First Name</label>
 
                     <input
                       className="form-control"
                       name="first_name"
-                      value={
-                        formData.first_name
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.first_name}
+                      onChange={handleChange}
                     />
-
                   </div>
 
                   <div className="col-md-6 mb-3">
-
-                    <label>
-                      Last Name
-                    </label>
+                    <label>Last Name</label>
 
                     <input
                       className="form-control"
                       name="last_name"
-                      value={
-                        formData.last_name
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.last_name}
+                      onChange={handleChange}
                     />
-
                   </div>
 
                   <div className="col-md-6 mb-3">
-
-                    <label>
-                      Phone
-                    </label>
+                    <label>Phone</label>
 
                     <input
                       className="form-control"
                       name="phone"
-                      value={
-                        formData.phone
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.phone}
+                      onChange={handleChange}
                     />
-
                   </div>
 
                   <div className="col-md-6 mb-3">
-
-                    <label>
-                      Email
-                    </label>
+                    <label>Email</label>
 
                     <input
                       className="form-control"
                       name="email"
-                      value={
-                        formData.email
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.email}
+                      onChange={handleChange}
                     />
-
                   </div>
 
                   <div className="col-12 mb-3">
-
-                    <label>
-                      New Password
-                    </label>
+                    <label>New Password</label>
 
                     <input
                       type="password"
                       className="form-control"
                       name="password"
-                      value={
-                        formData.password
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.password}
+                      onChange={handleChange}
                     />
-
                   </div>
 
                   <div className="col-12 mb-3">
-
-                    <label>
-                      Assign Shop
-                    </label>
+                    <label>Assign Shop</label>
 
                     <select
                       className="form-select"
                       name="shop_id"
-                      value={
-                        formData.shop_id
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.shop_id}
+                      onChange={handleChange}
                     >
+                      <option value="">Select Shop</option>
 
-                      <option value="">
-                        Select Shop
-                      </option>
-
-                      {
-                        shops.map(
-                          shop => (
-
-                          <option
-                            key={
-                              shop.id
-                            }
-                            value={
-                              shop.id
-                            }
-                          >
-                            {
-                              shop.name
-                            }
-                          </option>
-
-                        ))
-                      }
-
+                      {shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
+                      ))}
                     </select>
-
                   </div>
 
                   <div className="col-12">
-
-                    <button
-                      className="btn btn-warning w-100"
-                    >
-
-                      {
-                        loading
-                        ?
-                        "Updating..."
-                        :
-                        "Update Manager"
-                      }
-
+                    <button className="btn btn-warning w-100">
+                      {loading ? "Updating..." : "Update Manager"}
                     </button>
-
                   </div>
-
                 </div>
-
               </form>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

@@ -34,6 +34,7 @@ const EditMenuItem = () => {
 
   useEffect(() => {
     loadData();
+    document.title = "Edit Menu Item | Roti Wala";
   }, []);
 
   const loadData = async () => {

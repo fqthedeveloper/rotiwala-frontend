@@ -9,117 +9,70 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access");
 
-    console.log("TOKEN:", token);
-    console.log("URL:", config.url);
-
     if (token) {
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
-    console.log(
-      "AUTH HEADER:",
-      config.headers.Authorization
-    );
-
     return config;
-  }
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
 );
 
 api.interceptors.response.use(
   (response) => response,
 
   async (error) => {
+    const originalRequest = error.config;
 
-    const originalRequest =
-      error.config;
-
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
-    ) {
-
-      originalRequest._retry =
-        true;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
       try {
-
-        const refreshToken =
-          localStorage.getItem(
-            "refresh"
-          );
+        const refreshToken = localStorage.getItem("refresh");
 
         if (!refreshToken) {
-
-          throw new Error(
-            "No refresh token"
-          );
+          throw new Error("No refresh token");
         }
 
-        const response =
-          await axios.post(
-            `${import.meta.env.VITE_API_URL}/token/refresh/`,
-            {
-              refresh:
-                refreshToken,
-            }
-          );
-
-        const newAccessToken =
-          response.data.access;
-
-        localStorage.setItem(
-          "access",
-          newAccessToken
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/token/refresh/`,
+          {
+            refresh: refreshToken,
+          },
         );
 
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
+        const newAccessToken = response.data.access;
 
-        return api(
-          originalRequest
-        );
+        localStorage.setItem("access", newAccessToken);
 
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return api(originalRequest);
       } catch (refreshError) {
+        console.log("Refresh Failed", refreshError);
 
-        console.log(
-          "Refresh Failed",
-          refreshError
-        );
+        localStorage.removeItem("access");
 
-        localStorage.removeItem(
-          "access"
-        );
+        localStorage.removeItem("refresh");
 
-        localStorage.removeItem(
-          "refresh"
-        );
+        localStorage.removeItem("user");
 
-        localStorage.removeItem(
-          "role"
-        );
+        localStorage.removeItem("role");
 
-        localStorage.removeItem(
-          "user"
-        );
+        localStorage.removeItem("user_id");
 
-        localStorage.removeItem(
-          "user_id"
-        );
+        window.dispatchEvent(new Event("authChanged"));
 
-        window.location.href =
-          "/login";
+        window.location.href = "/login";
 
-        return Promise.reject(
-          refreshError
-        );
+        return Promise.reject(refreshError);
       }
     }
 
-    return Promise.reject(
-      error
-    );
-  }
+    return Promise.reject(error);
+  },
 );
 
 export default api;

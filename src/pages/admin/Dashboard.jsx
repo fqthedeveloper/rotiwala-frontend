@@ -4,8 +4,13 @@ import {
   FaRupeeSign,
   FaUtensils,
 } from "react-icons/fa";
+import {useEffect} from "react";
 
 const Dashboard = () => {
+
+  useEffect(() => {
+    document.title = "Dashboard | Roti Wala";
+  }, []);
 
   const cards = [
 

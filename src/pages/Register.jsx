@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   auth,
   RecaptchaVerifier,
@@ -47,6 +47,10 @@ export default function Register() {
 
     return mobile;
   };
+
+  useEffect(() => {
+    document.title = "Register - Roti Wala";
+  }, []);
 
   const sendOTP = async () => {
     try {

@@ -1,56 +1,36 @@
 import api from "../../service/api";
 
-import ProductForm
-from "../../components/forms/ProductForm";
+import ProductForm from "../../components/forms/ProductForm";
+
+import {useEffect} from "react";
 
 import Swal from "sweetalert2";
 
 const AddProduct = () => {
 
-  const submitProduct =
-  async (data) => {
+  useEffect(() => {
+    document.title = "Add Product | Roti Wala";
+  }, []);
 
+
+  const submitProduct = async (data) => {
     try {
+      await api.post("/products", data);
 
-      await api.post(
-        "/products",
-        data
-      );
-
-      Swal.fire(
-        "Success",
-        "Product Added",
-        "success"
-      );
-
+      Swal.fire("Success", "Product Added", "success");
     } catch {
-
-      Swal.fire(
-        "Error",
-        "Failed",
-        "error"
-      );
+      Swal.fire("Error", "Failed", "error");
     }
   };
 
   return (
-
     <div className="card">
-
       <div className="card-body">
+        <h3>Add Product</h3>
 
-        <h3>
-          Add Product
-        </h3>
-
-        <ProductForm
-          onSubmit={submitProduct}
-        />
-
+        <ProductForm onSubmit={submitProduct} />
       </div>
-
     </div>
-
   );
 };
 

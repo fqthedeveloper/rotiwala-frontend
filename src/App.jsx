@@ -22,7 +22,6 @@ import Register from "./pages/Register";
 import Menu from "./pages/Menu";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -44,6 +43,17 @@ import AddMenuItem from "./pages/admin/menu/AddMenuItem";
 import EditCategory from "./pages/admin/menu/EditCategory";
 import EditMenuItem from "./pages/admin/menu/EditMenuItem";
 
+// Coustomer pages would go here
+import Cart from "./pages/Customer/Cart";
+import Checkout from "./pages/Customer/Checkout";
+import MyOrders from "./pages/Customer/MyOrders";
+import OrderDetail from "./pages/Customer/OrderDetail";
+
+// Manager pages would go here
+import ManagerLayout from "./components/Manager/ManagerLayout";
+import ManagerDashboard from "./pages/manager/Dashboard";
+import ManagerOrders from "./pages/manager/Orders";
+
 function App() {
   return (
     <Routes>
@@ -62,7 +72,41 @@ function App() {
 
         <Route path="/contact" element={<Contact />} />
 
-        <Route path="/cart" element={<Cart />} />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-orders"
+          element={
+            <ProtectedRoute>
+              <MyOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetail />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* ADMIN ROUTES */}
@@ -110,6 +154,22 @@ function App() {
         <Route path="products" element={<Products />} />
 
         <Route path="users" element={<Users />} />
+      </Route>
+
+      {/* Manager routes would go here */}
+      <Route
+        path="/manager"
+        element={
+          <ProtectedRoute>
+            <RoleRoute role="manager">
+              <ManagerLayout />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<ManagerDashboard />} />
+
+        <Route path="orders" element={<ManagerOrders />} />
       </Route>
 
       {/* 404 */}

@@ -24,6 +24,7 @@ const Shops = () => {
 
   useEffect(() => {
     loadShops();
+    document.title = "Shops | Roti Wala";
   }, []);
 
   const loadShops = async () => {

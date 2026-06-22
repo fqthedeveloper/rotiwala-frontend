@@ -13,6 +13,7 @@ const Categories = () => {
 
   useEffect(() => {
     loadCategories();
+    document.title = "Categories | Roti Wala";
   }, []);
 
   const loadCategories = async () => {

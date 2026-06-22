@@ -30,6 +30,10 @@ export default function Login() {
 
   const [otpSent, setOtpSent] = useState(false);
 
+  const [phoneError, setPhoneError] = useState("");
+
+  const [passwordError, setPasswordError] = useState("");
+
   const [error, setError] = useState("");
 
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -159,26 +163,52 @@ export default function Login() {
   const loginWithPassword = async () => {
     try {
       setLoading(true);
+
       setError("");
+      setPhoneError("");
+      setPasswordError("");
+
+      if (!phone.trim()) {
+        setPhoneError("Phone number is required");
+        return;
+      }
+
+      if (!password.trim()) {
+        setPasswordError("Password is required");
+        return;
+      }
 
       const mobile = formatPhoneNumber(phone);
 
       const response = await api.post("/accounts/password-login/", {
         phone: mobile,
-        password: password,
+        password,
       });
 
       handleLoginSuccess(response);
     } catch (err) {
       console.error(err);
 
-      setError(err?.response?.data?.error || "Invalid credentials");
+      const data = err?.response?.data;
 
+      if (data?.field === "phone") {
+        setPhoneError(data.message);
+      } else if (data?.field === "password") {
+        setPasswordError(data.message);
+      } else {
+        setError(data?.message || data?.error || "Login failed");
+      }
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    document.title = "Login - Roti Wala";
+  }, []);
+
+  useEffect(() => {
+
     if (otpSent && otpRef.current) {
       setTimeout(() => {
         otpRef.current?.focus();
@@ -285,21 +315,35 @@ export default function Login() {
             <div className="mb-3">
               <input
                 type="tel"
-                className="form-control"
+                className={`form-control ${phoneError ? "is-invalid" : ""}`}
                 placeholder="Mobile Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setPhoneError("");
+                }}
               />
+
+              {phoneError && (
+                <div className="invalid-feedback d-block">{phoneError}</div>
+              )}
             </div>
 
             <div className="mb-3">
               <input
                 type={showPassword ? "text" : "password"}
-                className="form-control"
+                className={`form-control ${passwordError ? "is-invalid" : ""}`}
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError("");
+                }}
               />
+
+              {passwordError && (
+                <div className="invalid-feedback d-block">{passwordError}</div>
+              )}
             </div>
 
             <div className="form-check mb-3">
@@ -308,9 +352,12 @@ export default function Login() {
                 type="checkbox"
                 checked={showPassword}
                 onChange={() => setShowPassword(!showPassword)}
+                id="showPassword"
               />
 
-              <label className="form-check-label">Show Password</label>
+              <label className="form-check-label" htmlFor="showPassword">
+                Show Password
+              </label>
             </div>
 
             <button
