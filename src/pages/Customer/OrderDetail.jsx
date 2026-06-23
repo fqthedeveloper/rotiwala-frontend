@@ -1,6 +1,7 @@
 import {
   useEffect,
   useState,
+  useCallback,
 } from "react";
 
 import {
@@ -10,12 +11,15 @@ import {
 
 import Swal from "sweetalert2";
 
+import { motion } from "framer-motion";
+
 import {
   FaCheckCircle,
   FaClock,
   FaTimesCircle,
   FaTruck,
   FaShoppingBag,
+  FaBoxOpen,
 } from "react-icons/fa";
 
 import {
@@ -23,13 +27,15 @@ import {
   cancelOrder,
 } from "../../service/orderService";
 
+import useOrderSocket from "../../hooks/useOrderSocket";
+
+import "./CSS/OrderDetail.css";
+
 export default function OrderDetail() {
 
-  const { id } =
-    useParams();
+  const { id } = useParams();
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const [loading, setLoading] =
     useState(true);
@@ -37,14 +43,8 @@ export default function OrderDetail() {
   const [order, setOrder] =
     useState(null);
 
-  useEffect(() => {
-
-    loadOrder();
-
-  }, []);
-
   const loadOrder =
-    async () => {
+    useCallback(async () => {
 
       try {
 
@@ -66,7 +66,28 @@ export default function OrderDetail() {
         setLoading(false);
 
       }
-    };
+
+    }, [id]);
+
+  useEffect(() => {
+
+    loadOrder();
+
+  }, [loadOrder]);
+
+  useOrderSocket(
+    id,
+    (data) => {
+
+      setOrder(prev => ({
+        ...prev,
+        status: data.status,
+        payment_status:
+          data.payment_status,
+      }));
+
+    }
+  );
 
   const handleCancel =
     async () => {
@@ -84,7 +105,7 @@ export default function OrderDetail() {
             true,
 
           confirmButtonText:
-            "Cancel Order",
+            "Yes Cancel",
 
         });
 
@@ -114,197 +135,257 @@ export default function OrderDetail() {
             "Unable to cancel",
           "error"
         );
+
       }
     };
 
   if (loading) {
 
     return (
-      <div className="container py-5">
+      <div className="container py-5 text-center">
         Loading...
       </div>
     );
+
   }
+
+  const statuses = [
+    "pending",
+    "accepted",
+    "preparing",
+    "ready",
+    "collected",
+  ];
+
+  const currentIndex =
+    statuses.indexOf(
+      order.status
+    );
 
   return (
 
     <div className="container py-4">
 
-      <div className="card border-0 shadow">
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 20,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        className="order-card"
+      >
 
-        <div className="card-body">
+        <div className="order-header">
 
           <h2>
-            Order Details
-          </h2>
-
-          <hr />
-
-          <h5>
-
             Order #
-
             {
               order.order_number
             }
+          </h2>
 
-          </h5>
-
-          <p>
-
-            Amount :
-
-            ₹
-            {
-              order.total_amount
+          <StatusBadge
+            status={
+              order.status
             }
+          />
 
-          </p>
+        </div>
 
-          <p>
+        <div className="info-grid">
 
-            Payment :
-
-            {
-              order.payment_method
-            }
-
-          </p>
-
-          <p>
-
-            Payment Status :
-
-            {
-              order.payment_status
-            }
-
-          </p>
-
-          <p>
-
-            Pickup :
-
-            {
-              new Date(
-                order.pickup_time
-              ).toLocaleString()
-            }
-
-          </p>
-
-          <hr />
-
-          <h4>
-            Items
-          </h4>
-
-          {
-            order.items.map(
-              (item) => (
-
-                <div
-                  key={item.id}
-                  className="d-flex justify-content-between border-bottom py-2"
-                >
-
-                  <div>
-
-                    {
-                      item.quantity
-                    }
-
-                    x
-
-                    {
-                      item.item_name
-                    }
-
-                  </div>
-
-                  <div>
-
-                    ₹
-                    {
-                      item.total_price
-                    }
-
-                  </div>
-
-                </div>
-
-              )
-            )
-          }
-
-          <hr />
-
-          <h4>
-            Order Tracking
-          </h4>
-
-          <div className="mt-4">
-
-            <StatusStep
-              active={true}
-              title="Pending"
-              icon={<FaClock />}
-            />
-
-            <StatusStep
-              active={[
-                "accepted",
-                "preparing",
-                "ready",
-                "collected",
-              ].includes(
-                order.status
-              )}
-              title="Accepted"
-              icon={
-                <FaCheckCircle />
+          <div>
+            <strong>
+              Amount
+            </strong>
+            <p>
+              ₹
+              {
+                order.total_amount
               }
-            />
+            </p>
+          </div>
 
-            <StatusStep
-              active={[
-                "preparing",
-                "ready",
-                "collected",
-              ].includes(
-                order.status
-              )}
-              title="Preparing"
-              icon={
-                <FaShoppingBag />
+          <div>
+            <strong>
+              Payment
+            </strong>
+            <p>
+              {
+                order.payment_method
               }
-            />
+            </p>
+          </div>
 
-            <StatusStep
-              active={[
-                "ready",
-                "collected",
-              ].includes(
-                order.status
-              )}
-              title="Ready"
-              icon={<FaTruck />}
-            />
+          <div>
+            <strong>
+              Payment Status
+            </strong>
+            <p>
+              {
+                order.payment_status
+              }
+            </p>
+          </div>
 
-            <StatusStep
-              active={
-                order.status ===
-                "collected"
+          <div>
+            <strong>
+              Pickup Time
+            </strong>
+
+            <p>
+              {
+                new Date(
+                  order.pickup_time
+                ).toLocaleString()
               }
-              title="Collected"
-              icon={
-                <FaCheckCircle />
-              }
-            />
+            </p>
 
           </div>
 
-          {[
+        </div>
+
+        <hr />
+
+        <h4>
+          Items
+        </h4>
+
+        {
+          order.items.map(
+            (item) => (
+
+              <motion.div
+                key={item.id}
+                className="item-row"
+                whileHover={{
+                  scale: 1.02,
+                }}
+              >
+
+                <span>
+                  {
+                    item.quantity
+                  } x {
+                    item.item_name
+                  }
+                </span>
+
+                <span>
+                  ₹
+                  {
+                    item.total_price
+                  }
+                </span>
+
+              </motion.div>
+
+            )
+          )
+        }
+
+        <hr />
+
+        <h4>
+          Live Tracking
+        </h4>
+
+        {
+          order.status ===
+          "rejected" ? (
+
+            <motion.div
+              className="reject-box"
+              animate={{
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                repeat:
+                  Infinity,
+                duration: 2,
+              }}
+            >
+
+              <FaTimesCircle
+                size={70}
+              />
+
+              <h3>
+                Order Rejected
+              </h3>
+
+              <p>
+                {
+                  order.rejection_reason
+                }
+              </p>
+
+            </motion.div>
+
+          ) : (
+
+            <div className="timeline">
+
+              <TimelineStep
+                active={
+                  currentIndex >= 0
+                }
+                icon={
+                  <FaClock />
+                }
+                title="Pending"
+              />
+
+              <TimelineStep
+                active={
+                  currentIndex >= 1
+                }
+                icon={
+                  <FaCheckCircle />
+                }
+                title="Accepted"
+              />
+
+              <TimelineStep
+                active={
+                  currentIndex >= 2
+                }
+                icon={
+                  <FaShoppingBag />
+                }
+                title="Preparing"
+              />
+
+              <TimelineStep
+                active={
+                  currentIndex >= 3
+                }
+                icon={
+                  <FaTruck />
+                }
+                title="Ready"
+              />
+
+              <TimelineStep
+                active={
+                  currentIndex >= 4
+                }
+                icon={
+                  <FaBoxOpen />
+                }
+                title="Collected"
+              />
+
+            </div>
+
+          )
+        }
+
+        {
+          [
             "pending",
             "accepted",
           ].includes(
@@ -320,57 +401,90 @@ export default function OrderDetail() {
               Cancel Order
             </button>
 
-          )}
+          )
+        }
 
-          <button
-            className="btn btn-secondary mt-4 ms-2"
-            onClick={() =>
-              navigate(
-                "/my-orders"
-              )
-            }
-          >
-            Back
-          </button>
+        <button
+          className="btn btn-dark mt-4 ms-2"
+          onClick={() =>
+            navigate(
+              "/my-orders"
+            )
+          }
+        >
+          Back
+        </button>
 
-        </div>
-
-      </div>
+      </motion.div>
 
     </div>
 
   );
+
 }
 
-function StatusStep({
+function TimelineStep({
+
   active,
   title,
   icon,
+
 }) {
 
   return (
 
-    <div
-      className={`d-flex align-items-center mb-3 ${
+    <motion.div
+      className={
         active
-          ? "text-success"
-          : "text-secondary"
-      }`}
+          ? "step active"
+          : "step"
+      }
+      animate={
+        active
+          ? {
+              scale: [
+                1,
+                1.08,
+                1,
+              ],
+            }
+          : {}
+      }
+      transition={{
+        duration: 1.5,
+        repeat:
+          Infinity,
+      }}
     >
 
-      <div
-        className="me-3 fs-4"
-      >
+      <div>
         {icon}
       </div>
 
-      <div>
-        <strong>
-          {title}
-        </strong>
-      </div>
+      <span>
+        {title}
+      </span>
 
-    </div>
+    </motion.div>
 
   );
+
+}
+
+function StatusBadge({
+  status,
+}) {
+
+  return (
+
+    <span
+      className={`status-badge ${status}`}
+    >
+
+      {status}
+
+    </span>
+
+  );
+
 }

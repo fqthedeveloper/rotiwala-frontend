@@ -24,12 +24,19 @@ export default function Checkout() {
 
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  const [pickupTime, setPickupTime] = useState("");
+  const [pickupByOtherPerson, setPickupByOtherPerson] = useState(false);
+
+  const [pickupPersonName, setPickupPersonName] = useState("");
+
+  const [pickupPersonPhone, setPickupPersonPhone] = useState("");
+
+  const [selectedShop, setSelectedShop] = useState(null);
+
+  const [estimatedMinutes, setEstimatedMinutes] = useState(10);
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const [notes, setNotes] = useState("");
-
 
   useEffect(() => {
     loadData();
@@ -58,45 +65,66 @@ export default function Checkout() {
       return;
     }
 
-    if (!pickupTime) {
-      Swal.fire("Pickup Time", "Select pickup time", "warning");
+    if (pickupByOtherPerson && !pickupPersonName.trim()) {
+      Swal.fire("Pickup Person", "Enter pickup person name", "warning");
 
       return;
     }
 
- setPlacingOrder(true);
+    if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
+      Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
 
-     try {
+      return;
+    }
+
+    setPlacingOrder(true);
+
+    try {
       const response = await placeOrder({
         shop_id: shopId,
-        pickup_time: pickupTime,
+
         payment_method: paymentMethod,
+
         notes,
+
+        pickup_by_other_person: pickupByOtherPerson,
+
+        pickup_person_name: pickupByOtherPerson ? pickupPersonName : "",
+
+        pickup_person_phone: pickupByOtherPerson ? pickupPersonPhone : "",
       });
 
       await Swal.fire({
         title: "🎉 Order Placed Successfully",
+
         html: `
-    <div style="padding:10px">
-      <h4>Order No</h4>
-      <h2 style="color:#f7c600">
-        ${response.order_number}
-      </h2>
 
-      <p>
-        Your order has been sent to the shop.
-      </p>
+      <div style="padding:10px">
 
-      <p>
-        You will receive updates when
-        the shop accepts and prepares it.
-      </p>
-    </div>
-  `,
+        <h4>Order No</h4>
+
+        <h2 style="color:#f7c600">
+          ${response.order_number}
+        </h2>
+
+        <p>
+          Estimated Ready In
+        </p>
+
+        <h3>
+          ${response.estimated_minutes}
+          Minutes
+        </h3>
+
+      </div>
+
+      `,
+
         icon: "success",
+
         confirmButtonText: "Track Order",
+
         confirmButtonColor: "#f7c600",
-        backdrop: true,
       });
 
       navigate("/my-orders");
@@ -106,114 +134,197 @@ export default function Checkout() {
       setPlacingOrder(false);
     }
   };
-  
 
   if (loading) {
     return <div className="container py-5">Loading...</div>;
   }
 
   return (
-    <div className="container py-5">
-      <div className="row">
-        <div className="col-lg-8 mx-auto">
-          <div className="card shadow border-0">
-            <div className="card-body">
-              <h2 className="mb-4">Checkout</h2>
+    <div className="checkout-page">
+      <div className="container">
+        <div className="row justify-content-center">
+          <div className="col-12 col-lg-10 col-xl-9">
+            <div className="checkout-card">
+              <div className="checkout-header">
+                <h2>Checkout</h2>
 
-              <h5>Select Shop</h5>
-
-              <select
-                className="form-select mb-3"
-                value={shopId}
-                onChange={(e) => setShopId(e.target.value)}
-              >
-                <option value="">Select Shop</option>
-
-                {shops.map((shop) => (
-                  <option key={shop.id} value={shop.id}>
-                    {shop.name}
-                  </option>
-                ))}
-              </select>
-
-              <h5>Pickup Time</h5>
-
-              <input
-                type="datetime-local"
-                className="form-control mb-3"
-                value={pickupTime}
-                onChange={(e) => setPickupTime(e.target.value)}
-              />
-
-              <h5>Payment Method</h5>
-
-              <div className="mb-3">
-                <div className="form-check">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="cash"
-                    checked={paymentMethod === "cash"}
-                    onChange={() => setPaymentMethod("cash")}
-                    className="form-check-input"
-                  />
-
-                  <label className="form-check-label">Cash On Pickup</label>
-                </div>
-
-                <div className="form-check">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="upi"
-                    checked={paymentMethod === "upi"}
-                    onChange={() => setPaymentMethod("upi")}
-                    className="form-check-input"
-                  />
-
-                  <label className="form-check-label">UPI At Shop</label>
-                </div>
+                <p>Complete your order and pickup details</p>
               </div>
 
-              <h5>Notes</h5>
+              <div className="card-body p-4 p-md-5">
+                <div className="estimate-box">
+                  <h6>Estimated Preparation Time</h6>
 
-              <textarea
-                className="form-control mb-4"
-                rows="3"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
+                  <h2>{estimatedMinutes} Minutes</h2>
 
-              <h5>Cart Items</h5>
+                  <p>Freshly prepared after order confirmation</p>
+                </div>
 
-              {cart?.items?.map((item) => (
-                <div
-                  key={item.id}
-                  className="d-flex justify-content-between border-bottom py-2"
+                <h5 className="section-title">Select Shop</h5>
+
+                <select
+                  className="form-select checkout-input"
+                  value={shopId}
+                  onChange={(e) => {
+                    setShopId(e.target.value);
+
+                    const shop = shops.find(
+                      (s) => s.id === Number(e.target.value),
+                    );
+
+                    setSelectedShop(shop);
+                  }}
                 >
-                  <div>
-                    {item.item_name} x {item.quantity}
+                  <option value="">Select Shop</option>
+
+                  {shops.map((shop) => (
+                    <option key={shop.id} value={shop.id}>
+                      {shop.name}
+                    </option>
+                  ))}
+                </select>
+
+                {selectedShop && (
+                  <div className="customer-card mt-4">
+                    <h5>Shop Details</h5>
+
+                    <div className="customer-info">
+                      <div>
+                        <strong>Shop Name</strong>
+
+                        <span>{selectedShop.name}</span>
+                      </div>
+
+                      <div>
+                        <strong>Phone</strong>
+
+                        <span>{selectedShop.phone}</span>
+                      </div>
+
+                      <div>
+                        <strong>Address</strong>
+
+                        <span>{selectedShop.address}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pickup-card mt-4">
+                  <h5>Pickup Information</h5>
+
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      id="otherPickup"
+                      className="form-check-input"
+                      checked={pickupByOtherPerson}
+                      onChange={(e) => setPickupByOtherPerson(e.target.checked)}
+                    />
+
+                    <label
+                      htmlFor="otherPickup"
+                      className="form-check-label fw-bold"
+                    >
+                      Some other person will collect
+                    </label>
                   </div>
 
-                  <div>₹{item.total_price}</div>
+                  {pickupByOtherPerson && (
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        className="form-control checkout-input mb-3"
+                        placeholder="Pickup Person Name"
+                        value={pickupPersonName}
+                        onChange={(e) => setPickupPersonName(e.target.value)}
+                      />
+
+                      <input
+                        type="tel"
+                        className="form-control checkout-input"
+                        placeholder="Pickup Person Phone Number"
+                        value={pickupPersonPhone}
+                        onChange={(e) => setPickupPersonPhone(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
-              ))}
 
-              <div className="mt-3">
-                <h4>Total : ₹{cart?.total_amount}</h4>
+                <h5 className="section-title">Payment Method</h5>
+
+                <div className="payment-grid">
+                  <div
+                    className={
+                      paymentMethod === "cash"
+                        ? "payment-card active"
+                        : "payment-card"
+                    }
+                    onClick={() => setPaymentMethod("cash")}
+                  >
+                    <h6>Cash On Pickup</h6>
+
+                    <small>Pay when collecting</small>
+                  </div>
+
+                  <div
+                    className={
+                      paymentMethod === "upi"
+                        ? "payment-card active"
+                        : "payment-card"
+                    }
+                    onClick={() => setPaymentMethod("upi")}
+                  >
+                    <h6>UPI At Shop</h6>
+
+                    <small>Scan & pay at counter</small>
+                  </div>
+                </div>
+
+                <h5 className="section-title">Notes</h5>
+
+                <textarea
+                  rows="3"
+                  className="form-control checkout-textarea"
+                  placeholder="Any special instructions..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+
+                <h5 className="section-title mt-4">Cart Items</h5>
+
+                {cart?.items?.map((item) => (
+                  <div key={item.id} className="checkout-item">
+                    <div>
+                      <div className="checkout-item-name">{item.item_name}</div>
+
+                      <div className="checkout-item-qty">
+                        Qty : {item.quantity}
+                      </div>
+                    </div>
+
+                    <div className="checkout-item-price">
+                      ₹{item.total_price}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="checkout-summary">
+                  <div className="checkout-total">
+                    <h4>Total Amount</h4>
+
+                    <h3>₹{cart?.total_amount}</h3>
+                  </div>
+                </div>
+
+                <button
+                  className="checkout-btn"
+                  onClick={handleOrder}
+                  disabled={placingOrder}
+                >
+                  {placingOrder ? "Placing Order..." : "Place Order"}
+                </button>
               </div>
-
-              <button
-                    className="btn btn-warning checkout-btn"
-                    onClick={handleOrder}
-                    disabled={placingOrder}
-                    >
-
-                    {placingOrder
-                        ? "Placing Order..."
-                        : "Place Order"}
-
-                    </button>
             </div>
           </div>
         </div>

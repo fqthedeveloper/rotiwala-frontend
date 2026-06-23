@@ -6,6 +6,7 @@ import {
 } from "../service/firebase";
 
 import api from "../service/api";
+import { messaging, getToken } from "../service/firebase";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -54,7 +55,7 @@ export default function Login() {
     return mobile;
   };
 
-  const handleLoginSuccess = (response) => {
+  const handleLoginSuccess = async (response) => {
     console.log("LOGIN RESPONSE:", response.data);
 
     const currentUser = response.data.user;
@@ -73,10 +74,14 @@ export default function Login() {
 
     console.log("ROLE SAVED:", localStorage.getItem("role"));
 
+    await saveFCMToken();
+
     window.dispatchEvent(new Event("authChanged"));
 
-    if (currentUser.role === "super_admin" || currentUser.role === "manager") {
+    if (currentUser.role === "super_admin") {
       navigate("/admin/dashboard");
+    } else if (currentUser.role === "manager") {
+      navigate("/manager/dashboard");
     } else {
       navigate("/");
     }
@@ -118,13 +123,11 @@ export default function Login() {
       setPhone(mobile);
 
       setOtpSent(true);
-
-      setLoading(false);
     } catch (err) {
       console.error(err);
 
       setError(err.message || "Failed to send OTP");
-
+    } finally {
       setLoading(false);
     }
   };
@@ -208,13 +211,39 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-
     if (otpSent && otpRef.current) {
       setTimeout(() => {
         otpRef.current?.focus();
       }, 100);
     }
   }, [otpSent]);
+
+  const saveFCMToken = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+
+      if (permission !== "granted") {
+        console.log("Notification permission denied");
+        return;
+      }
+
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      });
+
+      console.log("FCM TOKEN:", token);
+
+      if (token) {
+        await api.post("/accounts/save-fcm-token/", {
+          token,
+        });
+
+        console.log("FCM Token Saved");
+      }
+    } catch (error) {
+      console.error("FCM Error:", error);
+    }
+  };
 
   return (
     <div className="auth-page">

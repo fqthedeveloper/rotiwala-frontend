@@ -188,21 +188,6 @@ export default function Home() {
               View Full Menu
             </Link>
           </div>
-
-          <div className="hero-meta">
-            <div>
-              <strong>{menuItems.length}</strong>
-              <span>Popular Dishes</span>
-            </div>
-            <div>
-              <strong>{shops.length}</strong>
-              <span>Nearby Shops</span>
-            </div>
-            <div>
-              <strong>{categories.length}</strong>
-              <span>Categories</span>
-            </div>
-          </div>
         </motion.div>
 
         <motion.div

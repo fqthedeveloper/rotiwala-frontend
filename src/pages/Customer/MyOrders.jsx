@@ -1,21 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import { Link } from "react-router-dom";
 
-import { getMyOrders } from "../../service/orderService";
+import { motion, AnimatePresence } from "framer-motion";
 
 import Swal from "sweetalert2";
+
+import {
+  FaShoppingBag,
+  FaClock,
+  FaCheckCircle,
+  FaTruck,
+  FaBoxOpen,
+  FaTimesCircle,
+  FaRupeeSign,
+} from "react-icons/fa";
+
+import { getMyOrders } from "../../service/orderService";
+
+import "./CSS/MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const data = await getMyOrders();
 
@@ -25,71 +35,172 @@ export default function MyOrders() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+
+    const interval = setInterval(() => {
+      loadOrders();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [loadOrders]);
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "pending":
+        return <FaClock />;
+
+      case "accepted":
+        return <FaCheckCircle />;
+
+      case "preparing":
+        return <FaShoppingBag />;
+
+      case "ready":
+        return <FaTruck />;
+
+      case "collected":
+        return <FaBoxOpen />;
+
+      case "rejected":
+        return <FaTimesCircle />;
+
+      default:
+        return <FaClock />;
+    }
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "pending":
+        return "pending";
+
+      case "accepted":
+        return "accepted";
+
+      case "preparing":
+        return "preparing";
+
+      case "ready":
+        return "ready";
+
+      case "collected":
+        return "collected";
+
+      case "rejected":
+        return "rejected";
+
+      default:
+        return "pending";
+    }
   };
 
   if (loading) {
-    return <div className="container py-5 text-center">Loading...</div>;
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border text-warning" />
+
+          <p className="mt-3">Loading Orders...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="container py-4">
-      <h2 className="mb-4">My Orders</h2>
+      <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <h2 className="fw-bold">My Orders</h2>
+
+        <span className="badge bg-dark fs-6">
+          Total Orders : {orders.length}
+        </span>
+      </div>
 
       {orders.length === 0 ? (
-        <div className="alert alert-warning">No orders found</div>
+        <motion.div
+          initial={{
+            opacity: 0,
+            scale: 0.9,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+          }}
+          className="empty-state"
+        >
+          <FaShoppingBag size={70} />
+
+          <h4 className="mt-3">No Orders Found</h4>
+
+          <p>Place your first order now.</p>
+        </motion.div>
       ) : (
-        orders.map((order) => (
-          <div key={order.id} className="card shadow-sm border-0 mb-3">
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-8">
-                  <h5>#{order.order_number}</h5>
+        <AnimatePresence>
+          {orders.map((order, index) => (
+            <motion.div
+              key={order.id}
+              initial={{
+                opacity: 0,
+                y: 40,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              exit={{
+                opacity: 0,
+              }}
+              transition={{
+                delay: index * 0.08,
+              }}
+              whileHover={{
+                scale: 1.01,
+              }}
+              className="order-card"
+            >
+              <div className="row align-items-center">
+                <div className="col-lg-8 col-md-8">
+                  <h5 className="fw-bold">#{order.order_number}</h5>
 
-                  <p className="mb-1">Amount: ₹{order.total_amount}</p>
+                  <div className="order-meta">
+                    <p>
+                      <FaRupeeSign /> Amount : ₹{order.total_amount}
+                    </p>
 
-                  <p className="mb-1">
-                    Payment:
-                    {order.payment_method}
-                  </p>
-
-                  <p className="mb-0">
-                    Pickup:
-                    {order.pickup_time}
-                  </p>
+                    <p>Payment :{order.payment_method}</p>
+                  </div>
                 </div>
 
-                <div className="col-md-4 text-md-end">
-                  <span
-                    className={`badge px-3 py-2 ${
-                      order.status === "pending"
-                        ? "bg-warning text-dark"
-                        : order.status === "accepted"
-                          ? "bg-info"
-                          : order.status === "preparing"
-                            ? "bg-primary"
-                            : order.status === "ready"
-                              ? "bg-success"
-                              : order.status === "collected"
-                                ? "bg-dark"
-                                : "bg-danger"
-                    }`}
+                <div className="col-lg-4 col-md-4 text-md-end mt-3 mt-md-0">
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.05, 1],
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 2,
+                    }}
+                    className={`status-badge ${getStatusClass(order.status)}`}
                   >
-                    {order.status}
-                  </span>
+                    {getStatusIcon(order.status)}
 
-                  <br />
+                    <span>{order.status}</span>
+                  </motion.div>
 
                   <Link
                     to={`/my-orders/${order.id}`}
-                    className="btn btn-warning btn-sm mt-3"
+                    className="btn btn-warning mt-3 fw-bold"
                   >
-                    View
+                    View Details
                   </Link>
                 </div>
               </div>
-            </div>
-          </div>
-        ))
+            </motion.div>
+          ))}
+        </AnimatePresence>
       )}
     </div>
   );
