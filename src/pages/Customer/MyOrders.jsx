@@ -167,11 +167,24 @@ export default function MyOrders() {
 
                   <div className="order-meta">
                     <p>
-                      <FaRupeeSign /> Amount : ₹{order.total_amount}
+                      <FaRupeeSign /> Amount : ₹ {order.total_amount}
                     </p>
 
-                    <p>Payment :{order.payment_method}</p>
+                    <p>Payment : {order.payment_method}</p>
                   </div>
+                  {order.ready_at && (
+                    <p>
+                      Order Ready At :{" "}
+                      {new Date(order.ready_at).toLocaleString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="col-lg-4 col-md-4 text-md-end mt-3 mt-md-0">

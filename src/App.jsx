@@ -53,6 +53,7 @@ import OrderDetail from "./pages/Customer/OrderDetail";
 import ManagerLayout from "./components/Manager/ManagerLayout";
 import ManagerDashboard from "./pages/manager/Dashboard";
 import ManagerOrders from "./pages/manager/Orders";
+import WalkInOrder from "./pages/manager/WalkInOrder";
 
 function App() {
   return (
@@ -170,6 +171,9 @@ function App() {
         <Route path="dashboard" element={<ManagerDashboard />} />
 
         <Route path="orders" element={<ManagerOrders />} />
+
+        <Route path="walkin" element={<WalkInOrder />} /> 
+        
       </Route>
 
       {/* 404 */}

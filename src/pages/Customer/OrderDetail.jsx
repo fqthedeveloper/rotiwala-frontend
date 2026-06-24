@@ -232,17 +232,15 @@ export default function OrderDetail() {
           </div>
 
           <div>
-            <strong>
-              Pickup Time
-            </strong>
 
-            <p>
-              {
-                new Date(
-                  order.pickup_time
-                ).toLocaleString()
-              }
-            </p>
+            {order.pickup_by_other_person == true && (
+            <div>
+            <strong>Pickup Person</strong>
+
+              <p>Name: {order.pickup_person_name || "N/A"}</p>
+              <p>Contact: {order.pickup_person_phone || "N/A"}</p>
+            </div>
+          )}
 
           </div>
 

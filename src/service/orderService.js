@@ -67,12 +67,21 @@ MANAGER ORDERS
 */
 
 export const getManagerOrders =
-  async () => {
+  async (
+    date = null
+  ) => {
+
+    let url =
+      "/orders/manager/";
+
+    if (date) {
+
+      url += `?date=${date}`;
+
+    }
 
     const response =
-      await api.get(
-        "/orders/manager/"
-      );
+      await api.get(url);
 
     return response.data;
   };

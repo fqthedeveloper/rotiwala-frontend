@@ -181,6 +181,12 @@ const MobileMenu = ({
             onClose={onClose}
           />
 
+          <NavItem
+            to="/my-orders"
+            text="📋 My Orders"
+            onClose={onClose}
+          />
+
           {(user?.role === "super_admin" ||
             user?.role === "manager") && (
 
