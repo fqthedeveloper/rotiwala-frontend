@@ -59,20 +59,17 @@ export default function Login() {
     console.log("LOGIN RESPONSE:", response.data);
 
     const currentUser = response.data.user;
-
     localStorage.setItem("access", response.data.access);
-
     localStorage.setItem("refresh", response.data.refresh);
-
     localStorage.setItem("user", JSON.stringify(currentUser));
-
     localStorage.setItem("role", currentUser.role);
-
     localStorage.setItem("user_id", currentUser.id);
 
-    console.log("ACCESS SAVED:", localStorage.getItem("access"));
+    if (currentUser.shop_id) {
+      localStorage.setItem("selected_shop", currentUser.shop_id);
+    }
 
-    console.log("ROLE SAVED:", localStorage.getItem("role"));
+    console.log("SHOP:", localStorage.getItem("selected_shop"));
 
     await saveFCMToken();
 

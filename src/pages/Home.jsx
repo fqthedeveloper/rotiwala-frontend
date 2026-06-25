@@ -302,7 +302,6 @@ export default function Home() {
                 alt={item.name}
                 className="food-image"
               />
-              <div className="food-badge">⭐ Popular</div>
             </div>
             <div className="food-body">
               <h4>{item.name}</h4>
@@ -320,12 +319,6 @@ export default function Home() {
                   onClick={() => handleAddCart(item) || updateCartCount(item)}
                 >
                   Add To Cart
-                </button>
-                <button
-                  className="details-btn"
-                  onClick={() => navigate(`/menu-item/${item.id}`)}
-                >
-                  Details
                 </button>
               </div>
             </div>

@@ -1,520 +1,382 @@
-import { useEffect, useMemo, useState } from "react";
-
+import { useEffect, useState, useCallback } from "react";
 import Swal from "sweetalert2";
 
-import { motion } from "framer-motion";
+import DraftCustomers from "./components/DraftCustomers";
+import MenuPanel from "./components/MenuPanel";
+import CustomerPanel from "./components/CustomerPanel";
+import CartPanel from "./components/CartPanel";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 import {
-  FaSearch,
-  FaUser,
-  FaPhone,
-  FaShoppingCart,
-  FaPlus,
-  FaMinus,
-  FaTrash,
-  FaMoneyBillWave,
-  FaQrcode,
-  FaReceipt,
-  FaRupeeSign,
-} from "react-icons/fa";
-
-import {
-  getCategoriesByShop,
-  getItemsByCategoryPublic,
-} from "../../service/menuItemService";
-
-import { createWalkInOrder, searchCustomer } from "../../service/walkInService";
+    getWalkInCarts,
+    getWalkInCart,
+    createWalkInCart,
+} from "../../service/walkInService";
 
 import "./CSS/WalkInOrder.css";
 
 export default function WalkInOrder() {
-  const [loading, setLoading] = useState(false);
 
-  const [customerLoading, setCustomerLoading] = useState(false);
+    const [mobileTab, setMobileTab] = useState("menu");
 
-  const [customerPhone, setCustomerPhone] = useState("");
+    /*
+    ========================================
+    SHARED STATE
+    ========================================
+    */
 
-  const [customerName, setCustomerName] = useState("");
+    const [loading, setLoading] = useState(true);
 
-  const [existingCustomer, setExistingCustomer] = useState(null);
+    const [carts, setCarts] = useState([]);
 
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+    const [selectedCartId, setSelectedCartId] = useState(null);
 
-  const [categories, setCategories] = useState([]);
+    const [selectedCart, setSelectedCart] = useState(null);
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
+    /*
+    ========================================
+    LOAD CARTS
+    ========================================
+    */
 
-  const [items, setItems] = useState([]);
+    const loadCarts = useCallback(async () => {
 
-  const [search, setSearch] = useState("");
+        try {
 
-  const [cart, setCart] = useState([]);
+            setLoading(true);
 
-  const [shopId] = useState(localStorage.getItem("selected_shop"));
+            let list = await getWalkInCarts();
 
-  useEffect(() => {
-    document.title = "Walk-In POS";
+            list = list || [];
 
-    loadCategories();
-  }, []);
+            /*
+            ------------------------------------
+            Create first cart automatically
+            ------------------------------------
+            */
 
-  useEffect(() => {
-    if (selectedCategory) {
-      loadItems(selectedCategory);
-    }
-  }, [selectedCategory]);
+            if (list.length === 0) {
 
-  const loadCategories = async () => {
-    try {
-      const data = await getCategoriesByShop(shopId);
+                const cart = await createWalkInCart({
 
-      setCategories(data);
+                    customer_name: "Walk-In Customer",
 
-      if (data.length > 0) {
-        setSelectedCategory(data[0].id);
-      }
-    } catch {
-      Swal.fire("Error", "Unable to load categories", "error");
-    }
-  };
+                    customer_phone: "",
 
-  const loadItems = async (categoryId) => {
-    try {
-      const data = await getItemsByCategoryPublic(categoryId);
+                    payment_method: "cash",
 
-      setItems(data);
-    } catch {
-      Swal.fire("Error", "Unable to load menu items", "error");
-    }
-  };
+                    notes: "",
 
-  const handleCustomerSearch = async () => {
-    if (!customerPhone) {
-      return;
-    }
+                });
 
-    let phone = customerPhone.trim();
+                list = [cart];
 
-    if (!phone.startsWith("+91")) {
-      phone = `+91${phone}`;
-    }
-
-    try {
-      setCustomerLoading(true);
-
-      const data = await searchCustomer(phone);
-
-      if (data.found) {
-        setExistingCustomer(data);
-
-        setCustomerName(data.name);
-
-        Swal.fire({
-          icon: "success",
-
-          title: "Customer Found",
-
-          toast: true,
-
-          timer: 1500,
-
-          position: "top-end",
-
-          showConfirmButton: false,
-        });
-      } else {
-        setExistingCustomer(null);
-
-        Swal.fire({
-          icon: "info",
-
-          title: "New Customer",
-
-          toast: true,
-
-          timer: 1500,
-
-          position: "top-end",
-
-          showConfirmButton: false,
-        });
-      }
-    } finally {
-      setCustomerLoading(false);
-    }
-  };
-
-  const addToCart = (item) => {
-    const exists = cart.find((c) => c.id === item.id);
-
-    if (exists) {
-      setCart(
-        cart.map((c) =>
-          c.id === item.id
-            ? {
-                ...c,
-                quantity: c.quantity + 1,
-              }
-            : c,
-        ),
-      );
-    } else {
-      setCart([
-        ...cart,
-
-        {
-          ...item,
-
-          quantity: 1,
-        },
-      ]);
-    }
-  };
-
-  const increaseQty = (id) => {
-    setCart(
-      cart.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
             }
-          : item,
-      ),
-    );
-  };
 
-  const decreaseQty = (id) => {
-    setCart(
-      cart
-        .map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
-            : item,
-        )
-        .filter((item) => item.quantity > 0),
-    );
-  };
+            setCarts(list);
 
-  const removeItem = (id) => {
-    setCart(cart.filter((item) => item.id !== id));
-  };
+            /*
+            ------------------------------------
+            Select first cart
+            ------------------------------------
+            */
 
-  const filteredItems = useMemo(() => {
-    return items.filter((item) =>
-      item.name?.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [items, search]);
+            if (!selectedCartId) {
 
-  const total = useMemo(() => {
-    return cart.reduce(
-      (sum, item) => sum + Number(item.base_price) * item.quantity,
+                setSelectedCartId(list[0].id);
 
-      0,
-    );
-  }, [cart]);
-  const placeOrder = async () => {
-    if (!customerName) {
-      Swal.fire("Customer Required", "Please enter customer name", "warning");
+            }
 
-      return;
-    }
+        }
 
-    if (cart.length === 0) {
-      Swal.fire("Cart Empty", "Please add items", "warning");
+        catch (error) {
 
-      return;
-    }
+            console.log(error);
 
-    try {
-      setLoading(true);
+            Swal.fire(
 
-      const payload = {
-        shop_id: shopId,
+                "Error",
 
-        customer_name: customerName,
+                "Unable to load walk-in carts.",
 
-        customer_phone: customerPhone,
+                "error"
 
-        payment_method: paymentMethod,
+            );
 
-        items: cart.map((item) => ({
-          item_id: item.id,
+        }
 
-          quantity: item.quantity,
-        })),
-      };
+        finally {
 
-      const response = await createWalkInOrder(payload);
+            setLoading(false);
 
-      Swal.fire({
-        icon: "success",
+        }
 
-        title: "Order Created",
+    }, [selectedCartId]);
 
-        html: `
-            <h4>${response.order_number}</h4>
-            <h3>₹${response.total_amount}</h3>
-          `,
-      });
+    /*
+    ========================================
+    LOAD SINGLE CART
+    ========================================
+    */
 
-      setCart([]);
+    const loadSelectedCart = useCallback(async (cartId) => {
 
-      setCustomerName("");
+        if (!cartId) return;
 
-      setCustomerPhone("");
+        try {
 
-      setExistingCustomer(null);
-    } catch (error) {
-      Swal.fire(
-        "Error",
-        error?.response?.data?.error || "Unable to create order",
-        "error",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+            const cart = await getWalkInCart(cartId);
 
-  return (
-    <div className="walkin-page">
-      <div className="container-fluid">
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 20,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          className="walkin-header"
-        >
-          <div>
-            <h2>
-              <FaReceipt />
-              Walk-In POS
-            </h2>
+            setSelectedCart(cart);
 
-            <p>Fast Billing & Order Creation</p>
-          </div>
+        }
 
-          <div className="order-preview">
-            <span>Next Order</span>
+        catch (error) {
 
-            <h4>RT-XXXX</h4>
-          </div>
-        </motion.div>
+            console.log(error);
 
-        <div className="row g-4">
-          <div className="col-lg-8">
-            <div className="card shadow-sm border-0 customer-card">
-              <div className="card-body">
-                <h5>
-                  <FaUser />
-                  Customer
-                </h5>
+        }
 
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label>Phone</label>
+    }, []);
 
-                    <div className="phone-search">
-                      <input
-                        type="text"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="9876543210"
-                      />
+    /*
+    ========================================
+    CREATE NEW CART
+    ========================================
+    */
 
-                      <button
-                        onClick={handleCustomerSearch}
-                        disabled={customerLoading}
-                      >
-                        <FaSearch />
-                      </button>
-                    </div>
-                  </div>
+    const createCustomerCart = async () => {
 
-                  <div className="col-md-6">
-                    <label>Customer Name</label>
+        try {
 
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
+            const cart = await createWalkInCart({
+
+                customer_name: "Walk-In Customer",
+
+                customer_phone: "",
+
+                payment_method: "cash",
+
+                notes: "",
+
+            });
+
+            await loadCarts();
+
+            setSelectedCartId(cart.id);
+
+            Swal.fire({
+
+                toast: true,
+
+                position: "top-end",
+
+                icon: "success",
+
+                timer: 1500,
+
+                title: "New Customer Created",
+
+                showConfirmButton: false,
+
+            });
+
+        }
+
+        catch (error) {
+
+            Swal.fire(
+
+                "Error",
+
+                "Unable to create customer.",
+
+                "error"
+
+            );
+
+        }
+
+    };
+
+    /*
+    ========================================
+    INITIAL LOAD
+    ========================================
+    */
+
+    useEffect(() => {
+
+        loadCarts();
+
+    }, [loadCarts]);
+
+    /*
+    ========================================
+    LOAD SELECTED CART
+    ========================================
+    */
+
+    useEffect(() => {
+
+        if (selectedCartId) {
+
+            loadSelectedCart(selectedCartId);
+
+        }
+
+    }, [
+
+        selectedCartId,
+
+        loadSelectedCart,
+
+    ]);
+
+    /*
+    ========================================
+    AUTO REFRESH
+    ========================================
+    */
+
+    useEffect(() => {
+
+        const interval = setInterval(() => {
+
+            loadCarts();
+
+        }, 10000);
+
+        return () => clearInterval(interval);
+
+    }, [loadCarts]);
+
+    return (
+
+        <div className="walkin-page">
+
+            <header className="walkin-header">
+
+                <div>
+
+                    <h1>
+
+                        Walk-In POS
+
+                    </h1>
+
+                    <p>
+
+                        Restaurant Point of Sale
+
+                    </p>
+
+                </div>
+
+                <div className="live-status">
+
+                    <span className="live-dot"/>
+
+                    Live Updates
+
+                </div>
+
+            </header>
+
+            <main className="walkin-layout">
+
+                <aside
+                    className={`left-panel ${
+                        mobileTab !== "customers"
+                            ? "mobile-hide"
+                            : ""
+                    }`}
+                >
+
+                    <DraftCustomers
+
+                        loading={loading}
+
+                        carts={carts}
+
+                        selectedCartId={selectedCartId}
+
+                        setSelectedCartId={setSelectedCartId}
+
+                        createCustomerCart={createCustomerCart}
+
                     />
-                  </div>
-                </div>
 
-                {existingCustomer && (
-                  <div className="customer-badge">
-                    <div>👤 {existingCustomer.name}</div>
+                </aside>
 
-                    <div>📱 {existingCustomer.phone}</div>
+                <section
+                    className={`center-panel ${
+                        mobileTab !== "menu"
+                            ? "mobile-hide"
+                            : ""
+                    }`}
+                >
 
-                    <div>⭐ Trust: {existingCustomer.trust_score}</div>
+                    <MenuPanel
 
-                    <div>🧾 Orders: {existingCustomer.total_orders}</div>
-                  </div>
-                )}
-              </div>
-            </div>
+                        selectedCart={selectedCart}
 
-            <div className="card shadow-sm border-0 mt-4">
-              <div className="card-body">
-                <div className="category-scroll">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      className={`category-btn ${
-                        selectedCategory === category.id ? "active" : ""
-                      }`}
-                      onClick={() => setSelectedCategory(category.id)}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
+                        refreshCart={() =>
+                            loadSelectedCart(
+                                selectedCartId
+                            )
+                        }
 
-                <div className="search-menu">
-                  <FaSearch />
+                    />
 
-                  <input
-                    type="text"
-                    placeholder="Search Item..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
+                </section>
 
-                <div className="row g-3 mt-2">
-                  {filteredItems.map((item) => (
-                    <div key={item.id} className="col-md-4 col-sm-6">
-                      <motion.div
-                        whileHover={{
-                          y: -5,
-                        }}
-                        className="menu-card"
-                      >
-                        <div className="menu-body">
-                          <img
-                            src={item.image || "/default-item.png"}
-                            alt={item.name}
-                          />
-                          <h6>{item.name}</h6>
+                <aside
+                    className={`right-panel ${
+                        mobileTab !== "cart"
+                            ? "mobile-hide"
+                            : ""
+                    }`}
+                >
 
-                          <p>₹{item.base_price}</p>
+                    <CustomerPanel
 
-                          <button
-                            className="btn btn-warning w-100"
-                            onClick={() => addToCart(item)}
-                          >
-                            Add Item
-                          </button>
-                        </div>
-                      </motion.div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+                        selectedCart={selectedCart}
 
-          <div className="col-lg-4">
-            <div className="cart-panel">
-              <h5>
-                <FaShoppingCart />
-                Cart
-              </h5>
+                        refreshCart={() =>
+                            loadSelectedCart(
+                                selectedCartId
+                            )
+                        }
 
-              {cart.map((item) => (
-                <div className="cart-item" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
+                    />
 
-                    <div>₹{item.base_price}</div>
-                  </div>
+                    <CartPanel
 
-                  <div className="qty-box">
-                    <button onClick={() => decreaseQty(item.id)}>
-                      <FaMinus />
-                    </button>
+                        selectedCart={selectedCart}
 
-                    <span>{item.quantity}</span>
+                        refreshCart={() =>
+                            loadSelectedCart(
+                                selectedCartId
+                            )
+                        }
 
-                    <button onClick={() => increaseQty(item.id)}>
-                      <FaPlus />
-                    </button>
+                    />
 
-                    <button
-                      className="delete-btn"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {cart.length === 0 && (
-                <div className="empty-cart">
-                  <FaShoppingCart />
+                </aside>
 
-                  <h5>Cart Empty</h5>
+            </main>
 
-                  <p>Select items to start billing</p>
-                </div>
-              )}
+            <MobileBottomNav
 
-              <div className="payment-box">
-                <label>
-                  <FaMoneyBillWave />
-                  Cash
-                </label>
+                active={mobileTab}
 
-                <input
-                  type="radio"
-                  checked={paymentMethod === "cash"}
-                  onChange={() => setPaymentMethod("cash")}
-                />
+                setActive={setMobileTab}
 
-                <label>
-                  <FaQrcode />
-                  UPI
-                </label>
+            />
 
-                <input
-                  type="radio"
-                  checked={paymentMethod === "upi"}
-                  onChange={() => setPaymentMethod("upi")}
-                />
-              </div>
-
-              <div className="cart-total">
-                <span>Total</span>
-
-                <h3>
-                  <FaRupeeSign />
-
-                  {total}
-                </h3>
-              </div>
-
-              <button
-                className="btn btn-success w-100 btn-lg"
-                disabled={loading}
-                onClick={placeOrder}
-              >
-                {loading ? "Creating..." : "Create Walk-In Order"}
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+
+    );
+
 }
