@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Swal from "sweetalert2";
 
 import DraftCustomers from "./components/DraftCustomers";
@@ -8,375 +8,364 @@ import CartPanel from "./components/CartPanel";
 import MobileBottomNav from "./components/MobileBottomNav";
 
 import {
-    getWalkInCarts,
-    getWalkInCart,
-    createWalkInCart,
+  getWalkInCarts,
+  getWalkInCart,
+  createWalkInCart,
 } from "../../service/walkInService";
 
 import "./CSS/WalkInOrder.css";
+import { header } from "framer-motion/client";
+
+import {FaBell} from "react-icons/fa";
+
+const BaseURL = "127.0.0.1:8000";
+
 
 export default function WalkInOrder() {
-
-    const [mobileTab, setMobileTab] = useState("menu");
-
-    /*
-    ========================================
-    SHARED STATE
-    ========================================
+  /*
+    =====================================================
+    MOBILE TAB
+    =====================================================
     */
 
-    const [loading, setLoading] = useState(true);
+  const [mobileTab, setMobileTab] = useState("menu");
 
-    const [carts, setCarts] = useState([]);
-
-    const [selectedCartId, setSelectedCartId] = useState(null);
-
-    const [selectedCart, setSelectedCart] = useState(null);
-
-    /*
-    ========================================
-    LOAD CARTS
-    ========================================
+  /*
+    =====================================================
+    DATA
+    =====================================================
     */
 
-    const loadCarts = useCallback(async () => {
+  const [loading, setLoading] = useState(true);
 
-        try {
+  const [carts, setCarts] = useState([]);
 
-            setLoading(true);
+  const [selectedCartId, setSelectedCartId] = useState(null);
 
-            let list = await getWalkInCarts();
+  const [selectedCart, setSelectedCart] = useState(null);
 
-            list = list || [];
+  const [socketConnected, setSocketConnected] = useState(false);
+  
+  const socketRef = useRef(null);
+  
+  /*
+    =====================================================
+    LOAD CART LIST
+    =====================================================
+    */
 
-            /*
-            ------------------------------------
-            Create first cart automatically
-            ------------------------------------
+  const loadCarts = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      let list = await getWalkInCarts();
+
+      list = list || [];
+
+      /*
+            --------------------------------------------
+            AUTO CREATE FIRST DRAFT
+            --------------------------------------------
             */
 
-            if (list.length === 0) {
+      if (list.length === 0) {
+        const cart = await createWalkInCart({
+          customer_name: "Walk-In Customer",
 
-                const cart = await createWalkInCart({
+          customer_phone: "",
 
-                    customer_name: "Walk-In Customer",
+          payment_method: "cash",
 
-                    customer_phone: "",
+          notes: "",
+        });
 
-                    payment_method: "cash",
+        list = [cart];
+      }
 
-                    notes: "",
+      setCarts(list);
 
-                });
-
-                list = [cart];
-
-            }
-
-            setCarts(list);
-
-            /*
-            ------------------------------------
-            Select first cart
-            ------------------------------------
+      /*
+            --------------------------------------------
+            AUTO SELECT
+            --------------------------------------------
             */
 
-            if (!selectedCartId) {
+      if (!selectedCartId && list.length) {
+        setSelectedCartId(list[0].id);
+      }
+    } catch (error) {
+      console.log(error);
 
-                setSelectedCartId(list[0].id);
+      Swal.fire({
+        icon: "error",
 
-            }
+        title: "Error",
 
-        }
+        text: "Unable to load Draft Customers.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCartId]);
 
-        catch (error) {
-
-            console.log(error);
-
-            Swal.fire(
-
-                "Error",
-
-                "Unable to load walk-in carts.",
-
-                "error"
-
-            );
-
-        }
-
-        finally {
-
-            setLoading(false);
-
-        }
-
-    }, [selectedCartId]);
-
-    /*
-    ========================================
+  /*
+    =====================================================
     LOAD SINGLE CART
-    ========================================
+    =====================================================
     */
 
-    const loadSelectedCart = useCallback(async (cartId) => {
+  const loadSelectedCart = useCallback(async (id) => {
+    if (!id) return;
 
-        if (!cartId) return;
+    try {
+      const cart = await getWalkInCart(id);
 
-        try {
+      setSelectedCart(cart);
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
 
-            const cart = await getWalkInCart(cartId);
-
-            setSelectedCart(cart);
-
-        }
-
-        catch (error) {
-
-            console.log(error);
-
-        }
-
-    }, []);
-
-    /*
-    ========================================
-    CREATE NEW CART
-    ========================================
+  /*
+    =====================================================
+    CREATE CUSTOMER
+    =====================================================
     */
 
-    const createCustomerCart = async () => {
+  const createCustomerCart = async () => {
+    try {
+      const cart = await createWalkInCart({
+        customer_name: "Walk-In Customer",
 
-        try {
+        customer_phone: "",
 
-            const cart = await createWalkInCart({
+        payment_method: "cash",
 
-                customer_name: "Walk-In Customer",
+        notes: "",
+      });
 
-                customer_phone: "",
+      await loadCarts();
 
-                payment_method: "cash",
+      setSelectedCartId(cart.id);
 
-                notes: "",
+      Swal.fire({
+        toast: true,
 
-            });
+        position: "top-end",
 
-            await loadCarts();
+        timer: 1800,
 
-            setSelectedCartId(cart.id);
+        showConfirmButton: false,
 
-            Swal.fire({
+        icon: "success",
 
-                toast: true,
+        title: "New Customer Created",
+      });
+    } catch {
+      Swal.fire({
+        icon: "error",
 
-                position: "top-end",
+        title: "Error",
 
-                icon: "success",
+        text: "Unable to create customer.",
+      });
+    }
+  };
 
-                timer: 1500,
-
-                title: "New Customer Created",
-
-                showConfirmButton: false,
-
-            });
-
-        }
-
-        catch (error) {
-
-            Swal.fire(
-
-                "Error",
-
-                "Unable to create customer.",
-
-                "error"
-
-            );
-
-        }
-
-    };
-
-    /*
-    ========================================
-    INITIAL LOAD
-    ========================================
+  /*
+    =====================================================
+    FIRST LOAD & Socket Load
+    =====================================================
     */
 
-    useEffect(() => {
+  useEffect(() => {
+    loadCarts();
+    
+  }, [loadCarts]);
 
-        loadCarts();
-
-    }, [loadCarts]);
-
-    /*
-    ========================================
-    LOAD SELECTED CART
-    ========================================
+  /*
+    =====================================================
+    LOAD SELECTED
+    =====================================================
     */
 
-    useEffect(() => {
+  useEffect(() => {
+    if (selectedCartId) {
+      loadSelectedCart(selectedCartId);
+    }
+  }, [selectedCartId, loadSelectedCart]);
 
-        if (selectedCartId) {
-
-            loadSelectedCart(selectedCartId);
-
-        }
-
-    }, [
-
-        selectedCartId,
-
-        loadSelectedCart,
-
-    ]);
-
-    /*
-    ========================================
+  /*
+    =====================================================
     AUTO REFRESH
-    ========================================
+    =====================================================
     */
 
-    useEffect(() => {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      loadCarts();
+    }, 10000);
 
-        const interval = setInterval(() => {
+    connectSocket();
 
-            loadCarts();
+    return () => clearInterval(timer);
+  }, [loadCarts]);
 
-        }, 10000);
+// ===================
+// Sockit code header
+// ===================
 
-        return () => clearInterval(interval);
+const connectSocket = () => {
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-    }, [loadCarts]);
+      socketRef.current = new WebSocket(
+        `${protocol}://${BaseURL}/ws/manager/orders/`,
+      );
 
-    return (
+      socketRef.current.onopen = () => {
+        setSocketConnected(true);
 
-        <div className="walkin-page">
+        console.log("Manager WebSocket Connected");
+      };
 
-            <header className="walkin-header">
+      socketRef.current.onclose = () => {
+        setSocketConnected(false);
 
-                <div>
+        setTimeout(() => {
+          connectSocket();
+        }, 5000);
+      };
 
-                    <h1>
+      socketRef.current.onerror = () => {
+        setSocketConnected(false);
+      };
 
-                        Walk-In POS
+      socketRef.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
 
-                    </h1>
+        if (data.type === "new_order") {
+          Swal.fire({
+            toast: true,
 
-                    <p>
+            position: "top-end",
 
-                        Restaurant Point of Sale
+            icon: "success",
 
-                    </p>
+            title: "🔥 New Order Received",
 
-                </div>
+            text: `Order #${data.order_number}`,
 
-                <div className="live-status">
+            timer: 5000,
 
-                    <span className="live-dot"/>
+            showConfirmButton: false,
+          });
 
-                    Live Updates
+          loadOrders();
+        }
 
-                </div>
+        if (data.type === "order_update") {
+          loadOrders();
+        }
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-            </header>
 
-            <main className="walkin-layout">
+  /*
+    =====================================================
+    RENDER
+    =====================================================
+    */
 
-                <aside
-                    className={`left-panel ${
-                        mobileTab !== "customers"
-                            ? "mobile-hide"
-                            : ""
-                    }`}
-                >
 
-                    <DraftCustomers
 
-                        loading={loading}
+  return (
+    <div className="walkin-page">
+      {/* =======================================
+                HEADER
+            ======================================== */}
 
-                        carts={carts}
+      <header className="walkin-header">
+        <div>
+          <h1>Walk-In POS</h1>
 
-                        selectedCartId={selectedCartId}
-
-                        setSelectedCartId={setSelectedCartId}
-
-                        createCustomerCart={createCustomerCart}
-
-                    />
-
-                </aside>
-
-                <section
-                    className={`center-panel ${
-                        mobileTab !== "menu"
-                            ? "mobile-hide"
-                            : ""
-                    }`}
-                >
-
-                    <MenuPanel
-
-                        selectedCart={selectedCart}
-
-                        refreshCart={() =>
-                            loadSelectedCart(
-                                selectedCartId
-                            )
-                        }
-
-                    />
-
-                </section>
-
-                <aside
-                    className={`right-panel ${
-                        mobileTab !== "cart"
-                            ? "mobile-hide"
-                            : ""
-                    }`}
-                >
-
-                    <CustomerPanel
-
-                        selectedCart={selectedCart}
-
-                        refreshCart={() =>
-                            loadSelectedCart(
-                                selectedCartId
-                            )
-                        }
-
-                    />
-
-                    <CartPanel
-
-                        selectedCart={selectedCart}
-
-                        refreshCart={() =>
-                            loadSelectedCart(
-                                selectedCartId
-                            )
-                        }
-
-                    />
-
-                </aside>
-
-            </main>
-
-            <MobileBottomNav
-
-                active={mobileTab}
-
-                setActive={setMobileTab}
-
-            />
-
+          <p>Restaurant Point of Sale</p>
         </div>
 
-    );
+        <div
+          className={`socket-status ${socketConnected ? "online" : "offline"}`}
+        >
+          <FaBell />
 
+          {socketConnected ? "LIVE" : "OFFLINE"}
+        </div>
+      </header>
+
+      {/* =======================================
+                MAIN LAYOUT
+            ======================================== */}
+
+      <main className="walkin-layout">
+        {/* ===============================
+                    LEFT PANEL
+                ================================ */}
+
+        <aside
+          className={`left-panel ${
+            mobileTab !== "customers" ? "mobile-hide" : ""
+          }`}
+        >
+          <DraftCustomers
+            loading={loading}
+            carts={carts}
+            selectedCartId={selectedCartId}
+            setSelectedCartId={setSelectedCartId}
+            createCustomerCart={createCustomerCart}
+          />
+        </aside>
+
+        {/* ===============================
+                    CENTER PANEL
+                ================================ */}
+
+        <section
+          className={`center-panel ${
+            mobileTab !== "menu" ? "mobile-hide" : ""
+          }`}
+        >
+          <MenuPanel
+            selectedCart={selectedCart}
+            refreshCart={() => loadSelectedCart(selectedCartId)}
+          />
+        </section>
+
+        {/* ===============================
+                    RIGHT PANEL
+                ================================ */}
+
+        <aside
+          className={`right-panel ${mobileTab !== "cart" ? "mobile-hide" : ""}`}
+        >
+          <CustomerPanel
+            selectedCart={selectedCart}
+            refreshCart={() => loadSelectedCart(selectedCartId)}
+          />
+
+          <CartPanel
+            selectedCart={selectedCart}
+            refreshCart={() => loadSelectedCart(selectedCartId)}
+          />
+        </aside>
+      </main>
+
+      {/* =======================================
+                MOBILE NAVIGATION
+            ======================================== */}
+
+      <MobileBottomNav active={mobileTab} setActive={setMobileTab} />
+    </div>
+  );
 }

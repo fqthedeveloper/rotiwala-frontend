@@ -20,6 +20,8 @@ import {
 
 import { addItemToCart } from "../../../service/walkInService";
 
+import './CSS/MenuPanel.css'
+
 export default function MenuPanel({
   selectedCart,
 
@@ -237,10 +239,6 @@ export default function MenuPanel({
               />
               <div className="menu-body">
                 <div className="menu-top">
-                  <span className="veg-badge">
-                    <FaLeaf />
-                    Veg
-                  </span>
 
                   {item.is_available ? (
                     <span className="available">Available</span>

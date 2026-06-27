@@ -1,71 +1,36 @@
+import "./CSS/MobileBottomNav.css";
+
 export default function MobileBottomNav({
-
     active,
-
     setActive,
-
 }) {
-
     return (
-
-        <div className="mobile-nav">
+        <nav className="mobile-nav">
 
             <button
-
-                className={
-                    active==="customers"
-                    ? "active"
-                    : ""
-                }
-
-                onClick={()=>
-                    setActive("customers")
-                }
-
+                className={active === "customers" ? "active" : ""}
+                onClick={() => setActive("customers")}
             >
-
-                Customers
-
+                👥
+                <span>Customers</span>
             </button>
 
             <button
-
-                className={
-                    active==="menu"
-                    ? "active"
-                    : ""
-                }
-
-                onClick={()=>
-                    setActive("menu")
-                }
-
+                className={active === "menu" ? "active" : ""}
+                onClick={() => setActive("menu")}
             >
-
-                Menu
-
+                🍽️
+                <span>Menu</span>
             </button>
 
             <button
-
-                className={
-                    active==="cart"
-                    ? "active"
-                    : ""
-                }
-
-                onClick={()=>
-                    setActive("cart")
-                }
-
+                className={active === "cart" ? "active" : ""}
+                onClick={() => setActive("cart")}
             >
-
-                Cart
-
+                🛒
+                <span>Cart</span>
             </button>
 
-        </div>
-
+        </nav>
     );
-
 }
