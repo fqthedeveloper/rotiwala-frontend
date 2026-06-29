@@ -472,6 +472,8 @@
 .draft-card{
 
     padding:14px;
+    flex-wrap: wrap;
+    gap: 10px;
 
 }
 
@@ -488,6 +490,7 @@
 .draft-right{
 
     min-width:75px;
+    align-items: flex-end;
 
 }
 
@@ -515,6 +518,18 @@
 
     font-size:10px;
 
+}
+
+.draft-header,
+.draft-search,
+.draft-list,
+.draft-filter {
+    margin: 0;
+    padding: 16px;
+}
+
+.draft-sidebar {
+    border-radius: 0;
 }
 
 }

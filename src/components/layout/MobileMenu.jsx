@@ -1,58 +1,31 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-const MobileMenu = ({
-  isOpen,
-  onClose,
-}) => {
-
+const MobileMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(
-    JSON.parse(
-      localStorage.getItem("user")
-    )
-  );
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   useEffect(() => {
-
     const syncUser = () => {
-
-      setUser(
-        JSON.parse(
-          localStorage.getItem("user")
-        )
-      );
-
+      setUser(JSON.parse(localStorage.getItem("user")));
     };
 
-    window.addEventListener(
-      "authChanged",
-      syncUser
-    );
+    window.addEventListener("authChanged", syncUser);
 
-    return () =>
-      window.removeEventListener(
-        "authChanged",
-        syncUser
-      );
-
+    return () => window.removeEventListener("authChanged", syncUser);
   }, []);
 
   const logout = () => {
-
     localStorage.clear();
 
     setUser(null);
 
-    window.dispatchEvent(
-      new Event("authChanged")
-    );
+    window.dispatchEvent(new Event("authChanged"));
 
     onClose();
 
     navigate("/");
-
   };
 
   if (!isOpen) return null;
@@ -87,11 +60,9 @@ const MobileMenu = ({
           animation: "slideIn .3s ease",
         }}
       >
-
         <div
           style={{
-            background:
-              "linear-gradient(135deg,#ff9800,#ff5722)",
+            background: "linear-gradient(135deg,#ff9800,#ff5722)",
             padding: "25px 20px",
             color: "#fff",
             position: "sticky",
@@ -99,7 +70,6 @@ const MobileMenu = ({
             zIndex: 10,
           }}
         >
-
           <button
             onClick={onClose}
             style={{
@@ -141,7 +111,6 @@ const MobileMenu = ({
               {user.role}
             </div>
           )}
-
         </div>
 
         <div
@@ -150,90 +119,52 @@ const MobileMenu = ({
             flex: 1,
           }}
         >
+          <NavItem to="/" text="🏠 Home" onClose={onClose} />
 
-          <NavItem
-            to="/"
-            text="🏠 Home"
-            onClose={onClose}
-          />
+          <NavItem to="/menu" text="🍔 Menu" onClose={onClose} />
 
-          <NavItem
-            to="/menu"
-            text="🍔 Menu"
-            onClose={onClose}
-          />
+          <NavItem to="/about" text="ℹ️ About" onClose={onClose} />
 
-          <NavItem
-            to="/about"
-            text="ℹ️ About"
-            onClose={onClose}
-          />
+          <NavItem to="/contact" text="📞 Contact" onClose={onClose} />
 
-          <NavItem
-            to="/contact"
-            text="📞 Contact"
-            onClose={onClose}
-          />
-
-          <NavItem
-            to="/cart"
-            text="🛒 Cart"
-            onClose={onClose}
-          />
-
-          <NavItem
-            to="/my-orders"
-            text="📋 My Orders"
-            onClose={onClose}
-          />
-
-          {(user?.role === "super_admin" ||
-            user?.role === "manager") && (
-
+          {(user?.role === "super_admin" || user?.role === "manager") && (
             <NavItem
               to="/admin/dashboard"
               text="📊 Dashboard"
               onClose={onClose}
             />
-
           )}
 
           {!user ? (
             <>
-              <NavItem
-                to="/login"
-                text="🔐 Login"
-                onClose={onClose}
-              />
+              <NavItem to="/login" text="🔐 Login" onClose={onClose} />
 
-              <NavItem
-                to="/register"
-                text="📝 Register"
-                onClose={onClose}
-              />
+              <NavItem to="/register" text="📝 Register" onClose={onClose} />
             </>
           ) : (
+            <>
+              <NavItem to="/cart" text="🛒 Cart" onClose={onClose} />
 
-            <button
-              onClick={logout}
-              style={{
-                width: "100%",
-                border: "none",
-                background:
-                  "linear-gradient(135deg,#ef4444,#dc2626)",
-                color: "#fff",
-                padding: "14px",
-                borderRadius: "12px",
-                marginTop: "20px",
-                fontWeight: "700",
-                cursor: "pointer",
-              }}
-            >
-              Logout
-            </button>
+              <NavItem to="/my-orders" text="📋 My Orders" onClose={onClose} />
 
+              <button
+                onClick={logout}
+                style={{
+                  width: "100%",
+                  border: "none",
+                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                  color: "#fff",
+                  padding: "14px",
+                  borderRadius: "12px",
+                  marginTop: "20px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                }}
+              >
+                Logout
+              </button>
+            </>
           )}
-
         </div>
 
         <div
@@ -247,7 +178,6 @@ const MobileMenu = ({
         >
           © 2026 Roti Wala
         </div>
-
       </div>
 
       <style>
@@ -262,17 +192,11 @@ const MobileMenu = ({
           }
         `}
       </style>
-
     </>
   );
 };
 
-function NavItem({
-  to,
-  text,
-  onClose,
-}) {
-
+function NavItem({ to, text, onClose }) {
   return (
     <NavLink
       to={to}
@@ -283,9 +207,7 @@ function NavItem({
         padding: "14px 16px",
         borderRadius: "12px",
         marginBottom: "10px",
-        background: isActive
-          ? "#fff7ed"
-          : "#f8f9fa",
+        background: isActive ? "#fff7ed" : "#f8f9fa",
         color: "#333",
         fontWeight: "600",
         transition: ".3s",

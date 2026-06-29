@@ -16,10 +16,9 @@ import {
 import "./CSS/WalkInOrder.css";
 import { header } from "framer-motion/client";
 
-import {FaBell} from "react-icons/fa";
+import { FaBell } from "react-icons/fa";
 
-const BaseURL = "127.0.0.1:8000";
-
+const BaseURL = import.meta.env.VITE_WS_URL;
 
 export default function WalkInOrder() {
   /*
@@ -45,9 +44,9 @@ export default function WalkInOrder() {
   const [selectedCart, setSelectedCart] = useState(null);
 
   const [socketConnected, setSocketConnected] = useState(false);
-  
+
   const socketRef = useRef(null);
-  
+
   /*
     =====================================================
     LOAD CART LIST
@@ -84,15 +83,7 @@ export default function WalkInOrder() {
 
       setCarts(list);
 
-      /*
-            --------------------------------------------
-            AUTO SELECT
-            --------------------------------------------
-            */
-
-      if (!selectedCartId && list.length) {
-        setSelectedCartId(list[0].id);
-      }
+      setSelectedCartId((prev) => prev || list[0].id);
     } catch (error) {
       console.log(error);
 
@@ -106,7 +97,7 @@ export default function WalkInOrder() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCartId]);
+  }, []);
 
   /*
     =====================================================
@@ -146,7 +137,18 @@ export default function WalkInOrder() {
 
       await loadCarts();
 
-      setSelectedCartId(cart.id);
+      const drafts = await getWalkInCarts();
+
+      if (drafts.length) {
+        setSelectedCartId(drafts[0].id);
+      } else {
+        const cart = await createWalkInCart({
+          customer_name: "Walk-In Customer",
+          payment_method: "cash",
+        });
+
+        setSelectedCartId(cart.id);
+      }
 
       Swal.fire({
         toast: true,
@@ -180,7 +182,6 @@ export default function WalkInOrder() {
 
   useEffect(() => {
     loadCarts();
-    
   }, [loadCarts]);
 
   /*
@@ -202,20 +203,22 @@ export default function WalkInOrder() {
     */
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      loadCarts();
-    }, 10000);
-
     connectSocket();
 
-    return () => clearInterval(timer);
-  }, [loadCarts]);
+    const timer = setInterval(loadCarts, 10000);
 
-// ===================
-// Sockit code header
-// ===================
+    return () => {
+      clearInterval(timer);
 
-const connectSocket = () => {
+      socketRef.current?.close();
+    };
+  }, []);
+
+  // ===================
+  // Sockit code header
+  // ===================
+
+  const connectSocket = () => {
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
@@ -229,11 +232,27 @@ const connectSocket = () => {
         console.log("Manager WebSocket Connected");
       };
 
+      const reconnectRef = useRef(true);
+
+      useEffect(() => {
+        reconnectRef.current = true;
+
+        connectSocket();
+
+        return () => {
+          reconnectRef.current = false;
+
+          socketRef.current?.close();
+        };
+      }, []);
+
       socketRef.current.onclose = () => {
-        setSocketConnected(false);
+        if (!reconnectRef.current) return;
 
         setTimeout(() => {
-          connectSocket();
+          if (reconnectRef.current) {
+            connectSocket();
+          }
         }, 5000);
       };
 
@@ -261,11 +280,19 @@ const connectSocket = () => {
             showConfirmButton: false,
           });
 
-          loadOrders();
+          loadCarts();
+
+          if (selectedCartId) {
+            loadSelectedCart(selectedCartId);
+          }
         }
 
         if (data.type === "order_update") {
-          loadOrders();
+          loadCarts();
+
+          if (selectedCartId) {
+            loadSelectedCart(selectedCartId);
+          }
         }
       };
     } catch (error) {
@@ -273,14 +300,17 @@ const connectSocket = () => {
     }
   };
 
+  useEffect(() => {
+    document.title = `${
+      socketConnected ? "online" : "offline"
+    } Create Walkin Order`;
+  }, [socketConnected]);
 
   /*
     =====================================================
     RENDER
     =====================================================
     */
-
-
 
   return (
     <div className="walkin-page">
@@ -356,7 +386,8 @@ const connectSocket = () => {
 
           <CartPanel
             selectedCart={selectedCart}
-            refreshCart={() => loadSelectedCart(selectedCartId)}
+            refreshDrafts={loadCarts}
+            onOrderPlaced={loadCarts}
           />
         </aside>
       </main>

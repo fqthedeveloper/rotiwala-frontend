@@ -7,6 +7,8 @@ import {
   FaStickyNote,
   FaStar,
   FaShoppingBag,
+  FaCheckCircle,
+  FaTimesCircle,
 } from "react-icons/fa";
 
 import {
@@ -16,11 +18,13 @@ import {
 
 import "./CSS/CustomerPanel.css";
 
-export default function CustomerPanel({
-  selectedCart,
+export default function CustomerPanel({ selectedCart, refreshCart }) {
+  /*
+  =========================================
+  STATES
+  =========================================
+  */
 
-  refreshCart,
-}) {
   const [customer, setCustomer] = useState(null);
 
   const [customerPhone, setCustomerPhone] = useState("");
@@ -28,6 +32,9 @@ export default function CustomerPanel({
   const [customerName, setCustomerName] = useState("");
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  // NEW
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
 
   const [notes, setNotes] = useState("");
 
@@ -38,6 +45,13 @@ export default function CustomerPanel({
   const customerExists = !!customer;
 
   const firstLoad = useRef(true);
+
+  /*
+  =========================================
+  LOAD CART
+  =========================================
+  */
+
   useEffect(() => {
     if (!selectedCart) return;
 
@@ -51,16 +65,22 @@ export default function CustomerPanel({
 
     setPaymentMethod(selectedCart.payment_method || "cash");
 
+    // NEW
+    setPaymentStatus(selectedCart.payment_status || "unpaid");
+
     setNotes(selectedCart.notes || "");
   }, [selectedCart]);
+
+  /*
+  =========================================
+  FORMAT PHONE
+  =========================================
+  */
+
   function formatPhone(phone) {
     if (!phone) return "";
 
-    phone = phone
-
-      .replace(/\s/g, "")
-
-      .replace(/-/g, "");
+    phone = phone.replace(/\s/g, "").replace(/-/g, "");
 
     if (phone.startsWith("+91")) {
       return phone;
@@ -72,6 +92,13 @@ export default function CustomerPanel({
 
     return "+91" + phone;
   }
+
+  /*
+  =========================================
+  SEARCH CUSTOMER
+  =========================================
+  */
+
   async function lookupCustomer(phone) {
     if (!phone) {
       setCustomer(null);
@@ -97,6 +124,13 @@ export default function CustomerPanel({
       setSearching(false);
     }
   }
+
+  /*
+  =========================================
+  AUTO SEARCH
+  =========================================
+  */
+
   useEffect(() => {
     if (!selectedCart || customerPhone.length < 10) {
       setCustomer(null);
@@ -110,6 +144,13 @@ export default function CustomerPanel({
 
     return () => clearTimeout(timer);
   }, [customerPhone]);
+
+  /*
+  =========================================
+  SAVE DRAFT
+  =========================================
+  */
+
   async function saveDraft() {
     if (!selectedCart) return;
 
@@ -130,17 +171,27 @@ export default function CustomerPanel({
 
           payment_method: paymentMethod,
 
+          payment_status: paymentStatus,
+
           notes: notes,
         },
       );
 
-      refreshCart();
+      if (refreshCart) {
+        await refreshCart();
+      }
     } catch (error) {
       console.log(error);
     } finally {
       setSaving(false);
     }
   }
+
+  /*
+  =========================================
+  AUTO SAVE
+  =========================================
+  */
 
   useEffect(() => {
     if (!selectedCart) return;
@@ -156,10 +207,34 @@ export default function CustomerPanel({
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [customerPhone, customerName, paymentMethod, notes]);
+  }, [customerPhone, customerName, paymentMethod, paymentStatus, notes]);
+
+  /*
+  =========================================
+  PAYMENT METHOD
+  =========================================
+  */
+
   function changePayment(method) {
     setPaymentMethod(method);
   }
+
+  /*
+  =========================================
+  PAYMENT STATUS
+  =========================================
+  */
+
+  function changePaymentStatus(status) {
+    setPaymentStatus(status);
+  }
+
+  /*
+  =========================================
+  CUSTOMER BADGES
+  =========================================
+  */
+
   const ExistingCustomer = () => (
     <div className="existing-customer">
       <div className="badge-icon">✓</div>
@@ -171,6 +246,7 @@ export default function CustomerPanel({
       </div>
     </div>
   );
+
   const NewCustomer = () => (
     <div className="new-customer">
       <div className="badge-icon">+</div>
@@ -182,6 +258,13 @@ export default function CustomerPanel({
       </div>
     </div>
   );
+
+  /*
+  =========================================
+  CUSTOMER STATS
+  =========================================
+  */
+
   const CustomerStats = () => (
     <div className="customer-stats">
       <div className="stat-card">
@@ -206,8 +289,18 @@ export default function CustomerPanel({
     </div>
   );
 
+  /*
+  =========================================
+  RENDER
+  =========================================
+  */
+
   return (
     <div className="customer-panel">
+      {/* =======================================
+          HEADER
+      ======================================== */}
+
       <div className="customer-header">
         <div>
           <h3>Customer Details</h3>
@@ -215,6 +308,11 @@ export default function CustomerPanel({
           <p>Walk-In Customer Information</p>
         </div>
       </div>
+
+      {/* =======================================
+          PHONE
+      ======================================== */}
+
       <div className="form-group">
         <label>Phone Number</label>
 
@@ -229,10 +327,17 @@ export default function CustomerPanel({
           />
         </div>
       </div>
+
       {searching && (
         <div className="customer-loading">Searching Customer...</div>
       )}
+
       {!customerExists && customerPhone.length >= 10 && <NewCustomer />}
+
+      {/* =======================================
+          CUSTOMER NAME
+      ======================================== */}
+
       <div className="form-group">
         <label>Customer Name</label>
 
@@ -248,7 +353,15 @@ export default function CustomerPanel({
           />
         </div>
       </div>
+
+      {customerExists && <ExistingCustomer />}
+
       {customerExists && <CustomerStats />}
+
+      {/* =======================================
+          PAYMENT METHOD
+      ======================================== */}
+
       <div className="form-group">
         <label>Payment Method</label>
 
@@ -276,6 +389,47 @@ export default function CustomerPanel({
           </button>
         </div>
       </div>
+
+      {/* =======================================
+          PAYMENT STATUS
+      ======================================== */}
+
+      <div className="form-group">
+        <label>Payment Status</label>
+
+        <div className="payment-list">
+          <button
+            type="button"
+            className={
+              paymentStatus === "paid"
+                ? "payment-btn active paid"
+                : "payment-btn"
+            }
+            onClick={() => changePaymentStatus("paid")}
+          >
+            <FaCheckCircle />
+            Paid
+          </button>
+
+          <button
+            type="button"
+            className={
+              paymentStatus === "unpaid"
+                ? "payment-btn active unpaid"
+                : "payment-btn"
+            }
+            onClick={() => changePaymentStatus("unpaid")}
+          >
+            <FaTimesCircle />
+            Unpaid
+          </button>
+        </div>
+      </div>
+
+      {/* =======================================
+          NOTES
+      ======================================== */}
+
       <div className="form-group">
         <label>Notes</label>
 
@@ -290,8 +444,31 @@ export default function CustomerPanel({
           />
         </div>
       </div>
+
+      {/* =======================================
+          LIVE STATUS
+      ======================================== */}
+
+      <div className="customer-payment-preview">
+        {paymentStatus === "paid" ? (
+          <span className="payment-paid">
+            <FaCheckCircle />
+            Payment Received
+          </span>
+        ) : (
+          <span className="payment-unpaid">
+            <FaTimesCircle />
+            Payment Pending
+          </span>
+        )}
+      </div>
+
+      {/* =======================================
+          FOOTER
+      ======================================== */}
+
       <div className="customer-footer">
-        {saving ? <span>Saving Draft...</span> : <span>Draft Saved</span>}
+        {saving ? <span>Saving Draft...</span> : <span>✓ Draft Saved</span>}
       </div>
     </div>
   );

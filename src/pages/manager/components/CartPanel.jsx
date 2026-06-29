@@ -75,9 +75,13 @@ export default function CartPanel({
         qty,
       );
 
-      loadCart();
+      await loadCart();
 
-      refreshDrafts();
+      if (refreshDrafts) {
+
+          await refreshDrafts();
+
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -109,17 +113,15 @@ export default function CartPanel({
       console.log(error);
     }
   }
+
+  
+
+
   async function placeOrder() {
     if (!cart) return;
 
     if (cart.items.length === 0) {
-      Swal.fire(
-        "Cart Empty",
-
-        "Add items first.",
-
-        "warning",
-      );
+      Swal.fire("Cart Empty", "Add items first.", "warning");
 
       return;
     }
@@ -141,54 +143,95 @@ export default function CartPanel({
     try {
       setPlacing(true);
 
-      await placeWalkInCart(cart.id);
+      const response = await placeWalkInCart(
+
+          cart.id,
+
+          cart.payment_status
+
+      );
+
+      console.log(response);
+
+      if (!response.success) {
+        throw new Error(response.message || "Order could not be placed.");
+      }
 
       Swal.fire({
         icon: "success",
 
-        title: "Order Created",
+        title: response.message || "Order Created Successfully",
 
-        timer: 1500,
+        timer: 1800,
 
         showConfirmButton: false,
       });
 
-      loadCart();
+      try {
+        await loadCart();
+      } catch (e) {
+        console.error("loadCart", e);
+      }
 
-      refreshDrafts();
+      try {
+        if (refreshDrafts) {
+          await refreshDrafts();
+        }
+      } catch (e) {
+        console.error("refreshDrafts", e);
+      }
 
-      onOrderPlaced?.();
+      try {
+        if (onOrderPlaced) {
+          await onOrderPlaced();
+        }
+      } catch (e) {
+        console.error("onOrderPlaced", e);
+      }
     } catch (error) {
-      Swal.fire(
-        "Error",
+      console.error(error);
 
-        "Unable to place order.",
+      console.error(error.response);
 
-        "error",
-      );
+      console.error(error.response?.data);
+
+      Swal.fire({
+        icon: "error",
+
+        title: "Order Failed",
+
+        text:
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Unable to place order.",
+      });
     } finally {
       setPlacing(false);
     }
   }
-  const totalItems = useMemo(() => {
-    if (!cart) return 0;
 
-    return cart.items.reduce(
-      (
-        total,
+const totalItems = useMemo(() => {
 
-        item,
-      ) => total + item.quantity,
+  if (!cart) return 0;
 
-      0,
-    );
-  }, [cart]);
+  return cart.items.reduce(
 
-  const grandTotal = useMemo(() => {
-    if (!cart) return 0;
+    (total, item) => total + item.quantity,
 
-    return Number(cart.total_amount);
-  }, [cart]);
+    0
+
+  );
+
+}, [cart]);
+
+const grandTotal = useMemo(() => {
+
+  if (!cart) return 0;
+
+  return Number(cart.total_amount);
+
+}, [cart]);
 
   return (
     <div className="cart-panel">

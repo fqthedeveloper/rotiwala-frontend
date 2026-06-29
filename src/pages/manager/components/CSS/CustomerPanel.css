@@ -214,6 +214,17 @@
     transform: rotate(360deg);
   }
 }
+@media (max-width: 992px) {
+  .customer-search {
+    flex-direction: column;
+  }
+
+  .search-btn {
+    width: 100%;
+    height: 48px;
+  }
+}
+
 @media (max-width: 768px) {
   .customer-panel {
     padding: 15px;
@@ -234,5 +245,26 @@
 
   .payment-list {
     flex-direction: column;
+  }
+
+  .input-box,
+  .textarea-box {
+    padding: 12px;
+  }
+
+  .textarea-box textarea {
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .customer-header h3 {
+    font-size: 20px;
+  }
+
+  .customer-header p,
+  .search-box input,
+  .input-box input {
+    font-size: 14px;
   }
 }

@@ -33,7 +33,8 @@ import {
 
 import "./CSS/Orders.css";
 
-const BaseURL = "127.0.0.1:8000";
+const BaseURL = import.meta.env.VITE_WS_URL;
+
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -243,13 +244,10 @@ export default function Orders() {
   }, [orders]);
 
   useEffect(() => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({ type: "subscribe", date: selectedDate }),
-      );
-    }
-    document.title = `Manager Orders - ${stats.pending} Pending`;
-  }, [selectedDate]);
+    document.title = `${
+                socketConnected ? "online" : "offline"
+              } Manager Orders`;
+  }, [socketConnected]);
 
   if (loading) {
     return (
