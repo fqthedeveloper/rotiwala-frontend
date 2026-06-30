@@ -43,8 +43,10 @@ const Cart = () => {
   };
 
   useEffect(() => {
-    loadCart();
     document.title = "Cart - Roti Wala";
+    
+    loadCart();
+    
   }, []);
 
   const increaseQty = async (item) => {

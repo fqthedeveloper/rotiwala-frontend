@@ -161,47 +161,60 @@ export default function Login() {
   };
 
   const loginWithPassword = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
+    setError("");
+    setPhoneError("");
+    setPasswordError("");
 
-      setError("");
-      setPhoneError("");
-      setPasswordError("");
-
-      if (!phone.trim()) {
-        setPhoneError("Phone number is required");
-        return;
-      }
-
-      if (!password.trim()) {
-        setPasswordError("Password is required");
-        return;
-      }
-
-      const mobile = formatPhoneNumber(phone);
-
-      const response = await api.post("/accounts/password-login/", {
-        phone: mobile,
-        password,
-      });
-
-      handleLoginSuccess(response);
-    } catch (err) {
-      console.error(err);
-
-      const data = err?.response?.data;
-
-      if (data?.field === "phone") {
-        setPhoneError(data.message);
-      } else if (data?.field === "password") {
-        setPasswordError(data.message);
-      } else {
-        setError(data?.message || data?.error || "Login failed");
-      }
-    } finally {
+    if (!phone.trim()) {
+      setPhoneError("Phone number is required");
       setLoading(false);
+      return;
     }
-  };
+
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      setLoading(false);
+      return;
+    }
+
+    const mobile = formatPhoneNumber(phone);
+
+    const response = await api.post("/accounts/password-login/", {
+      phone: mobile,
+      password,
+    });
+
+    await handleLoginSuccess(response);
+  } catch (err) {
+    console.error("Login error:", err);
+
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+
+    /* Field-specific error from backend */
+    if (data?.field === "phone") {
+      setPhoneError(data.message || "Invalid phone number");
+    } else if (data?.field === "password") {
+      setPasswordError(data.message || "Wrong password");
+    }
+    /* Common 401 / 400 — most likely wrong password */
+    else if (status === 401 || status === 400) {
+      setPasswordError(
+        data?.message || data?.error || "Wrong phone number or password",
+      );
+    }
+    /* Network / server error */
+    else if (!err.response) {
+      setError("Network error — please check your connection");
+    } else {
+      setError(data?.message || data?.error || "Login failed. Try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     document.title = "Login - Roti Wala";

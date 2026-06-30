@@ -11,9 +11,10 @@ import "./styles/theme.css";
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
 
-// Auth
+// Auth Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
+import AuthRoute from "./routes/AuthRoute"; // <-- NEW
 
 // Public Pages
 import Home from "./pages/Home";
@@ -43,13 +44,13 @@ import AddMenuItem from "./pages/admin/menu/AddMenuItem";
 import EditCategory from "./pages/admin/menu/EditCategory";
 import EditMenuItem from "./pages/admin/menu/EditMenuItem";
 
-// Coustomer pages would go here
+// Customer Pages
 import Cart from "./pages/Customer/Cart";
 import Checkout from "./pages/Customer/Checkout";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetail from "./pages/Customer/OrderDetail";
 
-// Manager pages would go here
+// Manager Pages
 import ManagerLayout from "./components/Manager/ManagerLayout";
 import ManagerDashboard from "./pages/manager/Dashboard";
 import ManagerOrders from "./pages/manager/Orders";
@@ -59,20 +60,32 @@ function App() {
   return (
     <Routes>
       {/* PUBLIC ROUTES */}
-
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
 
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/register" element={<Register />} />
-
         <Route path="/menu" element={<Menu />} />
-
         <Route path="/about" element={<About />} />
-
         <Route path="/contact" element={<Contact />} />
 
+        {/* Auth pages: Block if ALREADY logged in */}
+        <Route
+          path="/login"
+          element={
+            <AuthRoute>
+              <Login />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <AuthRoute>
+              <Register />
+            </AuthRoute>
+          }
+        />
+
+        {/* Protected Customer Pages */}
         <Route
           path="/cart"
           element={
@@ -81,7 +94,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/checkout"
           element={
@@ -90,7 +102,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/my-orders"
           element={
@@ -99,7 +110,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/my-orders/:id"
           element={
@@ -111,7 +121,6 @@ function App() {
       </Route>
 
       {/* ADMIN ROUTES */}
-
       <Route
         path="/admin"
         element={
@@ -123,41 +132,25 @@ function App() {
         }
       >
         <Route path="shops" element={<Shops />} />
-
         <Route path="shops/add-shop" element={<AddShop />} />
-
         <Route path="shops/edit/:id" element={<EditShop />} />
-
         <Route path="managers" element={<Managers />} />
-
         <Route path="managers/add" element={<AddManager />} />
-
         <Route path="managers/edit/:id" element={<EditManager />} />
-
         <Route path="categories" element={<Categories />} />
-
         <Route path="categories/add" element={<AddCategory />} />
-
         <Route path="menu-items" element={<MenuItems />} />
-
         <Route path="menu-items/add" element={<AddMenuItem />} />
-
         <Route path="categories/edit/:id" element={<EditCategory />} />
-
         <Route path="menu-items/edit/:id" element={<EditMenuItem />} />
-
         <Route path="products/create" element={<AddProduct />} />
-
         <Route path="dashboard" element={<Dashboard />} />
-
         <Route path="orders" element={<Orders />} />
-
         <Route path="products" element={<Products />} />
-
         <Route path="users" element={<Users />} />
       </Route>
 
-      {/* Manager routes would go here */}
+      {/* MANAGER ROUTES */}
       <Route
         path="/manager"
         element={
@@ -169,15 +162,11 @@ function App() {
         }
       >
         <Route path="dashboard" element={<ManagerDashboard />} />
-
         <Route path="orders" element={<ManagerOrders />} />
-
-        <Route path="walkin" element={<WalkInOrder />} /> 
-        
+        <Route path="walkin" element={<WalkInOrder />} />
       </Route>
 
       {/* 404 */}
-
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
