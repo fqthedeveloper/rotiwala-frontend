@@ -59,11 +59,7 @@ UPDATE CUSTOMER
 */
 
 export const updateWalkInCart = async (cartId, data) => {
-  const response = await api.patch(
-    `/orders/walkin/cart/${cartId}/update/`,
-    data,
-  );
-
+  const response = await api.patch(`/orders/walkin/cart/${cartId}/update/`, data);
   return response.data;
 };
 

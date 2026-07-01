@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import {
@@ -7,10 +7,16 @@ import {
 } from "react-icons/fa";
 
 import {
-  getWalkInCart, updateCartItem, deleteCartItem, placeWalkInCart,
+  getWalkInCart,
+  updateCartItem,
+  deleteCartItem,
+  placeWalkInCart,
+  updateWalkInCart,
 } from "../../../service/walkInService";
 
 import "./CSS/CartPanel.css";
+
+const QUICK_QUANTITIES = [1, 2, 3, 5, 10, 20, 30, 40, 60];
 
 export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }) {
   const [loading, setLoading] = useState(false);
@@ -18,18 +24,43 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
   const [updating, setUpdating] = useState(false);
   const [cart, setCart] = useState(null);
 
+  // local customer info state (synced with cart)
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
+  const [notes, setNotes] = useState("");
+
+  // load cart and sync customer fields
   async function loadCart() {
     if (!selectedCart) return setCart(null);
     try {
       setLoading(true);
       const data = await getWalkInCart(selectedCart.id);
       setCart(data);
+      setCustomerName(data.customer_name || "");
+      setCustomerPhone(data.customer_phone || "");
+      setPaymentMethod(data.payment_method || "cash");
+      setPaymentStatus(data.payment_status || "unpaid");
+      setNotes(data.notes || "");
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
 
   useEffect(() => { loadCart(); }, [selectedCart]);
 
+  // update customer info (auto‑save on change)
+  const updateCustomer = useCallback(async (field, value) => {
+    if (!cart) return;
+    try {
+      await updateWalkInCart(cart.id, { [field]: value });
+      loadCart();
+    } catch (error) {
+      console.error("Update failed", error);
+    }
+  }, [cart, loadCart]);
+
+  // quantity updates
   async function changeQuantity(item, qty) {
     if (qty < 0) return;
     try {
@@ -40,6 +71,13 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
     } catch (e) { console.error(e); }
     finally { setUpdating(false); }
   }
+
+  const handleCustomQty = (item, e) => {
+    const val = parseInt(e.target.value, 10);
+    if (!isNaN(val) && val >= 0) {
+      changeQuantity(item, val);
+    }
+  };
 
   async function removeItem(item) {
     const confirm = await Swal.fire({
@@ -57,6 +95,7 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
     } catch (e) { console.error(e); }
   }
 
+  // ---- place order ----
   async function placeOrder() {
     if (!cart) return;
     if (cart.items.length === 0) {
@@ -68,7 +107,7 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
       text: "Confirm walk-in order.",
       icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Place",
+      confirmButtonText: "Place Order",
     });
     if (!confirm.isConfirmed) return;
 
@@ -80,7 +119,7 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
       Swal.fire({
         icon: "success",
         title: response.message || "Order Created Successfully",
-        timer: 1800,
+        timer: 2000,
         showConfirmButton: false,
       });
 
@@ -112,7 +151,7 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
     <div className="cart-panel">
       <div className="cart-header">
         <div>
-          <h3>Current Cart</h3>
+          <h3>🛒 Current Cart</h3>
           <span>{totalItems} Items</span>
         </div>
         <div className="cart-icon-wrap">
@@ -146,7 +185,7 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: 80 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.25 }}
                 className="cart-item"
               >
                 <div className="cart-image">
@@ -156,15 +195,42 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
                   <h5>{item.item_name}</h5>
                   <span className="cart-unit">₹{Number(item.item_price).toFixed(2)} each</span>
                 </div>
-                <div className="qty-box">
-                  <button disabled={updating} onClick={() => changeQuantity(item, item.quantity - 1)}>
-                    <FaMinus />
-                  </button>
-                  <strong>{item.quantity}</strong>
-                  <button disabled={updating} onClick={() => changeQuantity(item, item.quantity + 1)}>
-                    <FaPlus />
-                  </button>
+
+                {/* ---- QUICK QUANTITY BUTTONS ---- */}
+                <div className="qty-quick-buttons">
+                  {QUICK_QUANTITIES.map((qty) => (
+                    <button
+                      key={qty}
+                      className={`qty-btn ${item.quantity === qty ? "active" : ""}`}
+                      onClick={() => changeQuantity(item, qty)}
+                      disabled={updating}
+                    >
+                      {qty}
+                    </button>
+                  ))}
                 </div>
+
+                <div className="qty-controls">
+                  <div className="qty-box">
+                    <button disabled={updating} onClick={() => changeQuantity(item, item.quantity - 1)}>
+                      <FaMinus />
+                    </button>
+                    <strong>{item.quantity}</strong>
+                    <button disabled={updating} onClick={() => changeQuantity(item, item.quantity + 1)}>
+                      <FaPlus />
+                    </button>
+                  </div>
+                  <div className="custom-qty">
+                    <input
+                      type="number"
+                      min="0"
+                      value={item.quantity}
+                      onChange={(e) => handleCustomQty(item, e)}
+                      disabled={updating}
+                    />
+                  </div>
+                </div>
+
                 <div className="item-total">
                   <strong>₹{Number(item.total_price).toFixed(2)}</strong>
                   <button className="delete-btn" onClick={() => removeItem(item)}>
@@ -189,6 +255,77 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
               <strong>₹{grandTotal.toFixed(2)}</strong>
             </div>
           </div>
+
+          {/* ---- CUSTOMER INFO FORM (auto‑save) ---- */}
+          <div className="customer-info">
+            <h4>Customer Details</h4>
+            <div className="form-row">
+              <label>Name</label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => {
+                  setCustomerName(e.target.value);
+                  updateCustomer("customer_name", e.target.value);
+                }}
+                placeholder="Customer name"
+              />
+            </div>
+            <div className="form-row">
+              <label>Phone</label>
+              <input
+                type="text"
+                value={customerPhone}
+                onChange={(e) => {
+                  setCustomerPhone(e.target.value);
+                  updateCustomer("customer_phone", e.target.value);
+                }}
+                placeholder="Phone number"
+              />
+            </div>
+            <div className="form-row">
+              <label>Payment</label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value);
+                  updateCustomer("payment_method", e.target.value);
+                }}
+              >
+                <option value="cash">Cash</option>
+                <option value="upi">UPI</option>
+              </select>
+            </div>
+
+            <div className="form-row">
+              <label>Payment Status</label>
+              <select
+                value={paymentStatus}
+                onChange={(e) => {
+                  setPaymentStatus(e.target.value);
+                  updateCustomer("payment_status", e.target.value);
+                }}
+              >
+                <option value="unpaid">unpaid</option>
+                <option value="paid">Paid</option>
+              </select>
+            </div>
+
+
+            <div className="form-row">
+              <label>Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  updateCustomer("notes", e.target.value);
+                }}
+                rows="2"
+                placeholder="Special instructions..."
+              />
+            </div>
+          </div>
+
           <button className="place-order-btn" disabled={placing} onClick={placeOrder}>
             {placing ? (
               <><FaSpinner className="spin" /> Creating...</>

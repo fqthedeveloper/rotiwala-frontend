@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { FaSearch, FaPlus, FaTimesCircle, FaSync } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaSearch, FaPlus, FaTimesCircle, FaSync, FaCheck } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 import {
@@ -19,7 +19,9 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(null);
+  const [addedItems, setAddedItems] = useState(new Set());
 
+  // load categories
   async function loadCategories() {
     try {
       setLoading(true);
@@ -33,6 +35,7 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
     }
   }
 
+  // load items for selected category
   async function loadItems(categoryId) {
     if (!categoryId) return;
     try {
@@ -49,34 +52,63 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
   useEffect(() => { loadCategories(); }, []);
   useEffect(() => { if (selectedCategory) loadItems(selectedCategory); }, [selectedCategory]);
 
+  // search filter
   const filteredItems = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return items;
     return items.filter((i) => i.name.toLowerCase().includes(q));
   }, [items, search]);
 
+  // ---------- ADD PRODUCT (INSTANT) ----------
   async function addProduct(product) {
     if (!selectedCart) {
       Swal.fire("Select Customer", "Please select a draft customer first.", "warning");
       return;
     }
+    if (adding === product.id) return;
+
     try {
       setAdding(product.id);
+      setAddedItems((prev) => new Set(prev).add(product.id));
+
       await addItemToCart(selectedCart.id, product.id, 1);
-      refreshCart();
+
       Swal.fire({
-        toast: true, position: "top-end", icon: "success",
-        title: "Added", timer: 900, showConfirmButton: false,
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Added!",
+        timer: 600,
+        showConfirmButton: false,
       });
-    } catch {
+
+      refreshCart();
+
+      setTimeout(() => {
+        setAdding(null);
+        setTimeout(() => {
+          setAddedItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(product.id);
+            return newSet;
+          });
+        }, 2000);
+      }, 300);
+    } catch (error) {
+      console.error(error);
       Swal.fire("Error", "Unable to add item.", "error");
-    } finally {
       setAdding(null);
+      setAddedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(product.id);
+        return newSet;
+      });
     }
   }
 
   return (
     <div className="menu-panel">
+      {/* ---- search bar ---- */}
       <div className="menu-search">
         <FaSearch className="search-icon" />
         <input
@@ -85,8 +117,14 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search && (
+          <button className="clear-search" onClick={() => setSearch("")}>
+            ✕
+          </button>
+        )}
       </div>
 
+      {/* ---- category tabs ---- */}
       <div className="category-list">
         {categories.map((category) => (
           <button
@@ -99,9 +137,12 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
         ))}
       </div>
 
+      {/* ---- HORIZONTAL SCROLL ITEMS ---- */}
       {loading ? (
-        <div className="menu-loading-grid">
-          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="menu-skeleton" />)}
+        <div className="menu-loading-horizontal">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="menu-skeleton-horizontal" />
+          ))}
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="menu-empty">
@@ -110,46 +151,63 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
           <p>Try another search or category.</p>
         </div>
       ) : (
-        <div className="menu-grid">
-          {filteredItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.25 }}
-              whileHover={{ y: -6 }}
-              className="menu-card"
-            >
-              <div className="menu-image-wrap">
-                <img
-                  src={item.image || item.image_url || "/placeholder.png"}
-                  alt={item.name}
-                  className="menu-image"
-                  loading="lazy"
-                />
-                <span className={item.is_available ? "badge available" : "badge unavailable"}>
-                  {item.is_available ? "Available" : "Out"}
-                </span>
-              </div>
+        <div className="menu-scroll-wrapper">
+          <div className="menu-horizontal-scroll">
+            <AnimatePresence>
+              {filteredItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.25 }}
+                  className={`menu-card-horizontal ${!item.is_available ? "out-of-stock" : ""} ${
+                    addedItems.has(item.id) ? "just-added" : ""
+                  }`}
+                >
+                  <div className="menu-image-wrap">
+                    <img
+                      src={item.image || item.image_url || "/placeholder.png"}
+                      alt={item.name}
+                      className="menu-image"
+                      loading="lazy"
+                    />
+                    <span className={`badge ${item.is_available ? "available" : "unavailable"}`}>
+                      {item.is_available ? "Available" : "Out"}
+                    </span>
+                    {addedItems.has(item.id) && (
+                      <div className="added-overlay">
+                        <FaCheck className="check-icon" />
+                      </div>
+                    )}
+                  </div>
 
-              <div className="menu-body">
-                <h4>{item.name}</h4>
-                <p>{item.description}</p>
-                <div className="menu-bottom">
-                  <div className="menu-price">₹{Number(item.base_price).toFixed(2)}</div>
-                  <button
-                    className="add-cart-btn"
-                    disabled={adding === item.id || !item.is_available}
-                    onClick={() => addProduct(item)}
-                  >
-                    {adding === item.id ? <FaSync className="spin" /> : <FaPlus />}
-                    {adding === item.id ? "Adding" : "Add"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                  <div className="menu-body-horizontal">
+                    <h4>{item.name}</h4>
+                    {item.description && <p>{item.description}</p>}
+                    <div className="menu-bottom-horizontal">
+                      <div className="menu-price">₹{Number(item.base_price).toFixed(2)}</div>
+                      <button
+                        className={`add-cart-btn ${adding === item.id ? "adding" : ""}`}
+                        disabled={!item.is_available || adding === item.id}
+                        onClick={() => addProduct(item)}
+                      >
+                        {adding === item.id ? (
+                          <FaSync className="spin" />
+                        ) : addedItems.has(item.id) ? (
+                          <FaCheck />
+                        ) : (
+                          <FaPlus />
+                        )}
+                        {adding === item.id ? "Adding" : addedItems.has(item.id) ? "Added" : "Add"}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </div>
