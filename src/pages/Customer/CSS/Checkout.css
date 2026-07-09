@@ -1,12 +1,12 @@
-
 /* ============================================
-   ROTI WALA CHECKOUT — Responsive & Animated
+   ROTI WALA CHECKOUT — Fully Responsive
    ============================================ */
 
+/* ----- Base ----- */
 .checkout-page {
   min-height: 100vh;
   background: linear-gradient(180deg, #fffef7 0%, #fff9db 100%);
-  padding: 30px 0;
+  padding: 20px 0;
 }
 
 .checkout-card {
@@ -16,11 +16,13 @@
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   animation: fadeUp 0.5s ease;
+  margin: 0 15px;
 }
 
+/* ----- Header ----- */
 .checkout-header {
   background: linear-gradient(135deg, #f7c600, #ffd93d);
-  padding: 25px;
+  padding: 20px 15px;
   text-align: center;
 }
 
@@ -28,18 +30,20 @@
   margin: 0;
   font-weight: 800;
   color: #5a1700;
+  font-size: 1.8rem;
 }
 
 .checkout-header p {
-  margin-top: 8px;
+  margin-top: 6px;
   color: #5a1700;
-  font-size: 15px;
+  font-size: 0.95rem;
 }
 
+/* ----- Estimate Box ----- */
 .estimate-box {
   background: linear-gradient(135deg, #f7c600, #ffdb4d);
   border-radius: 20px;
-  padding: 25px;
+  padding: 20px;
   text-align: center;
   margin-bottom: 20px;
   color: #5a1700;
@@ -47,33 +51,41 @@
 }
 
 .estimate-box h6 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .estimate-box h2 {
-  font-size: 42px;
+  font-size: 2.6rem;
   font-weight: 800;
   margin: 0;
 }
 
 .estimate-box p {
-  margin-top: 10px;
+  margin-top: 8px;
   margin-bottom: 0;
+  font-size: 0.9rem;
 }
 
+/* ----- Section Titles ----- */
 .section-title {
   font-weight: 700;
   color: #333;
   margin-top: 20px;
   margin-bottom: 12px;
+  font-size: 1.2rem;
 }
 
+/* ----- Form Elements ----- */
 .checkout-input {
   height: 55px;
   border-radius: 14px;
   border: 2px solid #ececec;
   transition: 0.3s;
+  font-size: 1rem;
+  padding: 0 16px;
+  width: 100%;
 }
 
 .checkout-input:focus {
@@ -85,6 +97,8 @@
   border-radius: 14px;
   border: 2px solid #ececec;
   resize: none;
+  padding: 12px 16px;
+  width: 100%;
 }
 
 .checkout-textarea:focus {
@@ -92,14 +106,15 @@
   box-shadow: 0 0 0 0.2rem rgba(247, 198, 0, 0.25);
 }
 
+/* ----- Payment Cards ----- */
 .payment-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 12px;
 }
 
 .payment-card {
-  padding: 18px;
+  padding: 16px;
   border: 2px solid #ececec;
   border-radius: 18px;
   text-align: center;
@@ -110,8 +125,8 @@
 }
 
 .payment-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .payment-card.active {
@@ -119,49 +134,133 @@
   background: #fffbe6;
 }
 
+/* ----- Pickup Card ----- */
 .pickup-card {
   background: #f8f9fa;
   border-radius: 18px;
-  padding: 20px;
+  padding: 18px;
   margin-bottom: 20px;
 }
 
 .pickup-card h5 {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-weight: 700;
+  font-size: 1.1rem;
 }
 
+/* ----- Pickup Time Options ----- */
+.pickup-time-card {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #ececec;
+  background: #fff;
+}
+
+.pickup-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 2px solid #e5e5e5;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.pickup-option:hover {
+  border-color: #f7c600;
+  background: #fffdf3;
+}
+
+.pickup-option.active {
+  border-color: #f7c600;
+  background: #fff8db;
+}
+
+.pickup-option input[type="radio"] {
+  margin-top: 5px;
+  transform: scale(1.2);
+  accent-color: #f7c600;
+  flex-shrink: 0;
+}
+
+.pickup-option h6 {
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.pickup-option small {
+  display: block;
+  line-height: 1.4;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* ----- Cart Items (with per‑item breakdown) ----- */
 .checkout-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #eee;
-  transition: 0.3s;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
 }
 
-.checkout-item:hover {
-  background: #fffbe6;
+.checkout-item:last-child {
+  border-bottom: none;
+}
+
+.checkout-item-details {
+  flex: 1;
+  min-width: 120px;
 }
 
 .checkout-item-name {
   font-weight: 600;
   color: #333;
+  font-size: 1rem;
 }
 
 .checkout-item-qty {
-  color: #666;
-  margin-left: 5px;
+  color: #888;
+  font-size: 0.85rem;
+  margin-left: 0;
 }
 
-.checkout-item-price {
+.checkout-item-prices {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.checkout-item-prices .original-price {
+  text-decoration: line-through;
+  color: #999;
+  font-weight: normal;
+  font-size: 0.95rem;
+}
+
+.checkout-item-prices .discount-amount {
+  color: #28a745;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.checkout-item-prices .final-price {
   font-weight: 700;
   color: #5a1700;
+  font-size: 1.1rem;
 }
 
+/* ----- Summary ----- */
 .checkout-summary {
   background: #fffbe6;
-  padding: 20px;
+  padding: 18px;
   border-radius: 18px;
   margin-top: 20px;
 }
@@ -169,39 +268,44 @@
 .checkout-summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #555;
-  font-size: 15px;
+  font-size: 1rem;
+  padding: 4px 0;
 }
 
 .checkout-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 15px;
+  padding-top: 14px;
   border-top: 2px dashed #f7c600;
-  margin-top: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .checkout-total h4 {
   margin: 0;
   font-weight: 800;
+  font-size: 1.2rem;
 }
 
 .checkout-total h3 {
   margin: 0;
   color: #5a1700;
   font-weight: 900;
+  font-size: 1.8rem;
 }
 
+/* ----- Place Order Button ----- */
 .checkout-btn {
   width: 100%;
-  height: 60px;
+  height: 58px;
   border: none;
   border-radius: 15px;
   background: linear-gradient(135deg, #f7c600, #ffdb4d);
   color: #5a1700;
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 800;
   margin-top: 20px;
   transition: 0.3s;
@@ -218,41 +322,45 @@
   cursor: not-allowed;
 }
 
+/* ----- Shop & Customer Cards ----- */
 .customer-card {
   background: #fff;
   border-radius: 18px;
-  padding: 20px;
+  padding: 18px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
   margin-bottom: 20px;
 }
 
 .customer-card h5 {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .customer-info {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .customer-info div {
   flex: 1;
-  min-width: 180px;
+  min-width: 150px;
 }
 
 .customer-info strong {
   display: block;
   color: #666;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
 }
 
 .customer-info span {
   font-weight: 700;
+  font-size: 0.95rem;
 }
 
+/* ----- Loading ----- */
 .loading-container {
   min-height: 70vh;
   display: flex;
@@ -276,22 +384,15 @@
   color: #5a1700;
 }
 
+/* ----- Animations ----- */
 @keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
 @keyframes fadeUp {
@@ -305,119 +406,312 @@
   }
 }
 
-/* ==========================
-   PICKUP TIME
-========================== */
+/* ============================================
+   PROMOTIONS SECTION
+   ============================================ */
 
-.pickup-time-card {
-  margin-top: 30px;
-  padding: 22px;
-  border-radius: 16px;
-  border: 1px solid #ececec;
-  background: #fff;
+.promotion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
 }
 
-.pickup-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 15px;
-  padding: 18px;
-  border: 2px solid #e5e5e5;
+.promotion-card {
+  border: 2px solid #e0e0e0;
   border-radius: 14px;
+  padding: 16px;
   cursor: pointer;
-  transition: 0.25s;
+  transition: all 0.2s;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
-.pickup-option:hover {
+.promotion-card:hover {
   border-color: #f7c600;
-  background: #fffdf3;
+  transform: translateY(-2px);
 }
 
-.pickup-option.active {
+.promotion-card.active {
   border-color: #f7c600;
-  background: #fff8db;
+  background: #fffde7;
 }
 
-.pickup-option input[type="radio"] {
-  margin-top: 6px;
-  transform: scale(1.2);
-  accent-color: #f7c600;
+.promotion-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  align-items: center;
 }
 
-.pickup-option h6 {
+.promotion-badge {
+  font-size: 0.75rem;
+  background: #eee;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.promotion-value {
+  font-weight: bold;
+  color: #f7c600;
+  font-size: 1.1rem;
+}
+
+.promotion-card h6 {
   font-weight: 700;
   margin-bottom: 4px;
+  font-size: 1rem;
 }
 
-.pickup-option small {
-  display: block;
-  line-height: 1.4;
+.promotion-card small {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.promotion-card .text-muted {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.coupon-code {
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ----- Coupon Input Group ----- */
+.coupon-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.coupon-input-group .checkout-input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.coupon-input-group .btn {
+  height: 55px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  white-space: nowrap;
+}
+
+.coupon-input-group .btn-primary {
+  background: #f7c600;
+  color: #5a1700;
+}
+
+.coupon-input-group .btn-primary:hover {
+  background: #e5b500;
+  transform: scale(1.02);
+}
+
+.coupon-input-group .btn-outline-danger {
+  background: transparent;
+  border: 2px solid #dc3545;
+  color: #dc3545;
+}
+
+.coupon-input-group .btn-outline-danger:hover {
+  background: #dc3545;
+  color: #fff;
 }
 
 /* ============================================
-   RESPONSIVE
+   RESPONSIVE BREAKPOINTS
    ============================================ */
 
+/* Tablets and small laptops */
 @media (max-width: 992px) {
   .payment-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
   .estimate-box h2 {
-    font-size: 34px;
+    font-size: 2.4rem;
+  }
+  .promotion-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 }
 
+/* Mobile devices (landscape & portrait) */
 @media (max-width: 768px) {
   .checkout-page {
-    padding: 15px 0;
+    padding: 10px 0;
   }
   .checkout-card {
-    margin: 10px;
-    border-radius: 20px;
+    margin: 0 8px;
+    border-radius: 18px;
   }
   .checkout-header {
-    padding: 20px;
+    padding: 16px 12px;
+  }
+  .checkout-header h2 {
+    font-size: 1.6rem;
+  }
+  .checkout-header p {
+    font-size: 0.85rem;
+  }
+  .estimate-box {
+    padding: 16px;
+  }
+  .estimate-box h2 {
+    font-size: 2rem;
   }
   .checkout-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 12px 0;
+  }
+  .checkout-item-details {
+    flex: 1 1 100%;
+  }
+  .checkout-item-prices {
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 4px;
   }
   .checkout-btn {
-    height: 55px;
-    font-size: 16px;
+    height: 52px;
+    font-size: 1rem;
   }
   .customer-info {
     flex-direction: column;
   }
+  .customer-info div {
+    min-width: auto;
+  }
   .checkout-total {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     text-align: center;
   }
+  .checkout-total h3 {
+    font-size: 1.6rem;
+  }
   .checkout-summary-row {
-    font-size: 14px;
+    font-size: 0.9rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+  }
+  .pickup-option {
+    padding: 12px;
+    gap: 10px;
+  }
+  .payment-card {
+    padding: 14px;
+  }
+  .payment-card h6 {
+    font-size: 0.95rem;
+  }
+  .promotion-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .promotion-card {
+    padding: 14px;
+  }
+  .coupon-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .coupon-input-group .checkout-input {
+    width: 100%;
+  }
+  .coupon-input-group .btn {
+    height: 50px;
+    width: 100%;
   }
 }
 
+/* Small phones (<= 480px) */
 @media (max-width: 480px) {
+  .checkout-card {
+    margin: 0 6px;
+    border-radius: 14px;
+  }
   .checkout-header h2 {
-    font-size: 24px;
+    font-size: 1.4rem;
   }
   .estimate-box h2 {
-    font-size: 28px;
+    font-size: 1.8rem;
   }
   .checkout-input {
-    height: 50px;
+    height: 48px;
+    font-size: 0.9rem;
+    padding: 0 12px;
   }
   .checkout-btn {
-    font-size: 15px;
+    height: 48px;
+    font-size: 0.95rem;
   }
-  .customer-info div {
-    min-width: 100%;
+  .checkout-item-name {
+    font-size: 0.95rem;
+  }
+  .checkout-item-prices .final-price {
+    font-size: 1rem;
+  }
+  .checkout-total h3 {
+    font-size: 1.4rem;
+  }
+  .section-title {
+    font-size: 1rem;
+  }
+  .payment-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
   .pickup-option {
     flex-direction: row;
-    padding: 16px;
+    padding: 12px;
+  }
+  .pickup-option h6 {
+    font-size: 0.9rem;
+  }
+  .promotion-grid {
+    grid-template-columns: 1fr;
+  }
+  .promotion-card {
+    padding: 12px;
+  }
+  .coupon-input-group .btn {
+    height: 45px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Very small phones (<= 360px) */
+@media (max-width: 360px) {
+  .checkout-header h2 {
+    font-size: 1.2rem;
+  }
+  .estimate-box h2 {
+    font-size: 1.5rem;
+  }
+  .checkout-btn {
+    font-size: 0.85rem;
+  }
+  .promotion-card h6 {
+    font-size: 0.9rem;
   }
 }

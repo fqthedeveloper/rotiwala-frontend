@@ -166,23 +166,6 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
                     addedItems.has(item.id) ? "just-added" : ""
                   }`}
                 >
-                  <div className="menu-image-wrap">
-                    <img
-                      src={item.image || item.image_url || "/placeholder.png"}
-                      alt={item.name}
-                      className="menu-image"
-                      loading="lazy"
-                    />
-                    <span className={`badge ${item.is_available ? "available" : "unavailable"}`}>
-                      {item.is_available ? "Available" : "Out"}
-                    </span>
-                    {addedItems.has(item.id) && (
-                      <div className="added-overlay">
-                        <FaCheck className="check-icon" />
-                      </div>
-                    )}
-                  </div>
-
                   <div className="menu-body-horizontal">
                     <h4>{item.name}</h4>
                     {item.description && <p>{item.description}</p>}

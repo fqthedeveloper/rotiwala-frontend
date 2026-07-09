@@ -2,8 +2,13 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import {
-  FaPlus, FaMinus, FaTrash, FaShoppingCart,
-  FaCheckCircle, FaSpinner,
+  FaPlus,
+  FaMinus,
+  FaTrash,
+  FaShoppingCart,
+  FaCheckCircle,
+  FaSpinner,
+  FaTag,
 } from "react-icons/fa";
 
 import {
@@ -12,53 +17,161 @@ import {
   deleteCartItem,
   placeWalkInCart,
   updateWalkInCart,
+  searchCustomer,
+  getActiveDiscounts,
 } from "../../../service/walkInService";
+import api from "../../../service/api";
 
 import "./CSS/CartPanel.css";
 
 const QUICK_QUANTITIES = [1, 2, 3, 5, 10, 20, 30, 40, 60];
 
-export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }) {
+export default function CartPanel({
+  selectedCart,
+  refreshDrafts,
+  onOrderPlaced,
+}) {
   const [loading, setLoading] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [cart, setCart] = useState(null);
 
-  // local customer info state (synced with cart)
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
+  const [customerFound, setCustomerFound] = useState(false);
+  const [customerTrust, setCustomerTrust] = useState(null);
+  const [customerOrders, setCustomerOrders] = useState(0);
   const [notes, setNotes] = useState("");
+
+  // ---- discount state ----
+  const [discounts, setDiscounts] = useState([]);
+  const [selectedDiscountId, setSelectedDiscountId] = useState(null);
+  const [loadingDiscounts, setLoadingDiscounts] = useState(false);
+
+  // ---- discount preview state ----
+  const [discountPreview, setDiscountPreview] = useState(null);
 
   // load cart and sync customer fields
   async function loadCart() {
-    if (!selectedCart) return setCart(null);
-    try {
-      setLoading(true);
-      const data = await getWalkInCart(selectedCart.id);
-      setCart(data);
-      setCustomerName(data.customer_name || "");
-      setCustomerPhone(data.customer_phone || "");
-      setPaymentMethod(data.payment_method || "cash");
-      setPaymentStatus(data.payment_status || "unpaid");
-      setNotes(data.notes || "");
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+  if (!selectedCart) {
+    setCart(null);
+    return;
   }
 
-  useEffect(() => { loadCart(); }, [selectedCart]);
+  try {
+    setLoading(false);
+
+    const data = await getWalkInCart(selectedCart.id);
+
+    setCart((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(data)) {
+        return prev;
+      }
+      return data;
+    });
+
+    setCustomerName(data.customer_name || "");
+
+    const phone = (data.customer_phone || "")
+      .replace("+91", "")
+      .replace(/^91/, "");
+
+    setCustomerPhone(phone);
+
+    setPaymentMethod(data.payment_method || "cash");
+    setPaymentStatus(data.payment_status || "unpaid");
+    setNotes(data.notes || "");
+
+    let shopId = null;
+
+    if (data.shop_id) {
+      shopId = data.shop_id;
+    } else if (data.shop) {
+      if (typeof data.shop === "object") {
+        shopId = data.shop.id;
+      } else {
+        shopId = data.shop;
+      }
+    }
+
+    if (discounts.length === 0) {
+      loadDiscounts(shopId);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+  // ---- load active discounts ----
+  const loadDiscounts = async (shopId) => {
+    setLoadingDiscounts(true);
+    try {
+      let data;
+      if (shopId) {
+        data = await getActiveDiscounts(shopId);
+      } else {
+        const response = await api.get("/discounts/?is_active=true");
+        data = response.data;
+      }
+      setDiscounts(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Failed to load discounts", e);
+      setDiscounts([]);
+    } finally {
+      setLoadingDiscounts(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCart();
+  }, [selectedCart]);
+
+  // ---- preview discount when selected ----
+  useEffect(() => {
+    if (selectedDiscountId && cart) {
+      const selectedDiscount = discounts.find(d => d.id === Number(selectedDiscountId));
+      if (selectedDiscount) {
+        // Calculate discount preview
+        const total = cart.total_amount || 0;
+        let discountAmount = 0;
+        if (selectedDiscount.discount_type === "percentage") {
+          discountAmount = (total * selectedDiscount.value) / 100;
+        } else {
+          discountAmount = Math.min(selectedDiscount.value, total);
+        }
+        if (selectedDiscount.maximum_discount_amount) {
+          discountAmount = Math.min(discountAmount, selectedDiscount.maximum_discount_amount);
+        }
+        setDiscountPreview({
+          amount: Math.round(discountAmount * 100) / 100,
+          name: selectedDiscount.name,
+          type: selectedDiscount.discount_type,
+        });
+      } else {
+        setDiscountPreview(null);
+      }
+    } else {
+      setDiscountPreview(null);
+    }
+  }, [selectedDiscountId, discounts, cart]);
 
   // update customer info (auto‑save on change)
-  const updateCustomer = useCallback(async (field, value) => {
-    if (!cart) return;
-    try {
-      await updateWalkInCart(cart.id, { [field]: value });
-      loadCart();
-    } catch (error) {
-      console.error("Update failed", error);
-    }
-  }, [cart, loadCart]);
+  const updateCustomer = useCallback(
+    async (field, value, reload = false) => {
+      if (!cart) return;
+      try {
+        await updateWalkInCart(cart.id, { [field]: value });
+        if (reload) {
+          await loadCart();
+        }
+      } catch (error) {
+        console.error("Update failed", error);
+      }
+    },
+    [cart],
+  );
 
   // quantity updates
   async function changeQuantity(item, qty) {
@@ -68,8 +181,11 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
       await updateCartItem(item.id, qty);
       await loadCart();
       if (refreshDrafts) await refreshDrafts();
-    } catch (e) { console.error(e); }
-    finally { setUpdating(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUpdating(false);
+    }
   }
 
   const handleCustomQty = (item, e) => {
@@ -92,10 +208,12 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
       await deleteCartItem(item.id);
       loadCart();
       refreshDrafts?.();
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  // ---- place order ----
+  // ---- place order with discount ----
   async function placeOrder() {
     if (!cart) return;
     if (cart.items.length === 0) {
@@ -113,8 +231,16 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
 
     try {
       setPlacing(true);
-      const response = await placeWalkInCart(cart.id, cart.payment_status);
-      if (!response.success) throw new Error(response.message || "Order could not be placed.");
+      const payload = {
+        payment_status: paymentStatus,
+      };
+      if (selectedDiscountId) {
+        payload.discount_id = selectedDiscountId;
+      }
+
+      const response = await placeWalkInCart(cart.id, payload);
+      if (!response.success)
+        throw new Error(response.message || "Order could not be placed.");
 
       Swal.fire({
         icon: "success",
@@ -134,18 +260,52 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
         text:
           error.response?.data?.error ||
           error.response?.data?.message ||
-          error.message || "Unable to place order.",
+          error.message ||
+          "Unable to place order.",
       });
     } finally {
       setPlacing(false);
     }
   }
 
+  async function handlePhoneSearch(phone) {
+    if (phone.length !== 10) {
+      setCustomerFound(false);
+      setCustomerTrust(null);
+      setCustomerOrders(0);
+      return;
+    }
+    try {
+      const data = await searchCustomer(phone);
+      if (data.found) {
+        setCustomerFound(true);
+        setCustomerName(data.name);
+        setCustomerTrust(data.trust_score);
+        setCustomerOrders(data.total_orders);
+      } else {
+        setCustomerFound(false);
+        setCustomerTrust(null);
+        setCustomerOrders(0);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const totalItems = useMemo(
     () => cart?.items?.reduce((t, i) => t + i.quantity, 0) || 0,
-    [cart]
+    [cart],
   );
+
   const grandTotal = useMemo(() => Number(cart?.total_amount || 0), [cart]);
+
+  // Calculate final total with discount preview
+  const finalTotal = useMemo(() => {
+    if (discountPreview && discountPreview.amount > 0) {
+      return Math.max(0, grandTotal - discountPreview.amount);
+    }
+    return grandTotal;
+  }, [grandTotal, discountPreview]);
 
   return (
     <div className="cart-panel">
@@ -153,10 +313,6 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
         <div>
           <h3>🛒 Current Cart</h3>
           <span>{totalItems} Items</span>
-        </div>
-        <div className="cart-icon-wrap">
-          <FaShoppingCart />
-          {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
         </div>
       </div>
 
@@ -189,14 +345,18 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
                 className="cart-item"
               >
                 <div className="cart-image">
-                  <img src={item.image || "/placeholder.png"} alt={item.item_name} />
+                  <img
+                    src={item.image || "/placeholder.png"}
+                    alt={item.item_name}
+                  />
                 </div>
                 <div className="cart-details">
                   <h5>{item.item_name}</h5>
-                  <span className="cart-unit">₹{Number(item.item_price).toFixed(2)} each</span>
+                  <span className="cart-unit">
+                    ₹{Number(item.item_price).toFixed(2)} each
+                  </span>
                 </div>
 
-                {/* ---- QUICK QUANTITY BUTTONS ---- */}
                 <div className="qty-quick-buttons">
                   {QUICK_QUANTITIES.map((qty) => (
                     <button
@@ -212,11 +372,17 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
 
                 <div className="qty-controls">
                   <div className="qty-box">
-                    <button disabled={updating} onClick={() => changeQuantity(item, item.quantity - 1)}>
+                    <button
+                      disabled={updating}
+                      onClick={() => changeQuantity(item, item.quantity - 1)}
+                    >
                       <FaMinus />
                     </button>
                     <strong>{item.quantity}</strong>
-                    <button disabled={updating} onClick={() => changeQuantity(item, item.quantity + 1)}>
+                    <button
+                      disabled={updating}
+                      onClick={() => changeQuantity(item, item.quantity + 1)}
+                    >
                       <FaPlus />
                     </button>
                   </div>
@@ -233,7 +399,10 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
 
                 <div className="item-total">
                   <strong>₹{Number(item.total_price).toFixed(2)}</strong>
-                  <button className="delete-btn" onClick={() => removeItem(item)}>
+                  <button
+                    className="delete-btn"
+                    onClick={() => removeItem(item)}
+                  >
                     <FaTrash />
                   </button>
                 </div>
@@ -250,9 +419,16 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
               <span>Items</span>
               <strong>{totalItems}</strong>
             </div>
+            {/* Show discount preview if selected */}
+            {discountPreview && discountPreview.amount > 0 && (
+              <div className="summary-row discount-row-summary">
+                <span className="text-success">Discount ({discountPreview.name})</span>
+                <strong className="text-success">-₹{discountPreview.amount.toFixed(2)}</strong>
+              </div>
+            )}
             <div className="summary-row total">
               <span>Grand Total</span>
-              <strong>₹{grandTotal.toFixed(2)}</strong>
+              <strong>₹{finalTotal.toFixed(2)}</strong>
             </div>
           </div>
 
@@ -276,13 +452,31 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
               <input
                 type="text"
                 value={customerPhone}
-                onChange={(e) => {
-                  setCustomerPhone(e.target.value);
-                  updateCustomer("customer_phone", e.target.value);
-                }}
+                maxLength={10}
                 placeholder="Phone number"
+                onChange={(e) => {
+                  const phone = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setCustomerPhone(phone);
+                  if (phone.length === 10) {
+                    handlePhoneSearch(phone);
+                  }
+                }}
+                onBlur={() => {
+                  if (customerPhone.length === 10) {
+                    updateCustomer("customer_phone", customerPhone, false);
+                  }
+                }}
               />
             </div>
+            {customerPhone.length === 10 && customerFound && (
+              <div className="customer-found">
+                <strong>{customerName}</strong>
+                <br />
+                Orders : {customerOrders}
+                <br />
+                Trust Score : {customerTrust}
+              </div>
+            )}
             <div className="form-row">
               <label>Payment</label>
               <select
@@ -306,11 +500,50 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
                   updateCustomer("payment_status", e.target.value);
                 }}
               >
-                <option value="unpaid">unpaid</option>
+                <option value="unpaid">Unpaid</option>
                 <option value="paid">Paid</option>
               </select>
             </div>
 
+            {/* ---- DISCOUNT SELECTION ---- */}
+            <div className="form-row discount-row">
+              <label>
+                <FaTag className="discount-icon" /> Apply Discount
+              </label>
+              {loadingDiscounts ? (
+                <span className="text-muted">Loading discounts...</span>
+              ) : discounts.length === 0 ? (
+                <div className="no-discounts">
+                  <span className="text-muted">No active discounts</span>
+                  <small className="d-block text-muted" style={{ fontSize: "0.75rem" }}>
+                    Create discounts in the admin panel (Discounts section)
+                  </small>
+                </div>
+              ) : (
+                <select
+                  value={selectedDiscountId || ""}
+                  onChange={(e) => setSelectedDiscountId(e.target.value || null)}
+                >
+                  <option value="">None</option>
+                  {discounts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} –{" "}
+                      {d.discount_type === "percentage"
+                        ? `${d.value}%`
+                        : `₹${d.value}`}
+                      {d.minimum_order_amount > 0
+                        ? ` (min ₹${d.minimum_order_amount})`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {discountPreview && discountPreview.amount > 0 && (
+                <div className="discount-info">
+                  ✅ {discountPreview.name} will save ₹{discountPreview.amount.toFixed(2)}
+                </div>
+              )}
+            </div>
 
             <div className="form-row">
               <label>Notes</label>
@@ -326,11 +559,19 @@ export default function CartPanel({ selectedCart, refreshDrafts, onOrderPlaced }
             </div>
           </div>
 
-          <button className="place-order-btn" disabled={placing} onClick={placeOrder}>
+          <button
+            className="place-order-btn"
+            disabled={placing}
+            onClick={placeOrder}
+          >
             {placing ? (
-              <><FaSpinner className="spin" /> Creating...</>
+              <>
+                <FaSpinner className="spin" /> Creating...
+              </>
             ) : (
-              <><FaCheckCircle /> Place Order</>
+              <>
+                <FaCheckCircle /> Place Order
+              </>
             )}
           </button>
         </>

@@ -153,11 +153,6 @@ export default function WalkInOrder() {
             <span>{socketConnected ? "LIVE" : "OFFLINE"}</span>
           </div>
         </div>
-        <div className="header-right">
-          <span className="cart-badge">
-            <FaShoppingCart /> {totalItems}
-          </span>
-        </div>
       </header>
 
       {/* customer selector */}

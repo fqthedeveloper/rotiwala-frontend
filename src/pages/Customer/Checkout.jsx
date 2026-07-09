@@ -3,25 +3,26 @@ import { useNavigate, Navigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getCart } from "../../service/cartService";
 import { placeOrder } from "../../service/orderService";
+import { fetchAvailablePromotions, applyPromotionPreview } from "../../service/couponService";
 import api from "../../service/api";
 import "./CSS/Checkout.css";
 
 export default function Checkout() {
   const navigate = useNavigate();
 
+  // ----- Core States -----
   const [loading, setLoading] = useState(true);
   const [redirectToCart, setRedirectToCart] = useState(false);
-
   const [cart, setCart] = useState(null);
   const [shops, setShops] = useState([]);
   const [shopId, setShopId] = useState("");
   const [selectedShop, setSelectedShop] = useState(null);
-
   const [placingOrder, setPlacingOrder] = useState(false);
+
+  // ----- Pickup & Payment -----
   const [pickupByOtherPerson, setPickupByOtherPerson] = useState(false);
   const [pickupPersonName, setPickupPersonName] = useState("");
   const [pickupPersonPhone, setPickupPersonPhone] = useState("");
-
   const [estimatedMinutes, setEstimatedMinutes] = useState(10);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [notes, setNotes] = useState("");
@@ -29,17 +30,69 @@ export default function Checkout() {
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
 
+  // ----- Promotion States -----
+  const [promotions, setPromotions] = useState([]);
+  const [selectedPromotion, setSelectedPromotion] = useState(null);
+  const [appliedDiscount, setAppliedDiscount] = useState({
+    type: null,
+    name: "",
+    amount: 0,
+    finalTotal: 0,
+    originalTotal: 0,
+    items: [],
+  });
+  const [isApplying, setIsApplying] = useState(false);
+  const [discountError, setDiscountError] = useState("");
+  const [promotionMessage, setPromotionMessage] = useState("");
+  const [fetchingPromotions, setFetchingPromotions] = useState(false);
+
+  // ----- Manual coupon input (fallback) -----
+  const [manualCouponCode, setManualCouponCode] = useState("");
+  const [showManualCoupon, setShowManualCoupon] = useState(false);
+
+  // ============================================
+  // 1. Load Cart and Shops
+  // ============================================
   useEffect(() => {
     document.title = "Check Out - Roti Wala";
     loadData();
   }, []);
 
-  /* ============================================
-     Haversine Formula — Distance between two
-     latitude/longitude points in kilometers
-     ============================================ */
+  // ============================================
+  // 2. Load Promotions when Shop Changes
+  // ============================================
+  useEffect(() => {
+    if (shopId) {
+      setSelectedPromotion(null);
+      setAppliedDiscount({
+        type: null,
+        name: "",
+        amount: 0,
+        finalTotal: 0,
+        originalTotal: 0,
+        items: [],
+      });
+      setDiscountError("");
+      setPromotionMessage("");
+      setManualCouponCode("");
+      fetchPromotions(shopId);
+    }
+  }, [shopId]);
+
+  // ============================================
+  // 3. Preview when selected promotion changes
+  // ============================================
+  useEffect(() => {
+    if (selectedPromotion && shopId) {
+      applySelectedPromotion();
+    }
+  }, [selectedPromotion]);
+
+  // ============================================
+  // Helper functions
+  // ============================================
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of earth in KM
+    const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -54,15 +107,10 @@ export default function Checkout() {
 
   const findNearestShop = (userLat, userLng, shopsList) => {
     if (!shopsList || shopsList.length === 0) return null;
-
     const shopsWithCoords = shopsList.filter(
       (s) => s.latitude != null && s.longitude != null
     );
-
-    if (shopsWithCoords.length === 0) {
-      return shopsList[0]; // fallback: no coords available
-    }
-
+    if (shopsWithCoords.length === 0) return shopsList[0];
     let nearest = shopsWithCoords[0];
     let minDist = calculateDistance(
       userLat,
@@ -70,7 +118,6 @@ export default function Checkout() {
       nearest.latitude,
       nearest.longitude
     );
-
     for (let i = 1; i < shopsWithCoords.length; i++) {
       const dist = calculateDistance(
         userLat,
@@ -88,22 +135,18 @@ export default function Checkout() {
 
   const autoSelectShop = (shopsData) => {
     if (!shopsData || shopsData.length === 0) return;
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const userLat = position.coords.latitude;
           const userLng = position.coords.longitude;
           const nearest = findNearestShop(userLat, userLng, shopsData);
-
           if (nearest) {
             setShopId(String(nearest.id));
             setSelectedShop(nearest);
           }
         },
-        (error) => {
-          // Location denied / unavailable → select first shop
-          console.warn("Geolocation denied or failed:", error.message);
+        () => {
           const first = shopsData[0];
           setShopId(String(first.id));
           setSelectedShop(first);
@@ -111,7 +154,6 @@ export default function Checkout() {
         { timeout: 10000, enableHighAccuracy: false }
       );
     } else {
-      // No geolocation support → select first shop
       const first = shopsData[0];
       setShopId(String(first.id));
       setSelectedShop(first);
@@ -121,10 +163,6 @@ export default function Checkout() {
   const loadData = async () => {
     try {
       const cartData = await getCart();
-
-      /* ============================================
-         GUARD: Empty cart → redirect to /cart
-         ============================================ */
       if (
         !cartData ||
         !cartData.items ||
@@ -134,14 +172,11 @@ export default function Checkout() {
         setRedirectToCart(true);
         return;
       }
-
       setCart(cartData);
 
       const res = await api.get("/shops/public/");
       const shopsData = res.data || [];
       setShops(shopsData);
-
-      // Auto-select nearest shop
       autoSelectShop(shopsData);
     } catch (err) {
       console.error(err);
@@ -151,22 +186,137 @@ export default function Checkout() {
     }
   };
 
-  const handleOrder = async () => {
+  const fetchPromotions = async (shopId) => {
+    setFetchingPromotions(true);
+    try {
+      const data = await fetchAvailablePromotions(shopId);
+      setPromotions(data);
+    } catch (err) {
+      console.error("Failed to fetch promotions:", err);
+      setPromotions([]);
+    } finally {
+      setFetchingPromotions(false);
+    }
+  };
+
+  const applySelectedPromotion = async () => {
+    if (!selectedPromotion) return;
+    setIsApplying(true);
+    setDiscountError("");
+    setPromotionMessage("");
+    try {
+      const response = await applyPromotionPreview(
+        shopId,
+        selectedPromotion.type,
+        selectedPromotion.type === "discount" ? selectedPromotion.id : undefined,
+        selectedPromotion.type === "coupon" ? selectedPromotion.code : undefined
+      );
+      setAppliedDiscount({
+        type: response.discount_type,
+        name: response.discount_name,
+        amount: response.discount_amount,
+        finalTotal: response.final_total,
+        originalTotal: response.original_total,
+        items: response.items || [],
+      });
+      if (response.message) {
+        setPromotionMessage(response.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setDiscountError(error.response?.data?.detail || "Promotion not applicable.");
+      setAppliedDiscount({
+        type: null,
+        name: "",
+        amount: 0,
+        finalTotal: 0,
+        originalTotal: 0,
+        items: [],
+      });
+      setSelectedPromotion(null);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  // Manual coupon application
+  const handleApplyManualCoupon = async () => {
+    if (!manualCouponCode.trim()) {
+      setDiscountError("Please enter a coupon code.");
+      return;
+    }
+    // Find coupon in promotions list
+    const coupon = promotions.find(p => p.type === "coupon" && p.code === manualCouponCode.toUpperCase());
+    if (coupon) {
+      handleSelectPromotion(coupon);
+    } else {
+      // Try to apply directly via preview
+      setIsApplying(true);
+      setDiscountError("");
+      try {
+        const response = await applyPromotionPreview(
+          shopId,
+          "coupon",
+          undefined,
+          manualCouponCode.toUpperCase()
+        );
+        setAppliedDiscount({
+          type: response.discount_type,
+          name: response.discount_name,
+          amount: response.discount_amount,
+          finalTotal: response.final_total,
+          originalTotal: response.original_total,
+          items: response.items || [],
+        });
+        if (response.message) {
+          setPromotionMessage(response.message);
+        }
+        // Create a temporary selected promotion object
+        setSelectedPromotion({
+          type: "coupon",
+          code: manualCouponCode.toUpperCase(),
+          name: response.discount_name || manualCouponCode.toUpperCase(),
+        });
+      } catch (error) {
+        setDiscountError(error.response?.data?.detail || "Invalid coupon.");
+      } finally {
+        setIsApplying(false);
+      }
+    }
+    setManualCouponCode("");
+  };
+
+  const handleSelectPromotion = (promo) => {
+    if (selectedPromotion?.id === promo.id && selectedPromotion?.type === promo.type) {
+      // Deselect
+      setSelectedPromotion(null);
+      setAppliedDiscount({
+        type: null,
+        name: "",
+        amount: 0,
+        finalTotal: 0,
+        originalTotal: 0,
+        items: [],
+      });
+      setPromotionMessage("");
+    } else {
+      setSelectedPromotion(promo);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
     if (!shopId) {
       Swal.fire("Select Shop", "Please select a shop", "warning");
       return;
     }
-
     if (pickupByOtherPerson && !pickupPersonName.trim()) {
       Swal.fire("Pickup Person", "Enter pickup person name", "warning");
       return;
     }
-
     if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
       Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
       return;
     }
-
     if (pickupType === "scheduled" && (!pickupDate || !pickupTime)) {
       Swal.fire(
         "Schedule Required",
@@ -177,7 +327,6 @@ export default function Checkout() {
     }
 
     setPlacingOrder(true);
-
     try {
       const payload = {
         shop_id: shopId,
@@ -190,6 +339,15 @@ export default function Checkout() {
         pickup_date: pickupType === "scheduled" ? pickupDate : null,
         pickup_time: pickupType === "scheduled" ? pickupTime : null,
       };
+
+      if (selectedPromotion) {
+        payload.promotion_type = selectedPromotion.type;
+        if (selectedPromotion.type === "discount") {
+          payload.promotion_id = selectedPromotion.id;
+        } else if (selectedPromotion.type === "coupon") {
+          payload.coupon_code = selectedPromotion.code;
+        }
+      }
 
       const response = await placeOrder(payload);
 
@@ -222,9 +380,7 @@ export default function Checkout() {
     }
   };
 
-  /* ============================================
-     Redirect if cart is empty
-     ============================================ */
+  // ----- Redirect if cart empty -----
   if (redirectToCart) {
     return <Navigate to="/cart" replace />;
   }
@@ -242,6 +398,11 @@ export default function Checkout() {
     );
   }
 
+  const originalTotal = appliedDiscount.originalTotal || cart?.total_amount || 0;
+  const discountAmount = appliedDiscount.amount || 0;
+  const finalTotal = appliedDiscount.finalTotal || originalTotal - discountAmount;
+  const itemsBreakdown = appliedDiscount.items || [];
+
   return (
     <div className="checkout-page">
       <div className="container">
@@ -254,21 +415,22 @@ export default function Checkout() {
               </div>
 
               <div className="card-body p-4 p-md-5">
+                {/* Estimated Time */}
                 <div className="estimate-box">
                   <h6>Estimated Preparation Time</h6>
-                  <h2>{estimatedMinutes} Minutes</h2>
+                  <h2>20 Minutes</h2>
                   <p>Freshly prepared after order confirmation</p>
                 </div>
 
+                {/* Shop Selection */}
                 <h5 className="section-title">Select Shop</h5>
                 <select
                   className="form-select checkout-input"
                   value={shopId}
                   onChange={(e) => {
-                    setShopId(e.target.value);
-                    const shop = shops.find(
-                      (s) => s.id === Number(e.target.value)
-                    );
+                    const val = e.target.value;
+                    setShopId(val);
+                    const shop = shops.find((s) => s.id === Number(val));
                     setSelectedShop(shop);
                   }}
                 >
@@ -300,6 +462,7 @@ export default function Checkout() {
                   </div>
                 )}
 
+                {/* Pickup Information */}
                 <div className="pickup-card mt-4">
                   <h5>Pickup Information</h5>
 
@@ -374,7 +537,7 @@ export default function Checkout() {
                     </div>
                   </div>
 
-                  <div className="form-check">
+                  <div className="form-check mt-4">
                     <input
                       type="checkbox"
                       id="otherPickup"
@@ -410,6 +573,7 @@ export default function Checkout() {
                   )}
                 </div>
 
+                {/* Payment Method */}
                 <h5 className="section-title">Payment Method</h5>
                 <div className="payment-grid">
                   <div
@@ -437,6 +601,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
+                {/* Notes */}
                 <h5 className="section-title">Notes</h5>
                 <textarea
                   rows="3"
@@ -446,39 +611,156 @@ export default function Checkout() {
                   onChange={(e) => setNotes(e.target.value)}
                 />
 
+                {/* ----- PROMOTIONS SECTION ----- */}
+                <h5 className="section-title mt-4">Available Promotions</h5>
+                {fetchingPromotions ? (
+                  <div className="text-muted">Loading promotions...</div>
+                ) : promotions.length === 0 ? (
+                  <div className="text-muted">No active promotions available.</div>
+                ) : (
+                  <>
+                    <div className="promotion-grid">
+                      {promotions.map((promo) => {
+                        const isSelected =
+                          selectedPromotion?.id === promo.id &&
+                          selectedPromotion?.type === promo.type;
+                        const isCoupon = promo.type === "coupon";
+                        return (
+                          <div
+                            key={`${promo.type}-${promo.id}`}
+                            className={`promotion-card ${isSelected ? "active" : ""}`}
+                            onClick={() => handleSelectPromotion(promo)}
+                          >
+                            <div className="promotion-header">
+                              <span className="promotion-badge">
+                                {isCoupon ? "Coupon" : "Discount"}
+                              </span>
+                              <span className="promotion-value">
+                                {promo.value}
+                                {promo.discount_type === "percentage" ? "%" : " ₹"}
+                              </span>
+                            </div>
+                            <h6>{promo.name}</h6>
+                            {isCoupon && promo.code && (
+                              <div className="coupon-code">📋 Code: {promo.code}</div>
+                            )}
+                            <small>{promo.description}</small>
+                            {promo.apply_on && (
+                              <div className="text-muted small">
+                                Applies to: {promo.apply_on}
+                              </div>
+                            )}
+                            {promo.minimum_order > 0 && (
+                              <div className="text-muted small">
+                                Min order: ₹{promo.minimum_order}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Manual coupon input (fallback) */}
+                    <div className="mt-3">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setShowManualCoupon(!showManualCoupon)}
+                      >
+                        {showManualCoupon ? "Hide" : "Enter coupon code manually"}
+                      </button>
+                      {showManualCoupon && (
+                        <div className="coupon-input-group mt-2">
+                          <input
+                            type="text"
+                            className="form-control checkout-input"
+                            placeholder="Enter coupon code"
+                            value={manualCouponCode}
+                            onChange={(e) => setManualCouponCode(e.target.value.toUpperCase())}
+                          />
+                          <button
+                            className="btn btn-primary ms-2"
+                            onClick={handleApplyManualCoupon}
+                            disabled={isApplying || !manualCouponCode.trim()}
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {discountError && (
+                  <div className="text-danger mt-2">{discountError}</div>
+                )}
+                {!isApplying && promotionMessage && (
+                  <div className="text-warning mt-2">
+                    <i className="fas fa-info-circle"></i> {promotionMessage}
+                  </div>
+                )}
+                {appliedDiscount.amount > 0 && (
+                  <div className="alert alert-success mt-2">
+                    <strong>{appliedDiscount.name}</strong> applied! You saved ₹{appliedDiscount.amount}
+                  </div>
+                )}
+
+                {/* ----- CART ITEMS with per‑item discount breakdown ----- */}
                 <h5 className="section-title mt-4">Cart Items</h5>
-                {cart?.items?.map((item) => (
-                  <div key={item.id} className="checkout-item">
-                    <div>
-                      <div className="checkout-item-name">{item.item_name}</div>
-                      <div className="checkout-item-qty">
-                        Qty : {item.quantity}
+                {cart?.items?.map((item, index) => {
+                  const breakdown = itemsBreakdown.find(
+                    (b) => b.item_name === item.item_name
+                  );
+                  const originalPrice = breakdown?.original_price || item.total_price;
+                  const itemDiscount = breakdown?.discount_amount || 0;
+                  const finalPrice = breakdown?.final_price || item.total_price;
+
+                  return (
+                    <div key={item.id} className="checkout-item">
+                      <div className="checkout-item-details">
+                        <div className="checkout-item-name">{item.item_name}</div>
+                        <div className="checkout-item-qty">Qty : {item.quantity}</div>
+                      </div>
+                      <div className="checkout-item-prices">
+                        {itemDiscount > 0 ? (
+                          <>
+                            <span className="original-price">₹{originalPrice}</span>
+                            <span className="discount-amount">-₹{itemDiscount}</span>
+                            <span className="final-price">₹{finalPrice}</span>
+                          </>
+                        ) : (
+                          <span className="final-price">₹{originalPrice}</span>
+                        )}
                       </div>
                     </div>
-                    <div className="checkout-item-price">
-                      ₹{item.total_price}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
+                {/* ----- Total Breakdown ----- */}
                 <div className="checkout-summary">
                   <div className="checkout-summary-row">
                     <span>Subtotal</span>
-                    <span>₹{cart?.total_amount}</span>
+                    <span>₹{originalTotal}</span>
                   </div>
+                  {discountAmount > 0 && (
+                    <div className="checkout-summary-row text-success">
+                      <span>Discount ({appliedDiscount.name})</span>
+                      <span>-₹{discountAmount}</span>
+                    </div>
+                  )}
                   <div className="checkout-summary-row">
                     <span>Taxes</span>
                     <span>₹0</span>
                   </div>
                   <div className="checkout-total">
                     <h4>Total Amount</h4>
-                    <h3>₹{cart?.total_amount}</h3>
+                    <h3>₹{finalTotal}</h3>
                   </div>
                 </div>
 
+                {/* Place Order Button */}
                 <button
                   className="checkout-btn"
-                  onClick={handleOrder}
+                  onClick={handlePlaceOrder}
                   disabled={placingOrder}
                 >
                   {placingOrder ? "Placing Order..." : "Place Order"}

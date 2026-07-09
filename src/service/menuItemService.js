@@ -85,16 +85,12 @@ export const getCategoriesByShop =
     return response.data;
   };
 
-export const getItemsByCategory =
-  async (categoryId) => {
-
-    const response =
-      await api.get(
-        `/menu/category/${categoryId}/items/`
-      );
-
-    return response.data;
-  };
+export const getItemsByCategory = async (categoryId) => {
+  const response = await api.get(
+    `/menu/public/category/${categoryId}/items/`   // ✅ added "public/"
+  );
+  return response.data;
+};
 
 
 

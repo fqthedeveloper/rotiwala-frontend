@@ -43,6 +43,10 @@ import MenuItems from "./pages/admin/menu/MenuItems";
 import AddMenuItem from "./pages/admin/menu/AddMenuItem";
 import EditCategory from "./pages/admin/menu/EditCategory";
 import EditMenuItem from "./pages/admin/menu/EditMenuItem";
+import Coupons from "./pages/admin/Coupons/Coupons";
+import CouponForm from "./pages/admin/Coupons/CouponForm";
+import Discounts from "./pages/admin/Discount/Discounts";
+import DiscountForm from "./pages/admin/Discount/DiscountForm";
 
 // Customer Pages
 import Cart from "./pages/Customer/Cart";
@@ -83,6 +87,9 @@ function App() {
             </AuthRoute>
           }
         />
+
+        {/* 404 */}
+      <Route path="*" element={<NotFound />} />
 
         {/* Protected Customer Pages */}
         <Route
@@ -147,6 +154,13 @@ function App() {
         <Route path="orders" element={<Orders />} />
         <Route path="products" element={<Products />} />
         <Route path="users" element={<Users />} />
+        <Route path="coupons" element={<Coupons />} />
+        <Route path="coupons/add" element={<CouponForm />} />
+        <Route path="coupons/edit/:id" element={<CouponForm />} />
+        <Route path="discounts" element={<Discounts />} />
+        <Route path="discounts/add" element={<DiscountForm />} />
+        <Route path="discounts/edit/:id" element={<DiscountForm />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       {/* MANAGER ROUTES */}
@@ -163,10 +177,10 @@ function App() {
         <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="orders" element={<ManagerOrders />} />
         <Route path="walkin" element={<WalkInOrder />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
 
-      {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+      
     </Routes>
   );
 }

@@ -5,14 +5,10 @@ import api from "./api";
 CUSTOMER SEARCH
 =========================================
 */
-
 export const searchCustomer = async (phone) => {
   const response = await api.get("/orders/customer-search/", {
-    params: {
-      phone,
-    },
+    params: { phone },
   });
-
   return response.data;
 };
 
@@ -21,10 +17,8 @@ export const searchCustomer = async (phone) => {
 CREATE NEW WALK-IN CART
 =========================================
 */
-
 export const createWalkInCart = async (data) => {
   const response = await api.post("/orders/walkin/cart/create/", data);
-
   return response.data;
 };
 
@@ -33,10 +27,8 @@ export const createWalkInCart = async (data) => {
 ALL ACTIVE CARTS
 =========================================
 */
-
 export const getWalkInCarts = async () => {
   const response = await api.get("/orders/walkin/cart/");
-
   return response.data;
 };
 
@@ -45,10 +37,8 @@ export const getWalkInCarts = async () => {
 SINGLE CART
 =========================================
 */
-
 export const getWalkInCart = async (cartId) => {
   const response = await api.get(`/orders/walkin/cart/${cartId}/`);
-
   return response.data;
 };
 
@@ -57,7 +47,6 @@ export const getWalkInCart = async (cartId) => {
 UPDATE CUSTOMER
 =========================================
 */
-
 export const updateWalkInCart = async (cartId, data) => {
   const response = await api.patch(`/orders/walkin/cart/${cartId}/update/`, data);
   return response.data;
@@ -68,13 +57,11 @@ export const updateWalkInCart = async (cartId, data) => {
 ADD ITEM TO CART
 =========================================
 */
-
 export const addItemToCart = async (cartId, menuItem, quantity = 1) => {
   const response = await api.post(`/orders/walkin/cart/${cartId}/add-item/`, {
     menu_item: menuItem,
     quantity,
   });
-
   return response.data;
 };
 
@@ -83,12 +70,10 @@ export const addItemToCart = async (cartId, menuItem, quantity = 1) => {
 UPDATE CART ITEM
 =========================================
 */
-
 export const updateCartItem = async (itemId, quantity) => {
   const response = await api.patch(`/orders/walkin/cart/item/${itemId}/`, {
     quantity,
   });
-
   return response.data;
 };
 
@@ -97,46 +82,28 @@ export const updateCartItem = async (itemId, quantity) => {
 DELETE CART ITEM
 =========================================
 */
-
 export const deleteCartItem = async (itemId) => {
-  const response = await api.delete(
-    `/orders/walkin/cart/item/${itemId}/delete/`,
-  );
-
+  const response = await api.delete(`/orders/walkin/cart/item/${itemId}/delete/`);
   return response.data;
 };
 
 /*
 =========================================
-PLACE WALK-IN ORDER
+PLACE WALK-IN ORDER (supports discount_id)
 =========================================
 */
-
-export const placeWalkInCart = async (cartId, paymentStatus = "unpaid") => {
-  const response = await api.post(
-    `/orders/walkin/cart/${cartId}/place/`,
-
-    {
-      payment_status: paymentStatus,
-    },
-  );
-
+export const placeWalkInCart = async (cartId, payload = {}) => {
+  const response = await api.post(`/orders/walkin/cart/${cartId}/place/`, payload);
   return response.data;
 };
-
 
 /*
 =========================================
 UPDATE WALK-IN ORDER
 =========================================
 */
-
 export const updateWalkInOrder = async (orderId, data) => {
-  const response = await api.patch(
-    `/orders/walkin/order/${orderId}/update/`,
-    data,
-  );
-
+  const response = await api.patch(`/orders/walkin/order/${orderId}/update/`, data);
   return response.data;
 };
 
@@ -145,13 +112,11 @@ export const updateWalkInOrder = async (orderId, data) => {
 ADD ITEM TO WALK-IN ORDER
 =========================================
 */
-
 export const addItemToOrder = async (orderId, menuItem, quantity = 1) => {
   const response = await api.post(`/orders/walkin/order/${orderId}/add-item/`, {
     menu_item: menuItem,
     quantity,
   });
-
   return response.data;
 };
 
@@ -160,12 +125,10 @@ export const addItemToOrder = async (orderId, menuItem, quantity = 1) => {
 UPDATE WALK-IN ORDER ITEM
 =========================================
 */
-
 export const updateOrderItem = async (itemId, quantity) => {
   const response = await api.patch(`/orders/walkin/order/item/${itemId}/`, {
     quantity,
   });
-
   return response.data;
 };
 
@@ -174,11 +137,22 @@ export const updateOrderItem = async (itemId, quantity) => {
 DELETE WALK-IN ORDER ITEM
 =========================================
 */
-
 export const deleteOrderItem = async (itemId) => {
-  const response = await api.delete(
-    `/orders/walkin/order/item/${itemId}/delete/`,
-  );
-
+  const response = await api.delete(`/orders/walkin/order/item/${itemId}/delete/`);
   return response.data;
+};
+
+/*
+=========================================
+GET ACTIVE DISCOUNTS FOR A SHOP
+=========================================
+*/
+export const getActiveDiscounts = async (shopId) => {
+  try {
+    const response = await api.get(`/discounts/?shop=${shopId}&is_active=true`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ getActiveDiscounts error:", error);
+    throw error;
+  }
 };

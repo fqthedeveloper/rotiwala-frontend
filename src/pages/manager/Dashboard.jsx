@@ -17,7 +17,7 @@ import {
   FaShoppingBag,
 } from "react-icons/fa";
 import api from "../../service/api";
-import "./CSS/Dashboard.css";
+import "./CSS/Dashboard.css";   // <-- fixed path
 
 /* ============================================
    Animated Counter Hook

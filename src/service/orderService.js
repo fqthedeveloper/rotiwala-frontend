@@ -157,3 +157,19 @@ export const collectedOrder =
 
     return response.data;
   };
+
+
+export const generateReceipt = async (orderId) => {
+  const response = await api.get(`/orders/receipt/${orderId}/`);
+  return response.data;
+};
+
+export const printReceipt = async (orderId, printerData = {}) => {
+  const response = await api.post(`/orders/receipt/${orderId}/print/`, printerData);
+  return response.data;
+};
+
+export const bulkPrintReceipts = async (orderIds) => {
+  const response = await api.post('/orders/receipt/bulk-print/', { order_ids: orderIds });
+  return response.data;
+};

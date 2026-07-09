@@ -1,11 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-
 import { Link } from "react-router-dom";
-
 import { motion, AnimatePresence } from "framer-motion";
-
 import Swal from "sweetalert2";
-
 import {
   FaShoppingBag,
   FaClock,
@@ -15,20 +11,16 @@ import {
   FaTimesCircle,
   FaRupeeSign,
 } from "react-icons/fa";
-
 import { getMyOrders } from "../../service/orderService";
-
 import "./CSS/MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   const loadOrders = useCallback(async () => {
     try {
       const data = await getMyOrders();
-
       setOrders(data);
     } catch {
       Swal.fire("Error", "Unable to load orders", "error");
@@ -39,61 +31,33 @@ export default function MyOrders() {
 
   useEffect(() => {
     loadOrders();
-
     const interval = setInterval(() => {
       loadOrders();
     }, 5000);
-
     return () => clearInterval(interval);
   }, [loadOrders]);
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "pending":
-        return <FaClock />;
-
-      case "accepted":
-        return <FaCheckCircle />;
-
-      case "preparing":
-        return <FaShoppingBag />;
-
-      case "ready":
-        return <FaTruck />;
-
-      case "collected":
-        return <FaBoxOpen />;
-
-      case "rejected":
-        return <FaTimesCircle />;
-
-      default:
-        return <FaClock />;
+      case "pending": return <FaClock />;
+      case "accepted": return <FaCheckCircle />;
+      case "preparing": return <FaShoppingBag />;
+      case "ready": return <FaTruck />;
+      case "collected": return <FaBoxOpen />;
+      case "rejected": return <FaTimesCircle />;
+      default: return <FaClock />;
     }
   };
 
   const getStatusClass = (status) => {
     switch (status) {
-      case "pending":
-        return "pending";
-
-      case "accepted":
-        return "accepted";
-
-      case "preparing":
-        return "preparing";
-
-      case "ready":
-        return "ready";
-
-      case "collected":
-        return "collected";
-
-      case "rejected":
-        return "rejected";
-
-      default:
-        return "pending";
+      case "pending": return "pending";
+      case "accepted": return "accepted";
+      case "preparing": return "preparing";
+      case "ready": return "ready";
+      case "collected": return "collected";
+      case "rejected": return "rejected";
+      default: return "pending";
     }
   };
 
@@ -102,7 +66,6 @@ export default function MyOrders() {
       <div className="container py-5">
         <div className="text-center">
           <div className="spinner-border text-warning" />
-
           <p className="mt-3">Loading Orders...</p>
         </div>
       </div>
@@ -110,31 +73,20 @@ export default function MyOrders() {
   }
 
   return (
-    <div className="container py-4">
+    <div className="orders-page container py-4">
       <div className="d-flex justify-content-between align-items-center flex-wrap mb-4">
         <h2 className="fw-bold">My Orders</h2>
-
-        <span className="badge bg-dark fs-6">
-          Total Orders : {orders.length}
-        </span>
+        <span className="badge bg-dark fs-6">Total : {orders.length}</span>
       </div>
 
       {orders.length === 0 ? (
         <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.9,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-          }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
           className="empty-state"
         >
           <FaShoppingBag size={70} />
-
           <h4 className="mt-3">No Orders Found</h4>
-
           <p>Place your first order now.</p>
         </motion.div>
       ) : (
@@ -142,23 +94,11 @@ export default function MyOrders() {
           {orders.map((order, index) => (
             <motion.div
               key={order.id}
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-              }}
-              transition={{
-                delay: index * 0.08,
-              }}
-              whileHover={{
-                scale: 1.01,
-              }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: index * 0.08 }}
+              whileHover={{ scale: 1.01 }}
               className="order-card"
             >
               <div className="row align-items-center">
@@ -169,12 +109,25 @@ export default function MyOrders() {
                     <p>
                       <FaRupeeSign /> Amount : ₹ {order.total_amount}
                     </p>
-
                     <p>Payment : {order.payment_method}</p>
                   </div>
+
+                  {/* ----- Discount Breakdown ----- */}
+                  {order.discount_amount > 0 && (
+                    <div className="discount-info">
+                      <span className="original-amount">
+                        ₹{order.original_amount}
+                      </span>
+                      <span className="discount-line">
+                        - ₹{order.discount_amount} ({order.discount_name || "Discount"})
+                      </span>
+                      <span className="final-amount">₹{order.total_amount}</span>
+                    </div>
+                  )}
+
                   {order.ready_at && (
                     <p>
-                      Order Ready At :{" "}
+                      Ready At :{" "}
                       {new Date(order.ready_at).toLocaleString("en-IN", {
                         day: "2-digit",
                         month: "short",
@@ -189,17 +142,11 @@ export default function MyOrders() {
 
                 <div className="col-lg-4 col-md-4 text-md-end mt-3 mt-md-0">
                   <motion.div
-                    animate={{
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2,
-                    }}
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
                     className={`status-badge ${getStatusClass(order.status)}`}
                   >
                     {getStatusIcon(order.status)}
-
                     <span>{order.status}</span>
                   </motion.div>
 

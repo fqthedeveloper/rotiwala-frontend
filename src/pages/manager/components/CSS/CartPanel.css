@@ -454,3 +454,143 @@
     font-size: 1rem;
   }
 }
+
+/* ----- Discount Row ----- */
+.discount-row {
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.discount-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.discount-icon {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+.discount-row select {
+  background: #fff;
+}
+.discount-info {
+  font-size: 0.85rem;
+  color: #28a745;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.text-muted {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discount-row select {
+    font-size: 0.9rem;
+  }
+}
+
+/* ----- Discount Row ----- */
+.discount-row {
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.discount-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.discount-icon {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+.discount-row select {
+  background: #fff;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.discount-info {
+  font-size: 0.85rem;
+  color: #28a745;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.text-muted {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discount-row select {
+    font-size: 0.9rem;
+  }
+}
+
+/* ----- Discount Row ----- */
+.discount-row {
+  border-top: 1px solid #eee;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+.discount-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.discount-icon {
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+.discount-row select {
+  background: #fff;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.discount-info {
+  font-size: 0.85rem;
+  color: #28a745;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.text-muted {
+  color: #999;
+  font-size: 0.9rem;
+}
+.no-discounts {
+  padding: 4px 0;
+}
+.no-discounts small {
+  color: #999;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discount-row select {
+    font-size: 0.9rem;
+  }
+}
+
+/* ----- Discount Row in Summary ----- */
+.summary-row.discount-row-summary {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.summary-row.discount-row-summary strong {
+  color: #28a745;
+}
+
+.text-success {
+  color: #28a745 !important;
+}

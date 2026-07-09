@@ -126,6 +126,22 @@ const Sidebar = ({
           </NavLink>
 
           <NavLink
+            to="/admin/discounts"
+            onClick={closeSidebar}
+          >
+            <i className="bi-solid bi-tags"></i>
+            Discounts
+          </NavLink>
+
+          <NavLink
+            to="/admin/coupons"
+            onClick={closeSidebar}
+          >
+           <i className="bi bi-patch-question-fill"></i>
+            Coupon Codes
+          </NavLink>
+
+          <NavLink
             to="/admin/users"
             onClick={closeSidebar}
           >

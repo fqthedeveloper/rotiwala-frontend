@@ -78,8 +78,22 @@ const TESTIMONIALS = [
   },
 ];
 
-const FLOATING_FOODS = ["🍕", "🍔", "🌮", "🥗", "🥤", "🍣", "🍩", "🥪"];
-
+const FLOATING_FOODS = [
+  "🫓", // Roti
+  "🫓", // Chapati
+  "🫓", // Tandoori Roti
+  "🫓", // Butter Naan
+  "🫓", // Garlic Naan
+  "🫓", // Plain Naan
+  "🫓", // Laccha Paratha
+  "🫓", // Aloo Paratha
+  "🫓", // Gobi Paratha
+  "🫓", // Paneer Paratha
+  "🫓", // Missi Roti
+  "🫓", // Rumali Roti
+  "🫓", // Kulcha
+  "🫓", // Stuffed Kulcha
+];
 /* -------------------- COMPONENT -------------------- */
 export default function Home() {
   const navigate = useNavigate();
@@ -346,7 +360,7 @@ export default function Home() {
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
             >
-              🍛
+              🫓
             </motion.div>
           </div>
           <motion.div
@@ -765,7 +779,6 @@ export default function Home() {
       >
         <span className="pulse-ring" />
         <FaWhatsapp size={24} />
-        <span className="wa-label">WhatsApp</span>
       </a>
     </div>
   );
