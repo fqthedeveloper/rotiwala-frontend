@@ -1,14 +1,31 @@
+// frontend/src/service/api.js
+
 import axios from "axios";
 
+/* =========================================================
+   API BASE URL
+========================================================= */
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:8000/api";
+
+/* =========================================================
+   CREATE AXIOS INSTANCE
+========================================================= */
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 15000,
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 /* =========================================================
-   ENDPOINTS THAT MUST *NOT* TRIGGER TOKEN REFRESH
-   (a 401 from these means "wrong credentials", not "expired token")
-   ========================================================= */
+   AUTH ENDPOINTS
+========================================================= */
+
 const AUTH_ENDPOINTS = [
   "/accounts/password-login/",
   "/accounts/firebase-login/",
@@ -16,80 +33,82 @@ const AUTH_ENDPOINTS = [
   "/accounts/send-otp/",
   "/accounts/verify-otp/",
   "/token/",
-  "/token/refresh/",
 ];
 
 const isAuthEndpoint = (url = "") =>
   AUTH_ENDPOINTS.some((path) => url.includes(path));
 
 /* =========================================================
-   REQUEST INTERCEPTOR — attach Bearer token
-   ========================================================= */
+   REQUEST INTERCEPTOR
+========================================================= */
+
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access");
-    if (token && !isAuthEndpoint(config.url)) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken =
+      localStorage.getItem("access");
+
+    if (
+      accessToken &&
+      !isAuthEndpoint(config.url)
+    ) {
+      config.headers.Authorization =
+        `Bearer ${accessToken}`;
     }
+
+    if (config.responseType === "blob") {
+      config.headers.Accept =
+        "application/pdf";
+    }
+
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 /* =========================================================
-   RESPONSE INTERCEPTOR — refresh only on protected APIs
-   ========================================================= */
+   RESPONSE INTERCEPTOR
+========================================================= */
+
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    const status = error.response?.status;
 
-    /* 🛑 Don't refresh / redirect for login endpoints */
-    if (isAuthEndpoint(originalRequest?.url)) {
-      return Promise.reject(error);
-    }
+  (error) => {
+    const originalRequest =
+      error.config;
 
-    /* 🛑 Don't try to refresh if user isn't logged in */
-    const refreshToken = localStorage.getItem("refresh");
-    if (!refreshToken) {
-      return Promise.reject(error);
-    }
+    const status =
+      error.response?.status;
 
-    /* ✅ Real expired-token case */
-    if (status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (
+      status === 401 &&
+      !isAuthEndpoint(originalRequest?.url)
+    ) {
+      console.warn(
+        "Access token expired. Logging out..."
+      );
 
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/token/refresh/`,
-          { refresh: refreshToken },
-        );
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("selected_shop");
 
-        const newAccessToken = response.data.access;
-        localStorage.setItem("access", newAccessToken);
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      window.dispatchEvent(
+        new Event("authChanged")
+      );
 
-        return api(originalRequest);
-      } catch (refreshError) {
-        console.warn("Refresh failed:", refreshError);
-
-        ["access", "refresh", "user", "role", "user_id"].forEach((k) =>
-          localStorage.removeItem(k),
-        );
-
-        window.dispatchEvent(new Event("authChanged"));
-
-        /* Redirect only if not already on /login */
-        if (!window.location.pathname.startsWith("/login")) {
-          window.location.href = "/login";
-        }
-        return Promise.reject(refreshError);
+      if (
+        !window.location.pathname.startsWith(
+          "/login"
+        )
+      ) {
+        window.location.href = "/login";
       }
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

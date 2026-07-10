@@ -15,38 +15,62 @@ import {
   FaWalking,
   FaExclamationTriangle,
   FaShoppingBag,
+  FaSpinner,
 } from "react-icons/fa";
 import api from "../../service/api";
-import "./CSS/Dashboard.css";   // <-- fixed path
+import "./CSS/Dashboard.css";
 
 /* ============================================
-   Animated Counter Hook
+   Enhanced Animated Counter Hook with Easing
    ============================================ */
-const useCountUp = (end, duration = 1800) => {
+const useCountUp = (end, duration = 1800, shouldAnimate = true) => {
   const [count, setCount] = useState(0);
+  const [prevEnd, setPrevEnd] = useState(end);
   const frameRef = useRef();
+  const startTimeRef = useRef();
 
   useEffect(() => {
-    if (end === 0) {
-      setCount(0);
+    if (!shouldAnimate || end === 0) {
+      setCount(end);
       return;
     }
+
+    // Reset animation if target changed significantly
+    if (prevEnd !== end) {
+      setPrevEnd(end);
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    }
+
     const startTime = performance.now();
+    const startValue = count;
 
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 4);
-      const current = Math.floor(end * easeOut);
+      
+      // Cubic bezier ease-out (smoother)
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      
+      const current = Math.floor(startValue + (end - startValue) * easeOut);
       setCount(current);
+
       if (progress < 1) {
         frameRef.current = requestAnimationFrame(animate);
+      } else {
+        setCount(end);
       }
     };
 
     frameRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameRef.current);
-  }, [end, duration]);
+    
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [end, duration, shouldAnimate, prevEnd]);
 
   return count;
 };
@@ -54,6 +78,7 @@ const useCountUp = (end, duration = 1800) => {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [pageVisible, setPageVisible] = useState(false);
   const [stats, setStats] = useState({
     pending: 0,
@@ -63,13 +88,15 @@ export default function Dashboard() {
     collected: 0,
     today_sales: 0,
   });
+  const [prevStats, setPrevStats] = useState(null);
 
-  const pendingCount = useCountUp(stats.pending);
-  const acceptedCount = useCountUp(stats.accepted);
-  const preparingCount = useCountUp(stats.preparing);
-  const readyCount = useCountUp(stats.ready);
-  const collectedCount = useCountUp(stats.collected);
-  const salesCount = useCountUp(stats.today_sales);
+  // Get counts with smooth animation
+  const pendingCount = useCountUp(stats.pending, 1800, !loading);
+  const acceptedCount = useCountUp(stats.accepted, 1800, !loading);
+  const preparingCount = useCountUp(stats.preparing, 1800, !loading);
+  const readyCount = useCountUp(stats.ready, 1800, !loading);
+  const collectedCount = useCountUp(stats.collected, 1800, !loading);
+  const salesCount = useCountUp(stats.today_sales, 2000, !loading);
 
   useEffect(() => {
     document.title = "Manager Dashboard";
@@ -80,13 +107,17 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      setLoading(true);
+      setRefreshing(true);
       const res = await api.get("/orders/dashboard/");
+      setPrevStats(stats);
       setStats(res.data);
     } catch (err) {
       console.error("Dashboard load failed:", err);
     } finally {
-      setTimeout(() => setLoading(false), 400);
+      setTimeout(() => {
+        setLoading(false);
+        setRefreshing(false);
+      }, 600);
     }
   };
 
@@ -103,6 +134,12 @@ export default function Dashboard() {
   const activeOrders =
     stats.pending + stats.accepted + stats.preparing + stats.ready;
 
+  // Check if value changed for pulse animation
+  const hasChanged = (key) => {
+    if (!prevStats) return false;
+    return prevStats[key] !== stats[key];
+  };
+
   const statCards = [
     {
       key: "pending",
@@ -112,6 +149,7 @@ export default function Dashboard() {
       color: "#e65100",
       bg: "#fff3e0",
       path: "/manager/orders",
+      changed: hasChanged("pending"),
     },
     {
       key: "accepted",
@@ -121,6 +159,7 @@ export default function Dashboard() {
       color: "#00695c",
       bg: "#e0f2f1",
       path: "/manager/orders",
+      changed: hasChanged("accepted"),
     },
     {
       key: "preparing",
@@ -130,6 +169,7 @@ export default function Dashboard() {
       color: "#1565c0",
       bg: "#e3f2fd",
       path: "/manager/orders",
+      changed: hasChanged("preparing"),
     },
     {
       key: "ready",
@@ -139,6 +179,7 @@ export default function Dashboard() {
       color: "#2e7d32",
       bg: "#e8f5e9",
       path: "/manager/orders",
+      changed: hasChanged("ready"),
     },
     {
       key: "collected",
@@ -148,6 +189,7 @@ export default function Dashboard() {
       color: "#424242",
       bg: "#f5f5f5",
       path: "/manager/orders",
+      changed: hasChanged("collected"),
     },
     {
       key: "today_sales",
@@ -157,6 +199,7 @@ export default function Dashboard() {
       color: "#f9a825",
       bg: "#fffde7",
       path: "/manager/orders",
+      changed: hasChanged("today_sales"),
     },
   ];
 
@@ -208,9 +251,17 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="header-right">
-            <button className="refresh-btn" onClick={loadDashboard}>
-              <FaSyncAlt />
-              <span className="btn-text">Refresh</span>
+            <button 
+              className={`refresh-btn ${refreshing ? "refreshing" : ""}`} 
+              onClick={loadDashboard}
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <FaSpinner className="spin-icon" />
+              ) : (
+                <FaSyncAlt />
+              )}
+              <span className="btn-text">{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
           </div>
         </div>
@@ -221,13 +272,13 @@ export default function Dashboard() {
             {statCards.map((card, idx) => (
               <div
                 key={card.key}
-                className="stat-card-dashboard"
+                className={`stat-card-dashboard ${card.changed ? "value-changed" : ""}`}
                 style={{ animationDelay: `${0.1 + idx * 0.07}s` }}
                 onClick={() => navigate(card.path)}
               >
                 <div className="stat-bg" style={{ background: card.bg }}></div>
                 <div className="stat-top">
-                  <div className="stat-icon" style={{ color: card.color }}>
+                  <div className={`stat-icon ${card.changed ? "pulse-icon" : ""}`} style={{ color: card.color }}>
                     {card.icon}
                   </div>
                   <div className="stat-arrow">
@@ -235,10 +286,17 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="stat-body">
-                  <h3 className="stat-value">{card.value}</h3>
+                  <h3 className={`stat-value ${card.changed ? "value-pulse" : ""}`}>
+                    {card.value}
+                  </h3>
                   <span className="stat-label">{card.label}</span>
                 </div>
                 <div className="stat-shine"></div>
+                {card.changed && (
+                  <div className="update-indicator">
+                    <span className="update-dot"></span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -265,7 +323,7 @@ export default function Dashboard() {
                   </div>
                   <div className="bar-track">
                     <div
-                      className="bar-fill"
+                      className={`bar-fill ${bar.value > 0 ? "animate" : ""}`}
                       style={{
                         width: `${(bar.value / maxBarValue) * 100}%`,
                         background: `linear-gradient(90deg, ${bar.color}22, ${bar.color})`,
@@ -372,7 +430,7 @@ export default function Dashboard() {
                 {stats.pending > 0 ? "Action Required" : "All Caught Up"}
               </h5>
               <p>
-                You have <strong>{activeOrders}</strong> active orders.
+                You have <strong className="active-orders">{activeOrders}</strong> active orders.
                 {stats.pending > 0 && (
                   <span className="urgent">
                     {" "}{stats.pending} pending orders need immediate attention!

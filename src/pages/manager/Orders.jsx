@@ -208,7 +208,21 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         <div className="detail-row"><span>Payment Status</span><strong className={`payment-status-text ${order.payment_status}`}>{order.payment_status}</strong></div>
         <div className="detail-divider" />
         <div className="detail-row"><span>Order Type</span><strong className="order-type-text">{order.order_type}</strong></div>
-        <div className="detail-row"><span>Pickup</span><strong>{order.pickup_display || order.pickup_type}</strong></div>
+        <div className="detail-row">
+  <span>Pickup</span>
+  <strong>
+    {order.pickup_time
+      ? new Date(order.pickup_time).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      : order.pickup_type}
+  </strong>
+</div>
         <div className="detail-row"><span>Est. Ready</span><strong>{order.estimated_ready_time ? formatDateTime(order.estimated_ready_time) : "-"}</strong></div>
         <div className="detail-row"><span>Est. Minutes</span><strong className="est-minutes"><FaHourglassHalf style={{ marginRight: 5, fontSize: 12 }} /> {order.estimated_minutes} min</strong></div>
         <div className="detail-row"><span>Shop ID</span><strong>#{order.shop}</strong></div>

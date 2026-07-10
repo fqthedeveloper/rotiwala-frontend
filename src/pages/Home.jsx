@@ -1,3 +1,4 @@
+// src/pages/Home.jsx
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
@@ -34,6 +35,8 @@ import {
   getItemsByCategoryPublic,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
+import Loader from "../components/common/Loader"; // Import the loader
+import { useLoading } from "../context/LoadingContext"; // Import loading context
 
 /* -------------------- STATIC DATA -------------------- */
 const TOP_CATEGORIES = [
@@ -79,21 +82,10 @@ const TESTIMONIALS = [
 ];
 
 const FLOATING_FOODS = [
-  "🫓", // Roti
-  "🫓", // Chapati
-  "🫓", // Tandoori Roti
-  "🫓", // Butter Naan
-  "🫓", // Garlic Naan
-  "🫓", // Plain Naan
-  "🫓", // Laccha Paratha
-  "🫓", // Aloo Paratha
-  "🫓", // Gobi Paratha
-  "🫓", // Paneer Paratha
-  "🫓", // Missi Roti
-  "🫓", // Rumali Roti
-  "🫓", // Kulcha
-  "🫓", // Stuffed Kulcha
+  "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", 
+  "🫓", "🫓", "🫓", "🫓", "🫓", "🫓"
 ];
+
 /* -------------------- COMPONENT -------------------- */
 export default function Home() {
   const navigate = useNavigate();
@@ -105,6 +97,9 @@ export default function Home() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.4]);
 
+  // Use loading context
+  const { showLoading, hideLoading } = useLoading();
+  
   const [loading, setLoading] = useState(true);
   const [nearestShop, setNearestShop] = useState(null);
   const [shops, setShops] = useState([]);
@@ -113,6 +108,7 @@ export default function Home() {
   const [menuItems, setMenuItems] = useState([]);
   const [locationDenied, setLocationDenied] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   /* ---------- INIT ---------- */
   useEffect(() => {
@@ -143,13 +139,14 @@ export default function Home() {
     }
   };
 
-  const loadLocation = () => {
+  const loadLocation = async () => {
     if (!navigator.geolocation) {
       setLocationDenied(true);
-      fetchAllShops();
+      await fetchAllShops();
       setLoading(false);
       return;
     }
+    
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -191,7 +188,14 @@ export default function Home() {
   };
 
   const loadAllShops = async () => {
-    await fetchAllShops();
+    setIsLoadingMore(true);
+    showLoading("Loading available shops...", "warm", "md");
+    try {
+      await fetchAllShops();
+    } finally {
+      setIsLoadingMore(false);
+      hideLoading();
+    }
   };
 
   const selectShop = (shop) => {
@@ -201,42 +205,68 @@ export default function Home() {
   };
 
   const handleAddCart = async (item) => {
+    showLoading("Adding to cart...", "cool", "sm");
     try {
       await addToCart(item.id, 1);
       window.dispatchEvent(new Event("cartUpdated"));
+      hideLoading();
       Swal.fire({
         icon: "success",
         title: "Added To Cart",
         text: `${item.name} added successfully`,
         timer: 1200,
         showConfirmButton: false,
+        background: '#1a1a1a',
+        color: '#ffffff',
       });
     } catch (error) {
+      hideLoading();
       Swal.fire({
         icon: "error",
         title: "Failed",
         text: error.response?.data?.error || "Unable to add item",
+        background: '#1a1a1a',
+        color: '#ffffff',
       });
+    }
+  };
+
+  const handleChangeShop = async () => {
+    setIsLoadingMore(true);
+    showLoading("Loading shops...", "warm", "md");
+    try {
+      await loadAllShops();
+    } finally {
+      setIsLoadingMore(false);
+      hideLoading();
     }
   };
 
   /* ---------- LOADER ---------- */
   if (loading) {
     return (
-      <div className="home-loader">
-        <div className="loader-ring">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <p className="loader-text">Finding the best food near you...</p>
-      </div>
+      <Loader 
+        message="Finding the best food near you..." 
+        variant="warm" 
+        size="lg"
+        fullScreen={true}
+      />
     );
   }
 
   /* ---------- RENDER ---------- */
   return (
     <div className="home-page">
+      {/* Show loader for async operations */}
+      {isLoadingMore && (
+        <Loader 
+          message="Loading shops..." 
+          variant="cool" 
+          size="md"
+          fullScreen={true}
+        />
+      )}
+
       {/* ============ HERO ============ */}
       <motion.section
         ref={heroRef}
@@ -310,7 +340,7 @@ export default function Home() {
           >
             <motion.button
               className="hero-btn primary"
-              onClick={loadAllShops}
+              onClick={handleChangeShop}
               whileHover={{ scale: 1.04, y: -3 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -431,7 +461,7 @@ export default function Home() {
               </motion.a>
               <motion.button
                 className="change-btn"
-                onClick={loadAllShops}
+                onClick={handleChangeShop}
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.96 }}
               >
@@ -530,55 +560,61 @@ export default function Home() {
       </motion.div>
 
       <motion.div className="menu-grid">
-        {menuItems.map((item, index) => (
-          <motion.div
-            key={item.id}
-            className="food-card"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ delay: (index % 8) * 0.05, duration: 0.5 }}
-            whileHover={{ y: -10 }}
-          >
-            <div className="food-image-wrapper">
-              <img
-                src={item.image_url ? item.image_url : "/food-placeholder.jpg"}
-                alt={item.name}
-                className="food-image"
-                loading="lazy"
-                onError={(e) => (e.target.src = "/food-placeholder.jpg")}
-              />
-              <span className="food-badge">
-                <FaFire /> Hot
-              </span>
-              <div className="food-img-overlay" />
-            </div>
-            <div className="food-body">
-              <h4>{item.name}</h4>
-              <p>
-                {item.description
-                  ? item.description.slice(0, 90)
-                  : "Delicious freshly prepared food."}
-              </p>
-              <div className="food-footer">
-                <h3>₹ {item.base_price || item.price}</h3>
-                <div className="food-stars">
-                  <FaStar /> 4.{5 + (index % 4)}
+        {menuItems.length === 0 ? (
+          <div className="empty-menu">
+            <p>No menu items available for this shop.</p>
+          </div>
+        ) : (
+          menuItems.map((item, index) => (
+            <motion.div
+              key={item.id}
+              className="food-card"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ delay: (index % 8) * 0.05, duration: 0.5 }}
+              whileHover={{ y: -10 }}
+            >
+              <div className="food-image-wrapper">
+                <img
+                  src={item.image_url ? item.image_url : "/food-placeholder.jpg"}
+                  alt={item.name}
+                  className="food-image"
+                  loading="lazy"
+                  onError={(e) => (e.target.src = "/food-placeholder.jpg")}
+                />
+                <span className="food-badge">
+                  <FaFire /> Hot
+                </span>
+                <div className="food-img-overlay" />
+              </div>
+              <div className="food-body">
+                <h4>{item.name}</h4>
+                <p>
+                  {item.description
+                    ? item.description.slice(0, 90)
+                    : "Delicious freshly prepared food."}
+                </p>
+                <div className="food-footer">
+                  <h3>₹ {item.base_price || item.price}</h3>
+                  <div className="food-stars">
+                    <FaStar /> 4.{5 + (index % 4)}
+                  </div>
+                </div>
+                <div className="food-actions">
+                  <motion.button
+                    className="add-cart-btn"
+                    onClick={() => handleAddCart(item)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <FaShoppingCart /> Add To Cart
+                  </motion.button>
                 </div>
               </div>
-              <div className="food-actions">
-                <motion.button
-                  className="add-cart-btn"
-                  onClick={() => handleAddCart(item)}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                >
-                  <FaShoppingCart /> Add To Cart
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </motion.div>
 
       {/* ============ STATS ============ */}

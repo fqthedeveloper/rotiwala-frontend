@@ -303,82 +303,91 @@ export default function Checkout() {
       setSelectedPromotion(promo);
     }
   };
+const handlePlaceOrder = async () => {
+  if (!shopId) {
+    Swal.fire("Select Shop", "Please select a shop", "warning");
+    return;
+  }
+  if (pickupByOtherPerson && !pickupPersonName.trim()) {
+    Swal.fire("Pickup Person", "Enter pickup person name", "warning");
+    return;
+  }
+  if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
+    Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
+    return;
+  }
+  if (pickupType === "scheduled" && (!pickupDate || !pickupTime)) {
+    Swal.fire(
+      "Schedule Required",
+      "Please select both pickup date and time",
+      "warning"
+    );
+    return;
+  }
 
-  const handlePlaceOrder = async () => {
-    if (!shopId) {
-      Swal.fire("Select Shop", "Please select a shop", "warning");
-      return;
-    }
-    if (pickupByOtherPerson && !pickupPersonName.trim()) {
-      Swal.fire("Pickup Person", "Enter pickup person name", "warning");
-      return;
-    }
-    if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
-      Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
-      return;
-    }
-    if (pickupType === "scheduled" && (!pickupDate || !pickupTime)) {
-      Swal.fire(
-        "Schedule Required",
-        "Please select both pickup date and time",
-        "warning"
-      );
-      return;
+  setPlacingOrder(true);
+  try {
+    // Build the payload
+    const payload = {
+      shop_id: shopId,
+      payment_method: paymentMethod,
+      notes: notes,
+      pickup_by_other_person: pickupByOtherPerson,
+      pickup_person_name: pickupByOtherPerson ? pickupPersonName : "",
+      pickup_person_phone: pickupByOtherPerson ? pickupPersonPhone : "",
+      pickup_type: pickupType,
+    };
+
+    // For scheduled pickup, send a combined datetime string
+    if (pickupType === "scheduled") {
+      // Combine date and time into ISO format: "2026-07-10T14:30:00"
+      const pickupDateTime = `${pickupDate}T${pickupTime}:00`; // assumes time is HH:mm
+      payload.pickup_time = pickupDateTime;
+    } else {
+      // For instant, we don't send a pickup_time (or send null)
+      payload.pickup_time = null;
     }
 
-    setPlacingOrder(true);
-    try {
-      const payload = {
-        shop_id: shopId,
-        payment_method: paymentMethod,
-        notes: notes,
-        pickup_by_other_person: pickupByOtherPerson,
-        pickup_person_name: pickupByOtherPerson ? pickupPersonName : "",
-        pickup_person_phone: pickupByOtherPerson ? pickupPersonPhone : "",
-        pickup_type: pickupType,
-        pickup_date: pickupType === "scheduled" ? pickupDate : null,
-        pickup_time: pickupType === "scheduled" ? pickupTime : null,
-      };
-
-      if (selectedPromotion) {
-        payload.promotion_type = selectedPromotion.type;
-        if (selectedPromotion.type === "discount") {
-          payload.promotion_id = selectedPromotion.id;
-        } else if (selectedPromotion.type === "coupon") {
-          payload.coupon_code = selectedPromotion.code;
-        }
+    // Add promotion details if any
+    if (selectedPromotion) {
+      payload.promotion_type = selectedPromotion.type;
+      if (selectedPromotion.type === "discount") {
+        payload.promotion_id = selectedPromotion.id;
+      } else if (selectedPromotion.type === "coupon") {
+        payload.coupon_code = selectedPromotion.code;
       }
-
-      const response = await placeOrder(payload);
-
-      await Swal.fire({
-        title: "🎉 Order Placed Successfully",
-        html: `
-          <div style="padding:10px">
-            <h4>Order No</h4>
-            <h2 style="color:#f7c600">
-              ${response.order_number}
-            </h2>
-            <p>Estimated Ready In</p>
-            <h3>${response.estimated_minutes} Minutes</h3>
-          </div>
-        `,
-        icon: "success",
-        confirmButtonText: "Track Order",
-        confirmButtonColor: "#f7c600",
-      });
-
-      navigate("/my-orders");
-    } catch (error) {
-      Swal.fire(
-        "Error",
-        error?.response?.data?.error || "Failed to place order",
-        "error"
-      );
-    } finally {
-      setPlacingOrder(false);
     }
-  };
+
+    const response = await placeOrder(payload);
+
+    await Swal.fire({
+      title: "🎉 Order Placed Successfully",
+      html: `
+        <div style="padding:10px">
+          <h4>Order No</h4>
+          <h2 style="color:#f7c600">
+            ${response.order_number}
+          </h2>
+          <p>Estimated Ready In</p>
+          <h3>${response.estimated_minutes} Minutes</h3>
+        </div>
+      `,
+      icon: "success",
+      confirmButtonText: "Track Order",
+      confirmButtonColor: "#f7c600",
+    });
+
+    navigate("/my-orders");
+  } catch (error) {
+    Swal.fire(
+      "Error",
+      error?.response?.data?.error || "Failed to place order",
+      "error"
+    );
+  } finally {
+    setPlacingOrder(false);
+  }
+};
 
   // ----- Redirect if cart empty -----
   if (redirectToCart) {

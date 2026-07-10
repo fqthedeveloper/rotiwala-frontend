@@ -1,31 +1,59 @@
 // frontend/src/components/ReceiptPrinter.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { FaPrint, FaDownload, FaTimes, FaSpinner } from 'react-icons/fa';
-import { generateReceipt, printReceipt } from '../../../service/orderService';
+import { 
+  FaPrint, 
+  FaDownload, 
+  FaTimes, 
+  FaSpinner, 
+  FaFilePdf, 
+  FaFileAlt, 
+  FaFileCode,
+  FaChevronDown,
+  FaChevronUp,
+  FaClipboardList,
+  FaWallet,
+  FaUser,
+  FaPhone,
+  FaShoppingBag,
+  FaMoneyBill,
+  FaClock
+} from 'react-icons/fa';
+import { generateReceipt, printReceipt, downloadReceiptPDF, downloadReceiptText } from '../../../service/orderService';
 import Swal from 'sweetalert2';
 import './CSS/ReceiptPrinter.css';
 
 const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [receiptText, setReceiptText] = useState('');
   const [error, setError] = useState(null);
+  const [selectedBillType, setSelectedBillType] = useState('standard');
+  const [showBillOptions, setShowBillOptions] = useState(false);
+  const [userRole, setUserRole] = useState('manager');
   const receiptRef = useRef(null);
+
+  // Get user role from localStorage
+  useEffect(() => {
+    const role = localStorage.getItem('userRole') || 'manager';
+    setUserRole(role);
+  }, []);
 
   // Load receipt data
   useEffect(() => {
     loadReceipt();
-  }, [orderId]);
+  }, [orderId, selectedBillType]);
 
   const loadReceipt = async () => {
     try {
       setLoading(true);
-      const data = await generateReceipt(orderId);
+      const data = await generateReceipt(orderId, selectedBillType);
       setReceiptData(data);
       setReceiptText(data.receipt_text);
       setError(null);
     } catch (err) {
+      console.error('Load receipt error:', err);
       setError(err.message || 'Failed to load receipt');
       Swal.fire('Error', 'Failed to generate receipt', 'error');
     } finally {
@@ -73,15 +101,14 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
   const printViaServer = async () => {
     try {
       const result = await printReceipt(orderId, {
-        printer_type: 'escpos',
+        bill_type: selectedBillType,
         printer_ip: localStorage.getItem('printer_ip') || '192.168.1.100',
       });
       
-      if (!result.success && result.receipt_text) {
-        // Fallback: use receipt text
-        return result.receipt_text;
+      if (result.success) {
+        return true;
       }
-      return result.success;
+      return false;
     } catch (error) {
       console.error('Server Print Error:', error);
       return false;
@@ -151,9 +178,16 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
     printWindow.document.close();
   };
 
-  // Main print handler
+  // Main print handler (Manager only)
   const handlePrint = async () => {
     if (printing) return;
+    
+    // Check if user is manager
+    if (userRole !== 'manager' && userRole !== 'super_admin') {
+      Swal.fire('Error', 'Only managers can print receipts directly', 'error');
+      return;
+    }
+
     setPrinting(true);
 
     try {
@@ -166,15 +200,7 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
 
       // If USB failed or not available, try server
       if (!printed) {
-        const result = await printViaServer();
-        if (result === true) {
-          printed = true;
-        } else if (typeof result === 'string') {
-          // Server returned fallback text
-          setReceiptText(result);
-          printAsPDF();
-          printed = true;
-        }
+        printed = await printViaServer();
       }
 
       // Final fallback: PDF
@@ -190,7 +216,6 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
           timer: 2000,
           showConfirmButton: false
         });
-        onClose?.();
       }
     } catch (error) {
       console.error('Print error:', error);
@@ -200,15 +225,104 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
     }
   };
 
-  // Download receipt as text
-  const downloadReceipt = () => {
-    const blob = new Blob([receiptText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+const handleDownloadPDF = async () => {
+  if (!receiptData?.order_number) {
+    Swal.fire('Error', 'Receipt data not available', 'error');
+    return;
+  }
+
+  setDownloading(true);
+  try {
+    // Use the simple window.open method
+    const token = localStorage.getItem("access");
+    if (!token) {
+      throw new Error('Please login again');
+    }
+    
+    const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+    const url = `${baseURL}/orders/receipt/${orderId}/download/pdf/?bill_type=${selectedBillType}`;
+    
+    // Use fetch to download with proper headers
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/pdf'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Download failed');
+    }
+    
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `receipt_${receiptData?.order_number || 'order'}.txt`;
+    link.href = downloadUrl;
+    link.download = `receipt_${orderId}.pdf`;
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    Swal.fire({
+      icon: 'success',
+      title: 'Download Started',
+      text: 'Your PDF receipt is being downloaded',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    console.error('Download PDF error:', error);
+    Swal.fire('Error', error.message || 'Failed to download PDF. Please try again.', 'error');
+  } finally {
+    setDownloading(false);
+  }
+};
+
+// Download Text - Manager only
+const handleDownloadText = async () => {
+  if (userRole !== 'manager' && userRole !== 'super_admin') {
+    Swal.fire('Error', 'Only managers can download text receipts', 'error');
+    return;
+  }
+
+  if (!receiptData?.order_number) {
+    Swal.fire('Error', 'Receipt data not available', 'error');
+    return;
+  }
+
+  setDownloading(true);
+  try {
+    await downloadReceiptText(orderId, selectedBillType);
+    Swal.fire({
+      icon: 'success',
+      title: 'Download Started',
+      text: 'Your text receipt is being downloaded',
+      timer: 2000,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    console.error('Download Text error:', error);
+    Swal.fire('Error', 'Failed to download text. Please try again.', 'error');
+  } finally {
+    setDownloading(false);
+  }
+};
+
+  // Copy receipt text to clipboard
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(receiptText).then(() => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Copied!',
+        text: 'Receipt text copied to clipboard',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }).catch(() => {
+      Swal.fire('Error', 'Failed to copy text', 'error');
+    });
   };
 
   if (loading) {
@@ -234,8 +348,10 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
     );
   }
 
+  const isManager = userRole === 'manager' || userRole === 'super_admin';
+
   return (
-    <div className="receipt-modal" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
+    <div className="receipt-modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="receipt-content" ref={receiptRef}>
         {/* Header */}
         <div className="receipt-header">
@@ -247,9 +363,60 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
 
         {/* Order Info */}
         <div className="receipt-info">
-          <span className="order-number">Order: #{receiptData?.order_number}</span>
-          <span className="order-type">{receiptData?.order_type?.toUpperCase()}</span>
-          <span className="order-date">{receiptData?.ordered_at}</span>
+          <div className="receipt-info-item">
+            <span className="label">Order</span>
+            <span className="value">#{receiptData?.order_number}</span>
+          </div>
+          <div className="receipt-info-item">
+            <span className="label">Type</span>
+            <span className={`value type-badge ${receiptData?.order_type}`}>
+              {receiptData?.order_type?.toUpperCase()}
+            </span>
+          </div>
+         <span className="value">
+            {receiptData?.ordered_at &&
+              new Date(receiptData.ordered_at).toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata",
+              })}
+          </span>
+          <div className="receipt-info-item">
+            <span className="label">Amount</span>
+            <span className="value amount">₹{receiptData?.total_amount}</span>
+          </div>
+        </div>
+
+        {/* Customer Info */}
+        <div className="receipt-customer-info">
+          <div className="customer-detail">
+            <FaUser className="icon" />
+            <span>{receiptData?.customer_name}</span>
+          </div>
+          <div className="customer-detail">
+            <FaPhone className="icon" />
+            <span>{receiptData?.customer_phone}</span>
+          </div>
+          <div className="customer-detail">
+            <FaMoneyBill className="icon" />
+            <span>{receiptData?.payment_method?.toUpperCase()} - {receiptData?.payment_status?.toUpperCase()}</span>
+          </div>
+        </div>
+
+        {/* Bill Type Selector */}
+        <div className="bill-type-section">
+          <button 
+            className="bill-type-toggle"
+            onClick={() => setShowBillOptions(!showBillOptions)}
+          >
+            <FaClipboardList /> Bill Type: {selectedBillType.charAt(0).toUpperCase() + selectedBillType.slice(1)}
+            {showBillOptions ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+
         </div>
 
         {/* Receipt Text */}
@@ -257,37 +424,64 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
           <pre className="receipt-text">{receiptText}</pre>
         </div>
 
-        {/* Actions */}
-        <div className="receipt-actions">
-          <button 
-            onClick={handlePrint} 
-            disabled={printing}
-            className="btn-print"
-          >
-            {printing ? <FaSpinner className="spinning" /> : <FaPrint />}
-            {printing ? 'Printing...' : 'Print Receipt'}
-          </button>
-          
-          <button 
-            onClick={downloadReceipt}
-            className="btn-download"
-          >
-            <FaDownload /> Download
-          </button>
+        {/* Download Options */}
+        <div className="download-options">
+          <div className="download-section-title">
+            <FaDownload /> Download Options
+          </div>
+          <div className="download-buttons">
+            {/* PDF Download - Available for everyone */}
+            <button 
+              onClick={handleDownloadPDF} 
+              disabled={downloading}
+              className="btn-download-pdf"
+            >
+              {downloading ? <FaSpinner className="spinning" /> : <FaFilePdf />}
+              PDF Bill
+            </button>
+
+            {/* Manager-only options */}
+            {isManager && (
+              <>
+                <button 
+                  onClick={handlePrint} 
+                  disabled={printing}
+                  className="btn-download-print"
+                >
+                  {printing ? <FaSpinner className="spinning" /> : <FaPrint />}
+                  Print Receipt
+                </button>
+                <button 
+                  onClick={handleDownloadText} 
+                  disabled={downloading}
+                  className="btn-download-text"
+                >
+                  {downloading ? <FaSpinner className="spinning" /> : <FaFileAlt />}
+                  Text Bill
+                </button>
+                <button 
+                  onClick={handleCopyText} 
+                  className="btn-download-copy"
+                >
+                  <FaFileCode /> Copy
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Printer Settings (optional) */}
-        <div className="printer-settings">
-          <small>
-            Printer IP: 
-            <input 
-              type="text" 
-              defaultValue={localStorage.getItem('printer_ip') || '192.168.1.100'}
-              onChange={(e) => localStorage.setItem('printer_ip', e.target.value)}
-              placeholder="192.168.1.100"
-              className="printer-ip-input"
-            />
-          </small>
+        {/* Manager Badge */}
+        {isManager && (
+          <div className="manager-badge">
+            <span>🔑 Manager Mode - Full Access</span>
+          </div>
+        )}
+
+        {/* Close Button */}
+        <div className="receipt-footer">
+          <button onClick={onClose} className="btn-close">
+            Close
+          </button>
         </div>
       </div>
     </div>

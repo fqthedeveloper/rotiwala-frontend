@@ -1,4 +1,7 @@
-import { Routes, Route } from "react-router-dom";
+// src/App.js
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useLoading } from "./context/LoadingContext";
 
 // Global Styles
 import "./index.css";
@@ -14,7 +17,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 // Auth Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
-import AuthRoute from "./routes/AuthRoute"; // <-- NEW
+import AuthRoute from "./routes/AuthRoute";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -29,7 +32,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/admin/Dashboard";
 import Orders from "./pages/admin/Orders";
 import Products from "./pages/admin/Products";
-import Users from "./pages/admin/Users";
+import Customer from "./pages/admin/CustomerManagement";
 import AddProduct from "./pages/admin/AddProduct";
 import Shops from "./pages/admin/Shop/Shops";
 import AddShop from "./pages/admin/Shop/AddShop";
@@ -47,6 +50,8 @@ import Coupons from "./pages/admin/Coupons/Coupons";
 import CouponForm from "./pages/admin/Coupons/CouponForm";
 import Discounts from "./pages/admin/Discount/Discounts";
 import DiscountForm from "./pages/admin/Discount/DiscountForm";
+import UsageAnalytics from "./pages/admin/Usage-Discount/UsageAnalytics";
+
 
 // Customer Pages
 import Cart from "./pages/Customer/Cart";
@@ -61,6 +66,19 @@ import ManagerOrders from "./pages/manager/Orders";
 import WalkInOrder from "./pages/manager/WalkInOrder";
 
 function App() {
+  const location = useLocation();
+  const { showLoading, hideLoading } = useLoading();
+
+  // Show loader on route change
+  useEffect(() => {
+    showLoading('Loading page...', 'warm', 'md');
+    const timer = setTimeout(() => {
+      hideLoading();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
   return (
     <Routes>
       {/* PUBLIC ROUTES */}
@@ -70,7 +88,6 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
 
-        {/* Auth pages: Block if ALREADY logged in */}
         <Route
           path="/login"
           element={
@@ -88,10 +105,8 @@ function App() {
           }
         />
 
-        {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
 
-        {/* Protected Customer Pages */}
         <Route
           path="/cart"
           element={
@@ -153,13 +168,14 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />
         <Route path="products" element={<Products />} />
-        <Route path="users" element={<Users />} />
+        <Route path="customer" element={<Customer />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="coupons/add" element={<CouponForm />} />
         <Route path="coupons/edit/:id" element={<CouponForm />} />
         <Route path="discounts" element={<Discounts />} />
         <Route path="discounts/add" element={<DiscountForm />} />
         <Route path="discounts/edit/:id" element={<DiscountForm />} />
+        <Route path="discounts/usage" element={<UsageAnalytics />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 
@@ -177,10 +193,9 @@ function App() {
         <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="orders" element={<ManagerOrders />} />
         <Route path="walkin" element={<WalkInOrder />} />
+        <Route path="discounts/usage" element={<UsageAnalytics />} />
         <Route path="*" element={<NotFound />} />
       </Route>
-
-      
     </Routes>
   );
 }

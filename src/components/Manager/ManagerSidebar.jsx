@@ -109,6 +109,13 @@ const ManagerSidebar = ({
           <div className="sidebar-section">
             Customers
           </div>
+          <NavLink
+            to="/manager/discounts/usage"
+            onClick={closeSidebar}
+          >
+            <i className="bi bi-people"></i>
+            Usage Analytics
+          </NavLink>
 
           <NavLink
             to="/manager/customers"

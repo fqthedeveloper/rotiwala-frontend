@@ -142,7 +142,15 @@ const Sidebar = ({
           </NavLink>
 
           <NavLink
-            to="/admin/users"
+            to="/admin/discounts/usage"
+            onClick={closeSidebar}
+          >
+           <i className="bi bi-patch-question-fill"></i>
+            Usage Discounts
+          </NavLink>
+
+          <NavLink
+            to="/admin/customer"
             onClick={closeSidebar}
           >
             <i className="bi bi-people"></i>
