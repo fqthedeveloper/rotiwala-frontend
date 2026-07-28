@@ -95,7 +95,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
               fontWeight: "800",
             }}
           >
-            🍽️ Roti Wala
+            🍽️ Roti Waale
           </h3>
 
           {user && (

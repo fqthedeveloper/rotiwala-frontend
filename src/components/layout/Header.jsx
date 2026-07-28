@@ -99,7 +99,7 @@ const Header = () => {
             <Link to="/" className="logo-section">
               <img src={Logo} alt="Logo" className="logo-img" />
 
-              <span className="logo-text">Roti Wala</span>
+              <span className="logo-text">Roti Waale</span>
             </Link>
 
             <nav className="desktop-nav">

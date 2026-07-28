@@ -18,6 +18,19 @@
   overflow: hidden;
 }
 
+/* Reduce heavy blur on small screens and add smooth fade */
+@media (max-width: 576px) {
+  .loader-wrapper {
+    background: rgba(10, 10, 10, 0.5);
+    backdrop-filter: blur(4px) saturate(120%);
+    -webkit-backdrop-filter: blur(4px) saturate(120%);
+  }
+}
+
+.loader-wrapper {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
 .loader-wrapper.inline {
   position: relative;
   height: 100%;

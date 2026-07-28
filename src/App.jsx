@@ -64,20 +64,28 @@ import ManagerLayout from "./components/Manager/ManagerLayout";
 import ManagerDashboard from "./pages/manager/Dashboard";
 import ManagerOrders from "./pages/manager/Orders";
 import WalkInOrder from "./pages/manager/WalkInOrder";
+import CustomerManagement from "./pages/manager/CustomerManagement";
 
 function App() {
   const location = useLocation();
   const { showLoading, hideLoading } = useLoading();
 
-  // Show loader on route change
+  // Show loader only if route change takes a little time; hide quickly if the new page is already ready.
   useEffect(() => {
-    showLoading('Loading page...', 'warm', 'md');
-    const timer = setTimeout(() => {
-      hideLoading();
-    }, 500);
+    const showTimer = setTimeout(() => {
+      showLoading('Loading page...', 'warm', 'md');
+    }, 80);
 
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+    const autoHideTimer = setTimeout(() => {
+      hideLoading();
+    }, 250);
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(autoHideTimer);
+      hideLoading();
+    };
+  }, [location.pathname, showLoading, hideLoading]);
 
   return (
     <Routes>
@@ -194,6 +202,7 @@ function App() {
         <Route path="orders" element={<ManagerOrders />} />
         <Route path="walkin" element={<WalkInOrder />} />
         <Route path="discounts/usage" element={<UsageAnalytics />} />
+        <Route path="customers" element={<CustomerManagement />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

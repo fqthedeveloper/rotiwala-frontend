@@ -19,7 +19,14 @@ export default function Checkout() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  // ----- Pickup & Payment -----
+  // ----- Delivery Option -----
+  const [deliveryOption, setDeliveryOption] = useState("pickup"); // "pickup" or "delivery"
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryLat, setDeliveryLat] = useState(null);
+  const [deliveryLng, setDeliveryLng] = useState(null);
+  const [addressError, setAddressError] = useState("");
+
+  // ----- Pickup & Payment (only for pickup) -----
   const [pickupByOtherPerson, setPickupByOtherPerson] = useState(false);
   const [pickupPersonName, setPickupPersonName] = useState("");
   const [pickupPersonPhone, setPickupPersonPhone] = useState("");
@@ -46,7 +53,7 @@ export default function Checkout() {
   const [promotionMessage, setPromotionMessage] = useState("");
   const [fetchingPromotions, setFetchingPromotions] = useState(false);
 
-  // ----- Manual coupon input (fallback) -----
+  // ----- Manual coupon input -----
   const [manualCouponCode, setManualCouponCode] = useState("");
   const [showManualCoupon, setShowManualCoupon] = useState(false);
 
@@ -303,91 +310,129 @@ export default function Checkout() {
       setSelectedPromotion(promo);
     }
   };
-const handlePlaceOrder = async () => {
-  if (!shopId) {
-    Swal.fire("Select Shop", "Please select a shop", "warning");
-    return;
-  }
-  if (pickupByOtherPerson && !pickupPersonName.trim()) {
-    Swal.fire("Pickup Person", "Enter pickup person name", "warning");
-    return;
-  }
-  if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
-    Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
-    return;
-  }
-  if (pickupType === "scheduled" && (!pickupDate || !pickupTime)) {
-    Swal.fire(
-      "Schedule Required",
-      "Please select both pickup date and time",
-      "warning"
+
+  // ============================================
+  // Get current location for delivery
+  // ============================================
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setAddressError("Geolocation is not supported by your browser");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setDeliveryLat(position.coords.latitude);
+        setDeliveryLng(position.coords.longitude);
+        setAddressError("");
+        // Optionally reverse-geocode to get address; for now just store coordinates.
+      },
+      (error) => {
+        setAddressError("Unable to get your location. Please enter address manually.");
+        console.error(error);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
     );
-    return;
-  }
+  };
 
-  setPlacingOrder(true);
-  try {
-    // Build the payload
-    const payload = {
-      shop_id: shopId,
-      payment_method: paymentMethod,
-      notes: notes,
-      pickup_by_other_person: pickupByOtherPerson,
-      pickup_person_name: pickupByOtherPerson ? pickupPersonName : "",
-      pickup_person_phone: pickupByOtherPerson ? pickupPersonPhone : "",
-      pickup_type: pickupType,
-    };
-
-    // For scheduled pickup, send a combined datetime string
-    if (pickupType === "scheduled") {
-      // Combine date and time into ISO format: "2026-07-10T14:30:00"
-      const pickupDateTime = `${pickupDate}T${pickupTime}:00`; // assumes time is HH:mm
-      payload.pickup_time = pickupDateTime;
-    } else {
-      // For instant, we don't send a pickup_time (or send null)
-      payload.pickup_time = null;
+  // ============================================
+  // Place Order
+  // ============================================
+  const handlePlaceOrder = async () => {
+    if (!shopId) {
+      Swal.fire("Select Shop", "Please select a shop", "warning");
+      return;
     }
 
-    // Add promotion details if any
-    if (selectedPromotion) {
-      payload.promotion_type = selectedPromotion.type;
-      if (selectedPromotion.type === "discount") {
-        payload.promotion_id = selectedPromotion.id;
-      } else if (selectedPromotion.type === "coupon") {
-        payload.coupon_code = selectedPromotion.code;
+    if (deliveryOption === "pickup") {
+      if (pickupByOtherPerson && !pickupPersonName.trim()) {
+        Swal.fire("Pickup Person", "Enter pickup person name", "warning");
+        return;
+      }
+      if (pickupByOtherPerson && !pickupPersonPhone.trim()) {
+        Swal.fire("Pickup Person", "Enter pickup person phone number", "warning");
+        return;
+      }
+      if (pickupType === "scheduled" && (!pickupDate || !pickupTime)) {
+        Swal.fire(
+          "Schedule Required",
+          "Please select both pickup date and time",
+          "warning"
+        );
+        return;
+      }
+    } else { // delivery
+      if (!deliveryAddress.trim()) {
+        Swal.fire("Delivery Address", "Please enter your delivery address", "warning");
+        return;
+      }
+      if (deliveryLat === null || deliveryLng === null) {
+        Swal.fire("Location", "Please allow location access or provide coordinates", "warning");
+        return;
       }
     }
 
-    const response = await placeOrder(payload);
+    setPlacingOrder(true);
+    try {
+      const payload = {
+        shop_id: shopId,
+        payment_method: paymentMethod,
+        notes: notes,
+        delivery_option: deliveryOption,
+        // For pickup: send pickup fields
+        pickup_type: deliveryOption === "pickup" ? pickupType : "instant",
+        pickup_time: deliveryOption === "pickup" && pickupType === "scheduled"
+          ? `${pickupDate}T${pickupTime}:00`
+          : null,
+        pickup_by_other_person: deliveryOption === "pickup" ? pickupByOtherPerson : false,
+        pickup_person_name: deliveryOption === "pickup" ? pickupPersonName : "",
+        pickup_person_phone: deliveryOption === "pickup" ? pickupPersonPhone : "",
+        // Delivery fields
+        delivery_address: deliveryOption === "delivery" ? deliveryAddress : "",
+        delivery_latitude: deliveryOption === "delivery" ? deliveryLat : null,
+        delivery_longitude: deliveryOption === "delivery" ? deliveryLng : null,
+      };
 
-    await Swal.fire({
-      title: "🎉 Order Placed Successfully",
-      html: `
-        <div style="padding:10px">
-          <h4>Order No</h4>
-          <h2 style="color:#f7c600">
-            ${response.order_number}
-          </h2>
-          <p>Estimated Ready In</p>
-          <h3>${response.estimated_minutes} Minutes</h3>
-        </div>
-      `,
-      icon: "success",
-      confirmButtonText: "Track Order",
-      confirmButtonColor: "#f7c600",
-    });
+      // Add promotion details if any
+      if (selectedPromotion) {
+        payload.promotion_type = selectedPromotion.type;
+        if (selectedPromotion.type === "discount") {
+          payload.promotion_id = selectedPromotion.id;
+        } else if (selectedPromotion.type === "coupon") {
+          payload.coupon_code = selectedPromotion.code;
+        }
+      }
 
-    navigate("/my-orders");
-  } catch (error) {
-    Swal.fire(
-      "Error",
-      error?.response?.data?.error || "Failed to place order",
-      "error"
-    );
-  } finally {
-    setPlacingOrder(false);
-  }
-};
+      const response = await placeOrder(payload);
+
+      await Swal.fire({
+        title: "🎉 Order Placed Successfully",
+        html: `
+          <div style="padding:10px">
+            <h4>Order No</h4>
+            <h2 style="color:#f7c600">
+              ${response.order_number}
+            </h2>
+            <p>Estimated Ready In</p>
+            <h3>${response.estimated_minutes} Minutes</h3>
+            ${response.delivery_option === 'delivery' ? `<p>Delivery Address: ${response.delivery_address}</p>` : ''}
+          </div>
+        `,
+        icon: "success",
+        confirmButtonText: "Track Order",
+        confirmButtonColor: "#f7c600",
+      });
+
+      navigate("/my-orders");
+    } catch (error) {
+      Swal.fire(
+        "Error",
+        error?.response?.data?.error || "Failed to place order",
+        "error"
+      );
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   // ----- Redirect if cart empty -----
   if (redirectToCart) {
@@ -420,7 +465,7 @@ const handlePlaceOrder = async () => {
             <div className="checkout-card">
               <div className="checkout-header">
                 <h2>Checkout</h2>
-                <p>Complete your order and pickup details</p>
+                <p>Complete your order and delivery/pickup details</p>
               </div>
 
               <div className="card-body p-4 p-md-5">
@@ -471,138 +516,171 @@ const handlePlaceOrder = async () => {
                   </div>
                 )}
 
-                {/* Pickup Information */}
-                <div className="pickup-card mt-4">
-                  <h5>Pickup Information</h5>
-
-                  <div className="pickup-time-card mt-4">
-                    <h5 className="mb-3">Pickup Time</h5>
-
-                    <div
-                      className={
-                        pickupType === "instant"
-                          ? "pickup-option active"
-                          : "pickup-option"
-                      }
-                      onClick={() => setPickupType("instant")}
-                    >
-                      <input
-                        type="radio"
-                        checked={pickupType === "instant"}
-                        readOnly
-                      />
-                      <div>
-                        <h6 className="mb-1">Prepare Immediately</h6>
-                        <small className="text-muted">
-                          Your order will be prepared as soon as the shop
-                          accepts it.
-                        </small>
-                      </div>
-                    </div>
-
-                    <div
-                      className={
-                        pickupType === "scheduled"
-                          ? "pickup-option active mt-3"
-                          : "pickup-option mt-3"
-                      }
-                      onClick={() => setPickupType("scheduled")}
-                    >
-                      <input
-                        type="radio"
-                        checked={pickupType === "scheduled"}
-                        readOnly
-                      />
-                      <div className="w-100">
-                        <h6 className="mb-1">Schedule Pickup</h6>
-                        <small className="text-muted">
-                          Choose a pickup date and time.
-                        </small>
-
-                        {pickupType === "scheduled" && (
-                          <div className="row mt-3">
-                            <div className="col-md-6 mb-3">
-                              <label className="form-label">Pickup Date</label>
-                              <input
-                                type="date"
-                                className="form-control checkout-input"
-                                value={pickupDate}
-                                min={new Date().toISOString().split("T")[0]}
-                                onChange={(e) => setPickupDate(e.target.value)}
-                              />
-                            </div>
-                            <div className="col-md-6">
-                              <label className="form-label">Pickup Time</label>
-                              <input
-                                type="time"
-                                className="form-control checkout-input"
-                                value={pickupTime}
-                                onChange={(e) => setPickupTime(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                {/* Delivery Option Toggle */}
+                <h5 className="section-title mt-4">Delivery Option</h5>
+                <div className="delivery-options">
+                  <div
+                    className={`delivery-option ${deliveryOption === "pickup" ? "active" : ""}`}
+                    onClick={() => setDeliveryOption("pickup")}
+                  >
+                    <input type="radio" checked={deliveryOption === "pickup"} readOnly />
+                    <div>
+                      <h6>Pay at Shop</h6>
+                      <small>Pick up your order from the shop</small>
                     </div>
                   </div>
-
-                  <div className="form-check mt-4">
-                    <input
-                      type="checkbox"
-                      id="otherPickup"
-                      className="form-check-input"
-                      checked={pickupByOtherPerson}
-                      onChange={(e) => setPickupByOtherPerson(e.target.checked)}
-                    />
-                    <label
-                      htmlFor="otherPickup"
-                      className="form-check-label fw-bold"
-                    >
-                      Some other person will collect
-                    </label>
-                  </div>
-
-                  {pickupByOtherPerson && (
-                    <div className="mt-4">
-                      <input
-                        type="text"
-                        className="form-control checkout-input mb-3"
-                        placeholder="Pickup Person Name"
-                        value={pickupPersonName}
-                        onChange={(e) => setPickupPersonName(e.target.value)}
-                      />
-                      <input
-                        type="tel"
-                        className="form-control checkout-input"
-                        placeholder="Pickup Person Phone Number"
-                        value={pickupPersonPhone}
-                        onChange={(e) => setPickupPersonPhone(e.target.value)}
-                      />
+                  <div
+                    className={`delivery-option ${deliveryOption === "delivery" ? "active" : ""}`}
+                    onClick={() => setDeliveryOption("delivery")}
+                  >
+                    <input type="radio" checked={deliveryOption === "delivery"} readOnly />
+                    <div>
+                      <h6>Home Delivery</h6>
+                      <small>We'll deliver to your address (within 2 km)</small>
                     </div>
-                  )}
+                  </div>
                 </div>
+
+                {/* Delivery Address Section */}
+                {deliveryOption === "delivery" && (
+                  <div className="delivery-address-section mt-4">
+                    <h5>Delivery Address</h5>
+                    <textarea
+                      rows="2"
+                      className="form-control checkout-textarea"
+                      placeholder="Enter your full delivery address"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                    />
+                    <button
+                      className="btn btn-outline-primary mt-2"
+                      onClick={getCurrentLocation}
+                      type="button"
+                    >
+                      Use my current location
+                    </button>
+                    {addressError && <div className="text-danger mt-2">{addressError}</div>}
+                    {deliveryLat && deliveryLng && (
+                      <div className="text-success mt-2">
+                        <i className="fas fa-check-circle"></i> Location captured.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Pickup Information (only if pickup) */}
+                {deliveryOption === "pickup" && (
+                  <div className="pickup-card mt-4">
+                    <h5>Pickup Information</h5>
+
+                    <div className="pickup-time-card mt-4">
+                      <h5 className="mb-3">Pickup Time</h5>
+
+                      <div
+                        className={`pickup-option ${pickupType === "instant" ? "active" : ""}`}
+                        onClick={() => setPickupType("instant")}
+                      >
+                        <input
+                          type="radio"
+                          checked={pickupType === "instant"}
+                          readOnly
+                        />
+                        <div>
+                          <h6 className="mb-1">Prepare Immediately</h6>
+                          <small className="text-muted">
+                            Your order will be prepared as soon as the shop accepts it.
+                          </small>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`pickup-option mt-3 ${pickupType === "scheduled" ? "active" : ""}`}
+                        onClick={() => setPickupType("scheduled")}
+                      >
+                        <input
+                          type="radio"
+                          checked={pickupType === "scheduled"}
+                          readOnly
+                        />
+                        <div className="w-100">
+                          <h6 className="mb-1">Schedule Pickup</h6>
+                          <small className="text-muted">
+                            Choose a pickup date and time.
+                          </small>
+
+                          {pickupType === "scheduled" && (
+                            <div className="row mt-3">
+                              <div className="col-md-6 mb-3">
+                                <label className="form-label">Pickup Date</label>
+                                <input
+                                  type="date"
+                                  className="form-control checkout-input"
+                                  value={pickupDate}
+                                  min={new Date().toISOString().split("T")[0]}
+                                  onChange={(e) => setPickupDate(e.target.value)}
+                                />
+                              </div>
+                              <div className="col-md-6">
+                                <label className="form-label">Pickup Time</label>
+                                <input
+                                  type="time"
+                                  className="form-control checkout-input"
+                                  value={pickupTime}
+                                  onChange={(e) => setPickupTime(e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-check mt-4">
+                      <input
+                        type="checkbox"
+                        id="otherPickup"
+                        className="form-check-input"
+                        checked={pickupByOtherPerson}
+                        onChange={(e) => setPickupByOtherPerson(e.target.checked)}
+                      />
+                      <label htmlFor="otherPickup" className="form-check-label fw-bold">
+                        Some other person will collect
+                      </label>
+                    </div>
+
+                    {pickupByOtherPerson && (
+                      <div className="mt-4">
+                        <input
+                          type="text"
+                          className="form-control checkout-input mb-3"
+                          placeholder="Pickup Person Name"
+                          value={pickupPersonName}
+                          onChange={(e) => setPickupPersonName(e.target.value)}
+                        />
+                        <input
+                          type="tel"
+                          className="form-control checkout-input"
+                          placeholder="Pickup Person Phone Number"
+                          value={pickupPersonPhone}
+                          onChange={(e) => setPickupPersonPhone(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Payment Method */}
                 <h5 className="section-title">Payment Method</h5>
                 <div className="payment-grid">
                   <div
-                    className={
-                      paymentMethod === "cash"
-                        ? "payment-card active"
-                        : "payment-card"
-                    }
+                    className={`payment-card ${paymentMethod === "cash" ? "active" : ""}`}
                     onClick={() => setPaymentMethod("cash")}
                   >
                     <h6>Cash On Pickup</h6>
                     <small>Pay when collecting</small>
                   </div>
-
                   <div
-                    className={
-                      paymentMethod === "upi"
-                        ? "payment-card active"
-                        : "payment-card"
-                    }
+                    className={`payment-card ${paymentMethod === "upi" ? "active" : ""}`}
                     onClick={() => setPaymentMethod("upi")}
                   >
                     <h6>UPI At Shop</h6>
@@ -669,7 +747,7 @@ const handlePlaceOrder = async () => {
                       })}
                     </div>
 
-                    {/* Manual coupon input (fallback) */}
+                    {/* Manual coupon input */}
                     <div className="mt-3">
                       <button
                         className="btn btn-sm btn-outline-secondary"

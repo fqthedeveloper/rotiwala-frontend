@@ -715,3 +715,48 @@
     font-size: 0.9rem;
   }
 }
+
+/* Checkout.css */
+
+.delivery-options {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.delivery-option {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.delivery-option.active {
+  border-color: #f7c600;
+  background: #fff8e1;
+}
+
+.delivery-option input[type="radio"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.delivery-option h6 {
+  margin-bottom: 0.25rem;
+}
+
+.delivery-option small {
+  color: #6c757d;
+}
+
+.delivery-address-section {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+}

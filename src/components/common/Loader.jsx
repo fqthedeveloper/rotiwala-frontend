@@ -55,21 +55,21 @@ const Loader = ({
   }, [size]);
 
   const containerVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
+    hidden: { opacity: 0, scale: 0.86 },
     visible: { 
       opacity: 1, 
       scale: 1,
       transition: {
-        duration: 0.5,
+        duration: 0.25,
         ease: "easeOut",
-        staggerChildren: 0.1,
+        staggerChildren: 0.08,
       }
     },
     exit: { 
       opacity: 0,
-      scale: 0.6,
+      scale: 0.72,
       transition: {
-        duration: 0.3,
+        duration: 0.18,
         ease: "easeIn"
       }
     }
@@ -81,7 +81,7 @@ const Loader = ({
       rotate: 360,
       scale: 1,
       transition: {
-        duration: 1.5,
+        duration: 1.1,
         ease: "linear",
         repeat: Infinity,
       }
@@ -93,7 +93,7 @@ const Loader = ({
     visible: {
       scale: [1, 0.85, 1],
       transition: {
-        duration: 1.2,
+        duration: 0.85,
         ease: "easeInOut",
         repeat: Infinity,
         repeatType: "mirror"
@@ -102,13 +102,13 @@ const Loader = ({
   };
 
   const textVariants = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0, y: 8 },
     visible: { 
       opacity: 1, 
       y: 0,
       transition: {
-        delay: 0.3,
-        duration: 0.4,
+        delay: 0.18,
+        duration: 0.25,
         ease: "easeOut"
       }
     }
@@ -119,12 +119,12 @@ const Loader = ({
     visible: (i) => ({
       opacity: [0, 0.6, 0],
       scale: [0, 1, 0],
-      x: [0, (i % 2 === 0 ? 1 : -1) * (Math.random() * 50 + 20)],
-      y: [0, (i % 3 === 0 ? 1 : -1) * (Math.random() * 50 + 20)],
+      x: [0, (i % 2 === 0 ? 1 : -1) * (Math.random() * 42 + 16)],
+      y: [0, (i % 3 === 0 ? 1 : -1) * (Math.random() * 42 + 16)],
       transition: {
-        duration: (i % 3 + 2),
+        duration: (i % 3 + 1.5),
         repeat: Infinity,
-        delay: i * 0.15,
+        delay: i * 0.12,
         ease: "easeInOut"
       }
     })
@@ -211,7 +211,7 @@ const Loader = ({
         initial={{ width: 0 }}
         animate={{ width: "100%" }}
         transition={{ 
-          duration: 3, 
+          duration: 1.25, 
           ease: "easeInOut",
           repeat: Infinity,
           repeatType: "reverse"

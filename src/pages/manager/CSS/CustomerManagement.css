@@ -1,0 +1,328 @@
+.customer-management-page {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+}
+
+.customer-management-page .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.customer-management-page .page-info {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.customer-management-page .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.customer-management-page .filter-input {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.customer-management-page .filter-input input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.customer-management-page .filter-input input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+}
+
+.customer-management-page .filter-input svg {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.customer-management-page .filter-select,
+.customer-management-page .refresh-button {
+  flex: 0 1 150px;
+  min-width: 140px;
+}
+
+.customer-management-page .refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  width: 100%;
+}
+
+.customer-management-page .table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(229, 231, 235, 0.9);
+}
+
+.customer-management-page table {
+  min-width: 900px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customer-management-page th,
+.customer-management-page td {
+  padding: 1rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.customer-management-page thead {
+  background: #f9fafb;
+}
+
+.customer-management-page tbody tr:hover {
+  background: #f8fafc;
+}
+
+.customer-management-page .customer-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.customer-management-page .customer-avatar {
+  width: 42px;
+  height: 42px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customer-management-page .modal-overlay {
+  inset: 0;
+  position: fixed;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 1rem;
+}
+
+.customer-management-page .modal-panel {
+  width: min(940px, 100%);
+  max-height: min(90vh, 100%);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
+}
+
+.customer-management-page .detail-modal-panel {
+  width: min(960px, 100%);
+}
+
+.customer-management-page .flag-modal-panel {
+  width: min(520px, 100%);
+  padding: 1.25rem;
+}
+
+.customer-management-page .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.customer-management-page .modal-header h2,
+.customer-management-page .modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.customer-management-page .modal-close-button {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.customer-management-page .modal-close-button:hover {
+  color: #111827;
+}
+
+.customer-management-page .modal-subtitle {
+  color: #4b5563;
+  margin-bottom: 0.85rem;
+  font-size: 0.95rem;
+}
+
+.customer-management-page .modal-textarea {
+  width: 100%;
+  min-height: 160px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.9rem;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.customer-management-page .modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+.customer-management-page .modal-secondary-button,
+.customer-management-page .modal-primary-button {
+  min-width: 98px;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.customer-management-page .modal-secondary-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  padding: 0.85rem 1rem;
+}
+
+.customer-management-page .modal-secondary-button:hover {
+  background: #f9fafb;
+  transform: translateY(-1px);
+}
+
+.customer-management-page .modal-primary-button {
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  padding: 0.85rem 1rem;
+}
+
+.customer-management-page .modal-primary-button:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.customer-management-page .modal-primary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.customer-management-page .customer-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.customer-management-page .flag-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-management-page .modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.customer-management-page .customer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.customer-management-page .customer-actions button {
+  min-width: 88px;
+}
+
+@media (max-width: 992px) {
+  .customer-management-page .filter-input {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-management-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .customer-management-page .filters {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .customer-management-page .filter-select,
+  .customer-management-page .refresh-button {
+    min-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .customer-management-page .table-container {
+    border-radius: 0.75rem;
+  }
+
+  .customer-management-page table {
+    min-width: 700px;
+  }
+
+  .customer-management-page .customer-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .customer-management-page {
+    padding: 0.75rem;
+  }
+
+  .customer-management-page .page-header {
+    gap: 0.75rem;
+  }
+
+  .customer-management-page .filter-input input {
+    padding-left: 2.5rem;
+  }
+
+  .customer-management-page .modal-panel {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .customer-management-page th,
+  .customer-management-page td {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .customer-management-page .customer-actions {
+    justify-content: flex-start;
+  }
+}

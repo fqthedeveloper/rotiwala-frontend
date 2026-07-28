@@ -22,6 +22,8 @@ import {
   FaChevronDown,
   FaPrint,
   FaPhone,
+  FaTruck,
+  FaHome,
 } from "react-icons/fa";
 
 import {
@@ -104,10 +106,9 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
       disabled: loadingAction !== null,
     });
 
-    // Build action buttons based on status
     const actionButtons = [];
 
-    // Always show print button
+    // Print button
     actionButtons.push(
       <button
         key="print"
@@ -119,7 +120,7 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
       </button>
     );
 
-    // Status-specific buttons
+    // Status-specific actions
     switch (status) {
       case "pending":
         actionButtons.push(
@@ -182,6 +183,8 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
     return actionButtons;
   };
 
+  const isDelivery = order.delivery_option === "delivery";
+
   return (
     <div className="order-card">
       {/* Header */}
@@ -191,6 +194,10 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
             <h5>#{order.order_number}</h5>
             <span className={`order-type-badge ${order.order_type}`}>
               {order.order_type}
+            </span>
+            <span className={`delivery-option-badge ${isDelivery ? "delivery" : "pickup"}`}>
+              {isDelivery ? <FaTruck /> : <FaHome />}
+              {isDelivery ? "Delivery" : "Pickup"}
             </span>
           </div>
           <small>{order.ordered_at ? formatDateTime(order.ordered_at) : "-"}</small>
@@ -208,21 +215,48 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         <div className="detail-row"><span>Payment Status</span><strong className={`payment-status-text ${order.payment_status}`}>{order.payment_status}</strong></div>
         <div className="detail-divider" />
         <div className="detail-row"><span>Order Type</span><strong className="order-type-text">{order.order_type}</strong></div>
+
+        {/* Delivery Option & Address */}
         <div className="detail-row">
-  <span>Pickup</span>
-  <strong>
-    {order.pickup_time
-      ? new Date(order.pickup_time).toLocaleString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : order.pickup_type}
-  </strong>
-</div>
+          <span>Delivery Option</span>
+          <strong className={`delivery-option-text ${isDelivery ? "delivery" : "pickup"}`}>
+            {isDelivery ? "Home Delivery" : "Pay at Shop"}
+          </strong>
+        </div>
+        {isDelivery && (
+          <>
+            <div className="detail-row">
+              <span>Delivery Address</span>
+              <strong className="delivery-address-text">{order.delivery_address || "N/A"}</strong>
+            </div>
+            {order.delivery_fee !== undefined && Number(order.delivery_fee) > 0 && (
+              <div className="detail-row">
+                <span>Delivery Fee</span>
+                <strong>₹{order.delivery_fee}</strong>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Pickup info (only for pickup) */}
+        {!isDelivery && (
+          <div className="detail-row">
+            <span>Pickup</span>
+            <strong>
+              {order.pickup_time
+                ? new Date(order.pickup_time).toLocaleString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })
+                : order.pickup_type}
+            </strong>
+          </div>
+        )}
+
         <div className="detail-row"><span>Est. Ready</span><strong>{order.estimated_ready_time ? formatDateTime(order.estimated_ready_time) : "-"}</strong></div>
         <div className="detail-row"><span>Est. Minutes</span><strong className="est-minutes"><FaHourglassHalf style={{ marginRight: 5, fontSize: 12 }} /> {order.estimated_minutes} min</strong></div>
         <div className="detail-row"><span>Shop ID</span><strong>#{order.shop}</strong></div>
@@ -273,8 +307,8 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         </div>
       )}
 
-      {/* Pickup Person */}
-      {order.pickup_by_other_person && (
+      {/* Pickup Person (only if pickup and person specified) */}
+      {!isDelivery && order.pickup_by_other_person && (
         <div className="pickup-box">
           <h6><FaPhone /> Pickup Person</h6>
           <div className="detail-row"><span>Name</span><strong>{order.pickup_person_name || "-"}</strong></div>
@@ -405,7 +439,7 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-  
+
   // Receipt printer states
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -415,7 +449,7 @@ export default function Orders() {
   const reconnectAttempt = useRef(0);
   const debounceTimer = useRef(null);
 
-  // ----- Socket connection (with exponential backoff) -----
+  // ----- Socket connection -----
   const connectSocket = useCallback(() => {
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -504,7 +538,7 @@ export default function Orders() {
     setShowReceipt(true);
   }, []);
 
-  // ----- Filtering (with debounce) -----
+  // ----- Filtering -----
   const filteredOrders = useMemo(() => {
     let result = orders;
     if (search.trim()) {
@@ -514,7 +548,9 @@ export default function Orders() {
         order.customer_name?.toLowerCase().includes(keyword) ||
         order.customer_phone?.toLowerCase().includes(keyword) ||
         order.status?.toLowerCase().includes(keyword) ||
-        order.order_type?.toLowerCase().includes(keyword)
+        order.order_type?.toLowerCase().includes(keyword) ||
+        order.delivery_option?.toLowerCase().includes(keyword) ||
+        order.delivery_address?.toLowerCase().includes(keyword)
       );
     }
     if (statusFilter) {
@@ -555,7 +591,6 @@ export default function Orders() {
     loadOrders();
   }, [selectedDate, loadOrders]);
 
-  // Debounce search
   useEffect(() => {
     clearTimeout(debounceTimer.current);
   }, [search]);

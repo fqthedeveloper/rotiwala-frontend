@@ -1,195 +1,158 @@
 import { useEffect } from "react";
-
+import { Link } from "react-router-dom";
 import {
   FaStore,
   FaUsers,
   FaClock,
   FaAward,
   FaMapMarkerAlt,
+  FaArrowRight,
 } from "react-icons/fa";
 
+const highlights = [
+  {
+    icon: FaStore,
+    title: "Multiple Shops",
+    desc: "Explore food from nearby shops in one smooth experience.",
+  },
+  {
+    icon: FaUsers,
+    title: "Happy Customers",
+    desc: "Thousands of successful orders delivered with ease.",
+  },
+  {
+    icon: FaClock,
+    title: "Quick Pickup",
+    desc: "Save time with fast ordering and easy collection.",
+  },
+  {
+    icon: FaAward,
+    title: "Quality Service",
+    desc: "Trusted by local communities for dependable support.",
+  },
+];
 
 const About = () => {
   useEffect(() => {
-  document.title = "About Us - Roti Wala";
-}, []);
+    document.title = "About Us - Roti Wala";
+  }, []);
 
   return (
-    <div className="container-fluid px-0">
+    <div className="page-shell about-page">
+      <section className="menu-hero about-hero">
+        <div className="menu-hero-blob mh-blob-1" />
+        <div className="menu-hero-blob mh-blob-2" />
+        <div className="menu-hero-grain" />
 
-      <section className="bg-warning py-5">
-        <div className="container text-center">
-
-          <h1 className="display-4 fw-bold">
-            About Roti Wala
+        <div className="container hero-content">
+          <span className="menu-kicker">
+            <FaStore /> Our Story
+          </span>
+          <h1>
+            Discover <span className="menu-grad-text">Roti Wala</span>
           </h1>
-
-          <p className="lead">
-            Fresh Food • Fast Pickup • Happy Customers
+          <p>
+            We connect hungry customers with local food shops through a smooth
+            pickup experience built for speed, quality, and trust.
           </p>
-
+          <div className="menu-count-badge">
+            <FaMapMarkerAlt /> Serving food lovers every day
+          </div>
+          <br />
+          <br />
+          <div className="hero-actions">
+            <Link to="/menu" className="btn btn-warning hero-btn">
+              Explore Menu
+            </Link>
+            <Link to="/contact" className="btn btn-outline-dark hero-btn hero-btn--ghost">
+              Contact Us
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="container py-5">
-
         <div className="row align-items-center g-5">
-
           <div className="col-lg-6">
-            <img
-              src="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
-              alt="Food"
-              className="img-fluid rounded-4 shadow"
-            />
+            <div className="about-image-card">
+              <img
+                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
+                alt="Fresh food served with care"
+                className="img-fluid"
+              />
+              <div className="image-overlay">
+                <span>Serving the community daily</span>
+              </div>
+            </div>
           </div>
 
           <div className="col-lg-6">
-
-            <h2 className="fw-bold mb-4">
-              Our Story
-            </h2>
-
-            <p className="text-muted">
-              Roti Wala is a modern food pickup platform
-              connecting customers with local food shops.
-              Our mission is to make ordering delicious
-              meals fast, easy and reliable.
-            </p>
-
-            <p className="text-muted">
-              Customers can browse menus, place orders,
-              track status and collect food directly
-              from shops without waiting in long queues.
-            </p>
-
+            <div className="about-story-card">
+              <h2>Our Story</h2>
+              <p>
+                Roti Wala is a modern food pickup platform connecting customers
+                with local food shops. Our mission is to make ordering delicious
+                meals fast, easy, and reliable.
+              </p>
+              <p>
+                Customers can browse menus, place orders, track status, and
+                collect food directly from shops without waiting in long queues.
+              </p>
+              <ul className="about-points">
+                <li>Simple ordering for busy days</li>
+                <li>Reliable pickup from trusted partners</li>
+                <li>Friendly support whenever you need it</li>
+              </ul>
+            </div>
           </div>
-
         </div>
-
       </section>
 
-      <section className="bg-light py-5">
-
+      <section className="about-highlights-section">
         <div className="container">
+          <div className="section-heading text-center">
+            <h2>Why customers love us</h2>
+            <p>Everything is designed to make food pickup effortless.</p>
+          </div>
 
           <div className="row g-4">
+            {highlights.map((item, index) => {
+              const Icon = item.icon;
 
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card border-0 shadow-sm h-100 text-center">
-
-                <div className="card-body">
-
-                  <FaStore
-                    size={50}
-                    className="text-warning mb-3"
-                  />
-
-                  <h4>Multiple Shops</h4>
-
-                  <p>
-                    Explore food from nearby shops.
-                  </p>
-
+              return (
+                <div key={item.title} className="col-sm-6 col-lg-3">
+                  <div
+                    className="feature-card"
+                    style={{ animationDelay: `${index * 120}ms` }}
+                  >
+                    <div className="feature-icon">
+                      <Icon />
+                    </div>
+                    <h4>{item.title}</h4>
+                    <p>{item.desc}</p>
+                  </div>
                 </div>
-
-              </div>
-
-            </div>
-
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card border-0 shadow-sm h-100 text-center">
-
-                <div className="card-body">
-
-                  <FaUsers
-                    size={50}
-                    className="text-warning mb-3"
-                  />
-
-                  <h4>Happy Customers</h4>
-
-                  <p>
-                    Thousands of successful orders.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card border-0 shadow-sm h-100 text-center">
-
-                <div className="card-body">
-
-                  <FaClock
-                    size={50}
-                    className="text-warning mb-3"
-                  />
-
-                  <h4>Quick Pickup</h4>
-
-                  <p>
-                    Save time with advance ordering.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="col-md-6 col-lg-3">
-
-              <div className="card border-0 shadow-sm h-100 text-center">
-
-                <div className="card-body">
-
-                  <FaAward
-                    size={50}
-                    className="text-warning mb-3"
-                  />
-
-                  <h4>Quality Service</h4>
-
-                  <p>
-                    Trusted by local communities.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
+              );
+            })}
           </div>
-
         </div>
-
       </section>
 
-      <section className="container py-5 text-center">
-
-        <FaMapMarkerAlt
-          size={50}
-          className="text-warning mb-3"
-        />
-
-        <h2>
-          Serving Food Lovers Every Day
-        </h2>
-
-        <p className="text-muted">
-          We work with local food vendors to bring
-          fresh meals closer to you.
-        </p>
-
+      <section className="container py-5">
+        <div className="about-cta">
+          <div>
+            <FaMapMarkerAlt className="cta-icon" />
+            <h3>Serving food lovers every day</h3>
+            <p>
+              We work with local food vendors to bring fresh meals closer to
+              you.
+            </p>
+          </div>
+          <Link to="/contact" className="btn btn-warning cta-btn">
+            Get In Touch <FaArrowRight />
+          </Link>
+        </div>
       </section>
-
     </div>
   );
 };

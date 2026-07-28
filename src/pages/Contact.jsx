@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-
 import Swal from "sweetalert2";
-
 import {
   FaPhone,
   FaEnvelope,
@@ -11,13 +9,12 @@ import {
   FaFacebook,
   FaInstagram,
   FaYoutube,
+  FaClock,
 } from "react-icons/fa";
-
 import { getContactInfo, submitFeedback } from "../service/contactService";
 
 const Contact = () => {
   const [contact, setContact] = useState(null);
-
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,7 +31,6 @@ const Contact = () => {
   const loadContact = async () => {
     try {
       const data = await getContactInfo();
-
       setContact(data);
     } catch (error) {
       console.log(error);
@@ -57,6 +53,7 @@ const Contact = () => {
       Swal.fire({
         icon: "success",
         title: "Feedback Sent",
+        text: "Thanks for reaching out. We will get back to you soon.",
       });
 
       setForm({
@@ -72,151 +69,175 @@ const Contact = () => {
   };
 
   if (!contact) {
-    return <div className="container py-5">Loading...</div>;
+    return (
+      <div className="page-shell contact-page">
+        <section className="hero-section contact-hero">
+          <div className="container hero-content text-center">
+            <span className="hero-badge">We’re ready to help</span>
+            <h1>Contact Us</h1>
+            <p>Loading our contact details...</p>
+          </div>
+        </section>
+        <div className="container py-5">
+          <div className="loading-card">Preparing your contact experience...</div>
+        </div>
+      </div>
+    );
   }
 
   const mapUrl = `https://www.google.com/maps?q=${contact.latitude},${contact.longitude}`;
 
   return (
-    <div className="container-fluid px-0">
+    <div className="page-shell contact-page">
+      <section className="menu-hero contact-hero">
+        <div className="menu-hero-blob mh-blob-1" />
+        <div className="menu-hero-blob mh-blob-2" />
+        <div className="menu-hero-grain" />
 
-      <section className="bg-warning py-5">
-
-        <div className="container text-center">
-
-          <h1 className="display-4 fw-bold">
-            Contact Us
+        <div className="container hero-content text-center">
+          <span className="menu-kicker">
+            <FaEnvelope /> Contact Team
+          </span>
+          <h1>
+            Contact <span className="menu-grad-text">Us</span>
           </h1>
-
-          <p>
-            We'd love to hear from you
-          </p>
-
+          <p>Share your feedback, questions, or special requests with us.</p>
+          <div className="menu-count-badge">
+            <FaClock /> Open daily for pickup and support
+          </div>
         </div>
-
       </section>
-  
 
-    <div className="container py-5">
+      <section className="container py-5">
+        <div className="row g-4">
+          <div className="col-lg-5">
+            <div className="contact-card info-card">
+              <div className="contact-card__head">
+                <h3>{contact.company_name}</h3>
+                <p>Reach us quickly through your preferred channel.</p>
+              </div>
 
-      <div className="row g-4">
-        <div className="col-lg-5">
-          <div className="card shadow border-0">
-            <div className="card-body">
-              <h3>{contact.company_name}</h3>
+              <div className="contact-list">
+                <p>
+                  <FaPhone /> <span>{contact.phone}</span>
+                </p>
+                <p>
+                  <FaEnvelope /> <span>{contact.email}</span>
+                </p>
+                <p>
+                  <FaMapMarkerAlt /> <span>{contact.address}</span>
+                </p>
+                <p>
+                  <FaClock /> <span>Open daily for pickup and support</span>
+                </p>
+              </div>
 
-              <p>
-                <FaPhone /> {contact.phone}
-              </p>
-
-              <p>
-                <FaEnvelope /> {contact.email}
-              </p>
-
-              <p>
-                <FaMapMarkerAlt /> {contact.address}
-              </p>
-
-              <a
-                href={`tel:${contact.phone}`}
-                className="btn btn-warning w-100 mb-2"
-              >
-                Call Now
-              </a>
-
-              <a
-                href={`https://wa.me/${contact.whatsapp}`}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-success w-100 mb-2"
-              >
-                <FaWhatsapp /> WhatsApp
-              </a>
-
-              <a
-                href={mapUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-primary w-100"
-              >
-                <FaDirections /> Navigate To Shop
-              </a>
-
-              <hr />
-
-              <div className="d-flex gap-3">
-                <a href={contact.facebook} target="_blank">
-                  <FaFacebook size={30} />
+              <div className="action-stack">
+                <a href={`tel:${contact.phone}`} className="btn btn-warning w-100 mb-2">
+                  Call Now
                 </a>
-
-                <a href={contact.instagram} target="_blank">
-                  <FaInstagram size={30} />
+                <a
+                  href={`https://wa.me/${contact.whatsapp}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-success w-100 mb-2"
+                >
+                  <FaWhatsapp /> WhatsApp
                 </a>
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-primary w-100"
+                >
+                  <FaDirections /> Navigate To Shop
+                </a>
+              </div>
 
-                <a href={contact.youtube} target="_blank">
-                  <FaYoutube size={30} />
+              <div className="social-links">
+                <a href={contact.facebook} target="_blank" rel="noreferrer" aria-label="Facebook">
+                  <FaFacebook size={24} />
+                </a>
+                <a href={contact.instagram} target="_blank" rel="noreferrer" aria-label="Instagram">
+                  <FaInstagram size={24} />
+                </a>
+                <a href={contact.youtube} target="_blank" rel="noreferrer" aria-label="YouTube">
+                  <FaYoutube size={24} />
                 </a>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="col-lg-7">
-          <div className="card shadow border-0">
-            <div className="card-body">
-              <h3>Send Feedback</h3>
+          <div className="col-lg-7">
+            <div className="contact-card form-card">
+              <div className="contact-card__head">
+                <h3>Send Feedback</h3>
+                <p>We usually reply within a day.</p>
+              </div>
 
               <form onSubmit={handleSubmit}>
-                <input
-                  className="form-control mb-3"
-                  name="name"
-                  placeholder="Name"
-                  value={form.name}
-                  onChange={handleChange}
-                />
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <input
+                      className="form-control"
+                      name="name"
+                      placeholder="Name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                      className="form-control"
+                      name="email"
+                      placeholder="Email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                      className="form-control"
+                      name="phone"
+                      placeholder="Phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                      className="form-control"
+                      name="subject"
+                      placeholder="Subject"
+                      value={form.subject}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <textarea
+                      rows="5"
+                      className="form-control"
+                      name="message"
+                      placeholder="Message"
+                      value={form.message}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
 
-                <input
-                  className="form-control mb-3"
-                  name="email"
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={handleChange}
-                />
-
-                <input
-                  className="form-control mb-3"
-                  name="phone"
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                />
-
-                <input
-                  className="form-control mb-3"
-                  name="subject"
-                  placeholder="Subject"
-                  value={form.subject}
-                  onChange={handleChange}
-                />
-
-                <textarea
-                  rows="5"
-                  className="form-control mb-3"
-                  name="message"
-                  placeholder="Message"
-                  value={form.message}
-                  onChange={handleChange}
-                />
-
-                <button className="btn btn-warning w-100">
+                <button className="btn btn-warning w-100 mt-3 contact-submit">
                   Submit Feedback
                 </button>
               </form>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
     </div>
   );
 };

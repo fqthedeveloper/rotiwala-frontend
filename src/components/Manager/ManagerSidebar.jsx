@@ -67,7 +67,7 @@ const ManagerSidebar = ({
         <div className="sidebar-logo">
 
           <h3>
-            🍽️ Roti Wala
+            🍽️ Roti Waale
           </h3>
 
           <p>

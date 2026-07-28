@@ -665,3 +665,41 @@
   min-width: 80px;
   justify-content: center;
 }
+
+/* Delivery option badge */
+.delivery-option-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.delivery-option-badge.pickup {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+.delivery-option-badge.delivery {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+/* Delivery option text in customer box */
+.delivery-option-text {
+  font-weight: 600;
+}
+.delivery-option-text.pickup {
+  color: #0d47a1;
+}
+.delivery-option-text.delivery {
+  color: #1b5e20;
+}
+
+.delivery-address-text {
+  font-weight: 500;
+  word-break: break-word;
+  color: #333;
+}

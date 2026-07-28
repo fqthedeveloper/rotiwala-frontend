@@ -63,7 +63,7 @@ const Sidebar = ({
         }`}
       >
         <div className="sidebar-logo">
-          <h3>🍽️ Roti Wala</h3>
+          <h3>🍽️ Roti Waale</h3>
           <p>Admin Panel</p>
         </div>
 
