@@ -9,6 +9,8 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
+import "./CSS/Menu.css";
+
 const highlights = [
   {
     icon: FaStore,

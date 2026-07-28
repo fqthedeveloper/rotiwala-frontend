@@ -200,3 +200,39 @@ export const bulkPrintReceipts = async (orderIds, billType = 'standard') => {
   });
   return response.data;
 };
+
+
+// ----------------------------------------------
+// SUPERADMIN DASHBOARD
+// ----------------------------------------------
+
+export const getSuperAdminStats = async () => {
+  const response = await api.get("accounts/superadmin/dashboard/stats/");
+  return response.data;
+};
+
+export const getSuperAdminRecentOrders = async (limit = 10) => {
+  const response = await api.get(`accounts/superadmin/dashboard/recent_orders/?limit=${limit}`);
+  return response.data;
+};
+
+export const getSuperAdminRevenueTrend = async (days = 30) => {
+  const response = await api.get(`accounts/superadmin/dashboard/revenue_trend/?days=${days}`);
+  return response.data;
+};
+
+export const getSuperAdminOrdersByShop = async () => {
+  const response = await api.get("accounts/superadmin/dashboard/orders_by_shop/");
+  return response.data;
+};
+
+export const getSuperAdminTopProducts = async () => {
+  const response = await api.get("accounts/superadmin/dashboard/top_products/");
+  return response.data;
+};
+
+
+export const getSuperAdminOrders = async (params = {}) => {
+  const response = await api.get("/orders/superadmin/orders/", { params });
+  return response.data;
+};

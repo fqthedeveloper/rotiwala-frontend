@@ -158,6 +158,14 @@ const Sidebar = ({
           </NavLink>
 
           <NavLink
+            to="/admin/expenses"
+            onClick={closeSidebar}
+          >
+            <i className="bi bi-graph-up"></i>
+            Expenses
+          </NavLink>
+
+          <NavLink
             to="/admin/reports"
             onClick={closeSidebar}
           >

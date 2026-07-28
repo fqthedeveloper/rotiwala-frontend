@@ -51,6 +51,9 @@ import CouponForm from "./pages/admin/Coupons/CouponForm";
 import Discounts from "./pages/admin/Discount/Discounts";
 import DiscountForm from "./pages/admin/Discount/DiscountForm";
 import UsageAnalytics from "./pages/admin/Usage-Discount/UsageAnalytics";
+import AdminExpenses from "./pages/admin/Expenses/AdminExpenses";
+import AddExpense from "./pages/admin/Expenses/AddExpense";
+import AddMaintenance from "./pages/admin/Expenses/AddMaintenance";
 
 
 // Customer Pages
@@ -184,6 +187,9 @@ function App() {
         <Route path="discounts/add" element={<DiscountForm />} />
         <Route path="discounts/edit/:id" element={<DiscountForm />} />
         <Route path="discounts/usage" element={<UsageAnalytics />} />
+        <Route path="expenses" element={<AdminExpenses />} />
+        <Route path="expenses/add" element={<AddExpense />} />  
+        <Route path="maintenance/add" element={<AddMaintenance />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

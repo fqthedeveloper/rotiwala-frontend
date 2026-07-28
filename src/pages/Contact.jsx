@@ -12,6 +12,8 @@ import {
   FaClock,
 } from "react-icons/fa";
 import { getContactInfo, submitFeedback } from "../service/contactService";
+import "./CSS/Menu.css";
+
 
 const Contact = () => {
   const [contact, setContact] = useState(null);
