@@ -10,6 +10,7 @@ import "./styles/forms.css";
 import "./styles/pages.css";
 import "./styles/theme.css";
 
+
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -53,7 +54,9 @@ import DiscountForm from "./pages/admin/Discount/DiscountForm";
 import UsageAnalytics from "./pages/admin/Usage-Discount/UsageAnalytics";
 import AdminExpenses from "./pages/admin/Expenses/AdminExpenses";
 import AddExpense from "./pages/admin/Expenses/AddExpense";
+import EditExpense from "./pages/admin/Expenses/EditExpense";
 import AddMaintenance from "./pages/admin/Expenses/AddMaintenance";
+import Report from './pages/Report';  // add import
 
 
 // Customer Pages
@@ -68,6 +71,7 @@ import ManagerDashboard from "./pages/manager/Dashboard";
 import ManagerOrders from "./pages/manager/Orders";
 import WalkInOrder from "./pages/manager/WalkInOrder";
 import CustomerManagement from "./pages/manager/CustomerManagement";
+import ManagerExpenses from "./pages/manager/Expenses/ManagerExpenses";
 
 function App() {
   const location = useLocation();
@@ -188,8 +192,10 @@ function App() {
         <Route path="discounts/edit/:id" element={<DiscountForm />} />
         <Route path="discounts/usage" element={<UsageAnalytics />} />
         <Route path="expenses" element={<AdminExpenses />} />
-        <Route path="expenses/add" element={<AddExpense />} />  
+        <Route path="expenses/add" element={<AddExpense />} />
+        <Route path="expenses/edit/:id" element={<EditExpense />} />
         <Route path="maintenance/add" element={<AddMaintenance />} />
+        <Route path="reports" element={<Report />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 
@@ -209,6 +215,11 @@ function App() {
         <Route path="walkin" element={<WalkInOrder />} />
         <Route path="discounts/usage" element={<UsageAnalytics />} />
         <Route path="customers" element={<CustomerManagement />} />
+        <Route path="expenses" element={<ManagerExpenses />} />
+        <Route path="expenses/add" element={<AddExpense />} />
+        <Route path="expenses/edit/:id" element={<EditExpense />} />
+        <Route path="expenses/maintenance/add" element={<AddMaintenance />} />
+        <Route path="reports" element={<Report />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -1,449 +1,355 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FaStore,
+  FaSyncAlt,
   FaClock,
-  FaCheck,
+  FaCheckCircle,
   FaFire,
   FaBoxOpen,
-  FaCheckCircle,
-  FaRupeeSign,
-  FaChartLine,
-  FaClipboardList,
+  FaHandHolding,
+  FaCoins,
+  FaChartBar,
+  FaBolt,
+  FaBell,
   FaArrowRight,
-  FaSyncAlt,
-  FaStore,
-  FaWalking,
-  FaExclamationTriangle,
-  FaShoppingBag,
-  FaSpinner,
+  FaPlus,
+  FaListUl,
+  FaCog,
 } from "react-icons/fa";
-import api from "../../service/api";
 import "./CSS/Dashboard.css";
+import api from "../../service/api";   // ✅ use the axios instance with auth interceptors
 
-/* ============================================
-   Enhanced Animated Counter Hook with Easing
-   ============================================ */
-const useCountUp = (end, duration = 1800, shouldAnimate = true) => {
-  const [count, setCount] = useState(0);
-  const [prevEnd, setPrevEnd] = useState(end);
-  const frameRef = useRef();
-  const startTimeRef = useRef();
+const STAT_META = [
+  { key: "pending",   label: "Pending Orders",   icon: FaClock,        accent: "amber",   hint: "Awaiting acceptance" },
+  { key: "accepted",  label: "Accepted",         icon: FaCheckCircle,  accent: "blue",    hint: "Confirmed by staff" },
+  { key: "preparing", label: "Preparing",        icon: FaFire,         accent: "orange",  hint: "In the kitchen" },
+  { key: "ready",     label: "Ready for Pickup", icon: FaBoxOpen,      accent: "green",   hint: "Bagged & waiting" },
+  { key: "collected", label: "Collected Today",  icon: FaHandHolding,  accent: "violet",  hint: "Completed orders" },
+  { key: "today_sales", label: "Today's Sales",  icon: FaCoins,        accent: "gold",    hint: "Revenue today", currency: true },
+];
 
-  useEffect(() => {
-    if (!shouldAnimate || end === 0) {
-      setCount(end);
-      return;
-    }
-
-    // Reset animation if target changed significantly
-    if (prevEnd !== end) {
-      setPrevEnd(end);
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    }
-
-    const startTime = performance.now();
-    const startValue = count;
-
-    const animate = (currentTime) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      // Cubic bezier ease-out (smoother)
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      
-      const current = Math.floor(startValue + (end - startValue) * easeOut);
-      setCount(current);
-
-      if (progress < 1) {
-        frameRef.current = requestAnimationFrame(animate);
-      } else {
-        setCount(end);
-      }
-    };
-
-    frameRef.current = requestAnimationFrame(animate);
-    
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [end, duration, shouldAnimate, prevEnd]);
-
-  return count;
-};
-
-export default function Dashboard() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [pageVisible, setPageVisible] = useState(false);
-  const [stats, setStats] = useState({
-    pending: 0,
-    accepted: 0,
-    preparing: 0,
-    ready: 0,
-    collected: 0,
-    today_sales: 0,
-  });
-  const [prevStats, setPrevStats] = useState(null);
-
-  // Get counts with smooth animation
-  const pendingCount = useCountUp(stats.pending, 1800, !loading);
-  const acceptedCount = useCountUp(stats.accepted, 1800, !loading);
-  const preparingCount = useCountUp(stats.preparing, 1800, !loading);
-  const readyCount = useCountUp(stats.ready, 1800, !loading);
-  const collectedCount = useCountUp(stats.collected, 1800, !loading);
-  const salesCount = useCountUp(stats.today_sales, 2000, !loading);
+// count-up hook — smoothly interpolates a number from prev → next
+function useCountUp(target, duration = 900) {
+  const [value, setValue] = useState(target ?? 0);
+  const rafRef = useRef(null);
+  const startRef = useRef(null);
+  const fromRef = useRef(target ?? 0);
 
   useEffect(() => {
-    document.title = "Manager Dashboard";
-    loadDashboard();
-    const t = setTimeout(() => setPageVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
+    if (target == null) return;
+    cancelAnimationFrame(rafRef.current);
+    fromRef.current = value;
+    startRef.current = null;
 
-  const loadDashboard = async () => {
-    try {
-      setRefreshing(true);
-      const res = await api.get("/orders/dashboard/");
-      setPrevStats(stats);
-      setStats(res.data);
-    } catch (err) {
-      console.error("Dashboard load failed:", err);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-        setRefreshing(false);
-      }, 600);
-    }
-  };
+    const step = (ts) => {
+      if (!startRef.current) startRef.current = ts;
+      const p = Math.min(1, (ts - startRef.current) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const next = fromRef.current + (target - fromRef.current) * eased;
+      setValue(next);
+      if (p < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, duration]);
 
-  const totalOrders =
-    stats.pending +
-    stats.accepted +
-    stats.preparing +
-    stats.ready +
-    stats.collected;
+  return value;
+}
 
-  const completionRate =
-    totalOrders > 0 ? Math.round((stats.collected / totalOrders) * 100) : 0;
-
-  const activeOrders =
-    stats.pending + stats.accepted + stats.preparing + stats.ready;
-
-  // Check if value changed for pulse animation
-  const hasChanged = (key) => {
-    if (!prevStats) return false;
-    return prevStats[key] !== stats[key];
-  };
-
-  const statCards = [
-    {
-      key: "pending",
-      label: "Pending",
-      value: pendingCount,
-      icon: <FaClock />,
-      color: "#e65100",
-      bg: "#fff3e0",
-      path: "/manager/orders",
-      changed: hasChanged("pending"),
-    },
-    {
-      key: "accepted",
-      label: "Accepted",
-      value: acceptedCount,
-      icon: <FaCheck />,
-      color: "#00695c",
-      bg: "#e0f2f1",
-      path: "/manager/orders",
-      changed: hasChanged("accepted"),
-    },
-    {
-      key: "preparing",
-      label: "Preparing",
-      value: preparingCount,
-      icon: <FaFire />,
-      color: "#1565c0",
-      bg: "#e3f2fd",
-      path: "/manager/orders",
-      changed: hasChanged("preparing"),
-    },
-    {
-      key: "ready",
-      label: "Ready",
-      value: readyCount,
-      icon: <FaBoxOpen />,
-      color: "#2e7d32",
-      bg: "#e8f5e9",
-      path: "/manager/orders",
-      changed: hasChanged("ready"),
-    },
-    {
-      key: "collected",
-      label: "Collected",
-      value: collectedCount,
-      icon: <FaCheckCircle />,
-      color: "#424242",
-      bg: "#f5f5f5",
-      path: "/manager/orders",
-      changed: hasChanged("collected"),
-    },
-    {
-      key: "today_sales",
-      label: "Paid Today",
-      value: salesCount,
-      icon: <FaRupeeSign />,
-      color: "#f9a825",
-      bg: "#fffde7",
-      path: "/manager/orders",
-      changed: hasChanged("today_sales"),
-    },
-  ];
-
-  const statusBars = [
-    { key: "pending", label: "Pending", value: stats.pending, color: "#e65100" },
-    { key: "accepted", label: "Accepted", value: stats.accepted, color: "#00695c" },
-    { key: "preparing", label: "Preparing", value: stats.preparing, color: "#1565c0" },
-    { key: "ready", label: "Ready", value: stats.ready, color: "#2e7d32" },
-    { key: "collected", label: "Collected", value: stats.collected, color: "#424242" },
-  ];
-
-  const maxBarValue = Math.max(...statusBars.map((b) => b.value), 1);
-
-  if (loading) {
-    return (
-      <div className="dashboard-page">
-        <div className="dashboard-loading">
-          <div className="dash-spinner">
-            <div className="dash-ring"></div>
-            <div className="dash-ring"></div>
-            <div className="dash-ring"></div>
-          </div>
-          <h4>Loading Dashboard</h4>
-          <div className="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+function StatCard({ meta, value, changed, index }) {
+  const num = useCountUp(value ?? 0, 900);
+  const Icon = meta.icon;
+  const display = meta.currency
+    ? `$${num.toFixed(2)}`
+    : Math.round(num).toLocaleString();
 
   return (
-    <div className={`dashboard-page ${pageVisible ? "visible" : ""}`}>
-      <div className="dashboard-container">
-        {/* Header */}
-        <div className="dashboard-header" style={{ animationDelay: "0s" }}>
-          <div className="header-left">
-            <div className="header-icon-wrap">
-              <div className="header-icon">
-                <FaStore />
-              </div>
-              <div className="header-pulse"></div>
-            </div>
-            <div className="header-text">
-              <h1>Manager Dashboard</h1>
-              <p>Real-time performance overview</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <button 
-              className={`refresh-btn ${refreshing ? "refreshing" : ""}`} 
-              onClick={loadDashboard}
-              disabled={refreshing}
-            >
-              {refreshing ? (
-                <FaSpinner className="spin-icon" />
-              ) : (
-                <FaSyncAlt />
-              )}
-              <span className="btn-text">{refreshing ? "Refreshing..." : "Refresh"}</span>
-            </button>
-          </div>
+    <div
+      className={`stat-card stat-accent-${meta.accent} ${changed ? "value-changed" : ""}`}
+      style={{ animationDelay: `${index * 70}ms` }}
+      data-testid={`stat-card-${meta.key}`}
+    >
+      <div className="stat-shine" aria-hidden="true" />
+      <div className="stat-card-top">
+        <div className="stat-icon-wrap" aria-hidden="true">
+          <Icon />
         </div>
-
-        {/* Stats Grid */}
-        <div className="stats-section">
-          <div className="stats-grid-dashboard">
-            {statCards.map((card, idx) => (
-              <div
-                key={card.key}
-                className={`stat-card-dashboard ${card.changed ? "value-changed" : ""}`}
-                style={{ animationDelay: `${0.1 + idx * 0.07}s` }}
-                onClick={() => navigate(card.path)}
-              >
-                <div className="stat-bg" style={{ background: card.bg }}></div>
-                <div className="stat-top">
-                  <div className={`stat-icon ${card.changed ? "pulse-icon" : ""}`} style={{ color: card.color }}>
-                    {card.icon}
-                  </div>
-                  <div className="stat-arrow">
-                    <FaArrowRight />
-                  </div>
-                </div>
-                <div className="stat-body">
-                  <h3 className={`stat-value ${card.changed ? "value-pulse" : ""}`}>
-                    {card.value}
-                  </h3>
-                  <span className="stat-label">{card.label}</span>
-                </div>
-                <div className="stat-shine"></div>
-                {card.changed && (
-                  <div className="update-indicator">
-                    <span className="update-dot"></span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Middle Section */}
-        <div className="dashboard-middle">
-          {/* Chart Card */}
-          <div className="panel-card chart-panel" style={{ animationDelay: "0.45s" }}>
-            <div className="panel-header">
-              <h5>
-                <FaChartLine />
-                Order Status Distribution
-              </h5>
-              <span className="badge-total">{totalOrders} Total</span>
-            </div>
-
-            <div className="bar-chart">
-              {statusBars.map((bar, idx) => (
-                <div className="bar-row" key={bar.key}>
-                  <div className="bar-label">
-                    <span className="bar-dot" style={{ background: bar.color }}></span>
-                    <span className="bar-label-text">{bar.label}</span>
-                  </div>
-                  <div className="bar-track">
-                    <div
-                      className={`bar-fill ${bar.value > 0 ? "animate" : ""}`}
-                      style={{
-                        width: `${(bar.value / maxBarValue) * 100}%`,
-                        background: `linear-gradient(90deg, ${bar.color}22, ${bar.color})`,
-                        animationDelay: `${0.6 + idx * 0.08}s`,
-                      }}
-                    >
-                      <span className="bar-value">{bar.value}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Circular Completion Ring */}
-            <div className="ring-wrapper">
-              <div className="completion-ring">
-                <svg viewBox="0 0 130 130" className="ring-svg">
-                  <defs>
-                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#f7c600" />
-                      <stop offset="100%" stopColor="#ffd93d" />
-                    </linearGradient>
-                  </defs>
-                  <circle className="ring-bg" cx="65" cy="65" r="54" />
-                  <circle
-                    className="ring-progress"
-                    cx="65"
-                    cy="65"
-                    r="54"
-                    style={{
-                      strokeDasharray: `${2 * Math.PI * 54}`,
-                      strokeDashoffset: `${2 * Math.PI * 54 * (1 - completionRate / 100)}`,
-                    }}
-                  />
-                </svg>
-                <div className="ring-center">
-                  <span className="ring-percent">{completionRate}%</span>
-                  <span className="ring-label">Completion</span>
-                </div>
-              </div>
-              <div className="ring-info">
-                <h6>Completion Rate</h6>
-                <p>
-                  {stats.collected} of {totalOrders} orders collected
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="panel-card actions-panel" style={{ animationDelay: "0.55s" }}>
-            <div className="panel-header">
-              <h5>
-                <FaClipboardList />
-                Quick Actions
-              </h5>
-            </div>
-
-            <div className="quick-actions">
-              <button className="q-action" onClick={() => navigate("/orders/orders")}>
-                <div className="q-icon" style={{ background: "#fff3e0", color: "#e65100" }}>
-                  <FaClipboardList />
-                </div>
-                <div className="q-text">
-                  <h6>View Orders</h6>
-                  <p>Manage incoming orders</p>
-                </div>
-                <FaArrowRight className="q-arrow" />
-              </button>
-
-              <button className="q-action" onClick={() => navigate("/orders/walkin")}>
-                <div className="q-icon" style={{ background: "#e8f5e9", color: "#2e7d32" }}>
-                  <FaWalking />
-                </div>
-                <div className="q-text">
-                  <h6>Walk-in Order</h6>
-                  <p>Create order at counter</p>
-                </div>
-                <FaArrowRight className="q-arrow" />
-              </button>
-
-              <button className="q-action" onClick={loadDashboard}>
-                <div className="q-icon" style={{ background: "#e3f2fd", color: "#1565c0" }}>
-                  <FaSyncAlt />
-                </div>
-                <div className="q-text">
-                  <h6>Refresh Data</h6>
-                  <p>Update live statistics</p>
-                </div>
-                <FaArrowRight className="q-arrow" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Alert */}
-        <div className="dashboard-bottom" style={{ animationDelay: "0.65s" }}>
-          <div className="alert-card">
-            <div className="alert-icon">
-              {stats.pending > 0 ? <FaExclamationTriangle /> : <FaShoppingBag />}
-            </div>
-            <div className="alert-body">
-              <h5>
-                {stats.pending > 0 ? "Action Required" : "All Caught Up"}
-              </h5>
-              <p>
-                You have <strong className="active-orders">{activeOrders}</strong> active orders.
-                {stats.pending > 0 && (
-                  <span className="urgent">
-                    {" "}{stats.pending} pending orders need immediate attention!
-                  </span>
-                )}
-              </p>
-            </div>
-            <button className="alert-btn" onClick={() => navigate("/manager/orders")}>
-              View Orders
-            </button>
-          </div>
-        </div>
+        <span className="stat-ring" aria-hidden="true" />
       </div>
+      <div className="stat-value" data-testid={`stat-value-${meta.key}`}>{display}</div>
+      <div className="stat-label">{meta.label}</div>
+      <div className="stat-hint">{meta.hint}</div>
+    </div>
+  );
+}
+
+function CompletionRing({ percent }) {
+  const clamped = Math.max(0, Math.min(100, percent || 0));
+  const anim = useCountUp(clamped, 1500);
+  const R = 62;
+  const C = 2 * Math.PI * R;
+  const offset = C - (anim / 100) * C;
+  return (
+    <div className="completion-ring-wrap" data-testid="completion-ring">
+      <svg viewBox="0 0 160 160" className="ring-svg">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffd93d" />
+            <stop offset="100%" stopColor="#f7c600" />
+          </linearGradient>
+        </defs>
+        <circle cx="80" cy="80" r={R} className="ring-track" />
+        <circle
+          cx="80"
+          cy="80"
+          r={R}
+          className="ring-progress"
+          strokeDasharray={C}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="ring-center">
+        <span className="ring-percent">{Math.round(anim)}%</span>
+        <span className="ring-caption">completion</span>
+      </div>
+    </div>
+  );
+}
+
+function BarChart({ stats }) {
+  const items = useMemo(
+    () => [
+      { key: "pending",   label: "Pending",   value: stats?.pending ?? 0,   color: "#f59e0b" },
+      { key: "accepted",  label: "Accepted",  value: stats?.accepted ?? 0,  color: "#3b82f6" },
+      { key: "preparing", label: "Preparing", value: stats?.preparing ?? 0, color: "#f97316" },
+      { key: "ready",     label: "Ready",     value: stats?.ready ?? 0,     color: "#10b981" },
+      { key: "collected", label: "Collected", value: stats?.collected ?? 0, color: "#8b5cf6" },
+    ],
+    [stats]
+  );
+  const max = Math.max(1, ...items.map((i) => i.value));
+
+  return (
+    <div className="bar-chart" data-testid="order-bar-chart">
+      {items.map((it, idx) => {
+        const pct = (it.value / max) * 100;
+        return (
+          <div key={it.key} className="bar-row" style={{ animationDelay: `${idx * 90}ms` }}>
+            <div className="bar-label">
+              <span>{it.label}</span>
+              <strong>{it.value}</strong>
+            </div>
+            <div className="bar-track">
+              <div
+                className="bar-fill"
+                style={{
+                  width: `${pct}%`,
+                  background: `linear-gradient(90deg, ${it.color}, ${it.color}cc)`,
+                  animationDelay: `${idx * 110}ms`,
+                }}
+                data-testid={`bar-${it.key}`}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function QuickActions() {
+  const actions = [
+    { key: "new-order",   label: "New Order",       icon: FaPlus },
+    { key: "view-orders", label: "View All Orders", icon: FaListUl },
+    { key: "reports",     label: "Sales Report",    icon: FaChartBar },
+    { key: "settings",    label: "Store Settings",  icon: FaCog },
+  ];
+  return (
+    <div className="quick-actions" data-testid="quick-actions">
+      {actions.map((a, i) => {
+        const Icon = a.icon;
+        return (
+          <button
+            key={a.key}
+            className="qa-btn"
+            style={{ animationDelay: `${i * 80}ms` }}
+            data-testid={`qa-${a.key}`}
+          >
+            <span className="qa-icon"><Icon /></span>
+            <span className="qa-label">{a.label}</span>
+            <span className="qa-arrow"><FaArrowRight /></span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AlertCard({ pending }) {
+  const urgent = (pending ?? 0) > 0;
+  return (
+    <div
+      className={`alert-card ${urgent ? "alert-urgent" : "alert-calm"}`}
+      data-testid="alert-card"
+    >
+      <div className="alert-icon"><FaBell /></div>
+      <div className="alert-body">
+        <h4>{urgent ? `${pending} pending order${pending > 1 ? "s" : ""} need attention` : "All caught up"}</h4>
+        <p>
+          {urgent
+            ? "Head to the orders queue to accept and start preparing."
+            : "No pending orders right now. Great pace, keep it up!"}
+        </p>
+      </div>
+      {urgent && <button className="alert-cta" data-testid="alert-cta">Review<FaArrowRight /></button>}
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="dashboard-loading" data-testid="dashboard-loading">
+      <div className="multi-ring">
+        <span></span><span></span><span></span>
+      </div>
+      <div className="bouncing-dots">
+        <i></i><i></i><i></i>
+      </div>
+      <p>Loading your store…</p>
+    </div>
+  );
+}
+
+export default function ManagerDashboard() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [changedKeys, setChangedKeys] = useState(new Set());
+  const prevRef = useRef(null);
+
+  const load = async (isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      // ✅ Use the authenticated api instance and your existing backend endpoint
+      const res = await api.get("/orders/dashboard/");
+      const next = res.data;
+      if (prevRef.current) {
+        const changes = new Set();
+        for (const k of ["pending", "accepted", "preparing", "ready", "collected", "today_sales"]) {
+          if (prevRef.current[k] !== next[k]) changes.add(k);
+        }
+        setChangedKeys(changes);
+        setTimeout(() => setChangedKeys(new Set()), 1400);
+      }
+      prevRef.current = next;
+      setStats(next);
+    } catch (e) {
+      // silent fail — UI shows loading
+      console.error(e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    load(false);
+  }, []);
+
+  const completionPct = useMemo(() => {
+    if (!stats) return 0;
+    const total = stats.pending + stats.accepted + stats.preparing + stats.ready + stats.collected;
+    if (total === 0) return 0;
+    return (stats.collected / total) * 100;
+  }, [stats]);
+
+  const values = {
+    pending: stats?.pending,
+    accepted: stats?.accepted,
+    preparing: stats?.preparing,
+    ready: stats?.ready,
+    collected: stats?.collected,
+    today_sales: stats?.today_sales,
+  };
+
+  return (
+    <div className="manager-dashboard" data-testid="manager-dashboard">
+      <div className="dashboard-bg" aria-hidden="true">
+        <div className="bg-orb bg-orb-a" />
+        <div className="bg-orb bg-orb-b" />
+        <div className="bg-grain" />
+      </div>
+
+      <header className="dashboard-header" data-testid="dashboard-header">
+        <div className="header-left">
+          <div className="store-icon-wrap">
+            <span className="store-halo" aria-hidden="true" />
+            <FaStore className="store-icon" />
+          </div>
+          <div className="header-titles">
+            <span className="header-eyebrow">Manager Console</span>
+            <h1 className="header-title" data-testid="dashboard-title">
+              {stats?.store_name || "Your Store"}
+            </h1>
+            <span className="header-subtitle">
+              <FaBolt /> Live overview · updates in real time
+            </span>
+          </div>
+        </div>
+        <button
+          className={`refresh-btn ${refreshing ? "is-refreshing" : ""}`}
+          onClick={() => load(true)}
+          disabled={refreshing}
+          data-testid="refresh-btn"
+        >
+          <FaSyncAlt className="refresh-icon" />
+          <span className="refresh-label">Refresh</span>
+          <span className="refresh-ripple" aria-hidden="true" />
+        </button>
+      </header>
+
+      {loading ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          <section className="stats-grid-dashboard" data-testid="stats-grid">
+            {STAT_META.map((m, i) => (
+              <StatCard
+                key={m.key}
+                meta={m}
+                value={values[m.key]}
+                changed={changedKeys.has(m.key)}
+                index={i}
+              />
+            ))}
+          </section>
+
+          <section className="dashboard-middle" data-testid="dashboard-middle">
+            <div className="panel chart-panel" data-testid="chart-panel">
+              <div className="panel-header">
+                <div>
+                  <h3><FaChartBar /> Order Distribution</h3>
+                  <p>Snapshot across pipeline stages</p>
+                </div>
+                <CompletionRing percent={completionPct} />
+              </div>
+              <BarChart stats={stats} />
+            </div>
+
+            <div className="panel actions-panel" data-testid="actions-panel">
+              <div className="panel-header">
+                <div>
+                  <h3><FaBolt /> Quick Actions</h3>
+                  <p>Shortcuts you use every day</p>
+                </div>
+              </div>
+              <QuickActions />
+              <AlertCard pending={stats?.pending ?? 0} />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

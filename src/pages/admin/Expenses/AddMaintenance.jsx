@@ -5,9 +5,12 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { createMaintenance } from "../../../service/expenseServices";
+import { getShops } from "../../../service/shopService";
+import { useAuth } from "../../../context/AuthContext";
 
 const AddMaintenance = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -23,19 +26,26 @@ const AddMaintenance = () => {
   });
 
   useEffect(() => {
+    const managerShopId =
+      user?.shop_id || user?.shop?.id || user?.shop || "";
+
     const fetchShops = async () => {
       try {
-        // Replace with your actual getShops() API
-        // const data = await getShops();
-        // setShops(data);
-        setShops([{ id: 1, name: "Main Shop" }, { id: 2, name: "Branch 1" }]);
+        const shopsData = await getShops();
+        setShops(shopsData);
+        if (user?.role !== "super_admin" && managerShopId) {
+          setFormData((prev) => ({
+            ...prev,
+            shop_id: managerShopId,
+          }));
+        }
       } catch (err) {
         console.error("Error fetching shops:", err);
         setError("Failed to load shops.");
       }
     };
     fetchShops();
-  }, []);
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,7 +79,10 @@ const AddMaintenance = () => {
       setSuccess(true);
       setTimeout(() => {
         setFormData({
-          shop_id: "",
+          shop_id:
+            user?.role !== "super_admin"
+              ? user?.shop_id || user?.shop?.id || user?.shop || ""
+              : "",
           title: "",
           description: "",
           amount: "",
@@ -91,72 +104,76 @@ const AddMaintenance = () => {
       <style>{`
         .add-maintenance-page {
           padding: 24px;
-          max-width: 700px;
+          max-width: 900px;
           margin: 0 auto;
-          color: #e8f0fe;
-          background: #0f172a;
+          color: #111827;
+          background: #f8fafc;
           min-height: 100vh;
         }
         .page-title {
-          font-size: 28px;
-          font-weight: 600;
+          font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+          font-weight: 700;
           margin-bottom: 24px;
-          background: linear-gradient(135deg, #fbbf24, #f59e0b);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: #111827;
         }
         .maintenance-form {
-          background: rgba(255,255,255,0.03);
-          padding: 24px;
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #ffffff;
+          padding: 28px;
+          border-radius: 20px;
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
         }
         .form-group {
           margin-bottom: 18px;
         }
         .form-group label {
           display: block;
-          font-weight: 500;
-          margin-bottom: 6px;
-          color: #cbd5e1;
+          font-weight: 600;
+          margin-bottom: 8px;
+          color: #0f172a;
         }
         .form-group input,
         .form-group select,
         .form-group textarea {
           width: 100%;
-          padding: 10px 12px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px;
-          color: #e8f0fe;
+          padding: 12px 14px;
+          background: #f8fafc;
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          border-radius: 12px;
+          color: #0f172a;
           font-size: 14px;
           outline: none;
         }
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
-          border-color: #f59e0b;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
         }
         .form-actions {
           display: flex;
           gap: 12px;
           justify-content: flex-end;
           margin-top: 20px;
+          flex-wrap: wrap;
         }
         .btn {
-          padding: 10px 24px;
+          padding: 12px 24px;
           border: none;
-          border-radius: 8px;
-          font-weight: 500;
+          border-radius: 12px;
+          font-weight: 600;
           cursor: pointer;
-          transition: 0.2s;
+          transition: transform 0.2s ease, background-color 0.2s ease;
           display: inline-flex;
           align-items: center;
           gap: 8px;
         }
+        .btn:hover:not(:disabled) {
+          transform: translateY(-1px);
+        }
         .btn-warning {
           background: #f59e0b;
-          color: #fff;
+          color: #ffffff;
         }
         .btn-warning:hover {
           background: #d97706;
@@ -166,31 +183,63 @@ const AddMaintenance = () => {
           cursor: not-allowed;
         }
         .btn-secondary {
-          background: rgba(255,255,255,0.05);
-          color: #e8f0fe;
+          background: #e2e8f0;
+          color: #0f172a;
+          border: 1px solid rgba(15, 23, 42, 0.1);
         }
         .btn-secondary:hover {
-          background: rgba(255,255,255,0.1);
+          background: #cbd5e1;
         }
         .error-message {
-          background: rgba(239,68,68,0.15);
-          color: #f87171;
+          background: #fee2e2;
+          color: #b91c1c;
           padding: 12px;
-          border-radius: 8px;
+          border-radius: 10px;
           margin-bottom: 16px;
+          border: 1px solid rgba(239, 68, 68, 0.2);
         }
         .success-message {
-          background: rgba(16,185,129,0.15);
-          color: #34d399;
+          background: #dcfce7;
+          color: #15803d;
           padding: 12px;
-          border-radius: 8px;
+          border-radius: 10px;
           margin-bottom: 16px;
+          border: 1px solid rgba(16, 185, 129, 0.24);
         }
         .spinner {
           animation: spin 1s linear infinite;
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+          .add-maintenance-page {
+            padding: 16px;
+          }
+          .maintenance-form {
+            padding: 20px;
+          }
+          .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+        @media (max-width: 560px) {
+          .add-maintenance-page {
+            padding: 12px;
+          }
+          .maintenance-form {
+            padding: 18px;
+          }
+          .form-group input,
+          .form-group select,
+          .form-group textarea {
+            font-size: 15px;
+          }
         }
       `}</style>
 
@@ -207,6 +256,7 @@ const AddMaintenance = () => {
             value={formData.shop_id}
             onChange={handleChange}
             required
+            disabled={user?.role !== "super_admin"}
           >
             <option value="">Select Shop</option>
             {shops.map((shop) => (
@@ -215,6 +265,15 @@ const AddMaintenance = () => {
               </option>
             ))}
           </select>
+          {user?.role !== "super_admin" && (
+            <small style={{
+              display: "block",
+              marginTop: "8px",
+              color: "#475569",
+            }}>
+              Your assigned shop is preselected and cannot be changed.
+            </small>
+          )}
         </div>
 
         <div className="form-group">

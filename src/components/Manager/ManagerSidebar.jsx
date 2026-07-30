@@ -130,6 +130,14 @@ const ManagerSidebar = ({
           </div>
 
           <NavLink
+            to="/manager/expenses"
+            onClick={closeSidebar}
+          >
+            <i className="bi bi-graph-up"></i>
+            Expense
+          </NavLink>
+
+          <NavLink
             to="/manager/reports"
             onClick={closeSidebar}
           >

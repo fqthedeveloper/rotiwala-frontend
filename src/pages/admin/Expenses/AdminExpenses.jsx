@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ added
 import {
   FaPlus,
@@ -18,6 +18,7 @@ import {
   updateExpense,   // ✅ added – implement in expenseServices
   updateMaintenance, // ✅ added – implement in expenseServices
 } from "../../../service/expenseServices";
+import { getShops } from "../../../service/shopService";
 
 const SuperAdminExpenses = () => {
   const navigate = useNavigate(); // ✅
@@ -26,6 +27,7 @@ const SuperAdminExpenses = () => {
   const [expenses, setExpenses] = useState([]);
   const [maintenanceList, setMaintenanceList] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reportData, setReportData] = useState(null);
@@ -83,6 +85,55 @@ const SuperAdminExpenses = () => {
     }
   }, []);
 
+  const fetchShops = useCallback(async () => {
+    try {
+      const data = await getShops();
+      setShops(data || []);
+    } catch (err) {
+      console.error("Error fetching shops:", err);
+    }
+  }, []);
+
+  const shopMap = useMemo(
+    () => shops.reduce((map, shop) => ({ ...map, [shop.id]: shop.name }), {}),
+    [shops]
+  );
+
+  const getShopName = (record) => {
+    if (!record) return "N/A";
+    if (typeof record === "object" && record?.name) return record.name;
+    return shopMap[record] || "N/A";
+  };
+
+  const totalExpenseAmount = useMemo(() => {
+    const apiTotal = reportData?.total_expenses;
+    if (apiTotal !== null && apiTotal !== undefined) {
+      return Number(apiTotal);
+    }
+    return expenses.reduce((sum, expense) => sum + Number(expense.total_amount || 0), 0);
+  }, [reportData, expenses]);
+
+  const isSameDay = (dateString) => {
+    if (!dateString) return false;
+    const recordDate = new Date(dateString);
+    const today = new Date();
+    return (
+      recordDate.getFullYear() === today.getFullYear() &&
+      recordDate.getMonth() === today.getMonth() &&
+      recordDate.getDate() === today.getDate()
+    );
+  };
+
+  const todaysExpenseCount = useMemo(
+    () => expenses.filter((exp) => isSameDay(exp.expense_date)).length,
+    [expenses]
+  );
+
+  const todaysMaintenanceCount = useMemo(
+    () => maintenanceList.filter((item) => isSameDay(item.maintenance_date)).length,
+    [maintenanceList]
+  );
+
   const fetchReport = useCallback(async () => {
     try {
       const data = await getExpenseReport({
@@ -93,6 +144,7 @@ const SuperAdminExpenses = () => {
       setReportData(data);
     } catch (err) {
       console.error("Error fetching report:", err);
+      setReportData(null);
     }
   }, [filters]);
 
@@ -100,8 +152,9 @@ const SuperAdminExpenses = () => {
     fetchCategories();
     fetchExpenses();
     fetchMaintenance();
+    fetchShops();
     fetchReport();
-  }, [fetchCategories, fetchExpenses, fetchMaintenance, fetchReport]);
+  }, [fetchCategories, fetchExpenses, fetchMaintenance, fetchReport, fetchShops]);
 
   // ---------- Delete Handlers ----------
   const handleDeleteExpense = async (id) => {
@@ -122,8 +175,309 @@ const SuperAdminExpenses = () => {
   // ---------- Render ----------
   return (
     <div className="superadmin-expenses">
-      {/* Styles (same as before – keep your styles) */}
-      <style>{`/* ... your existing styles ... */`}</style>
+      <style>{`
+        .superadmin-expenses {
+          padding: 24px;
+          min-height: 100vh;
+          background: linear-gradient(180deg, #f8fbff 0%, #eef2ff 100%);
+          color: #0f172a;
+        }
+        .page-header {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+        .page-header h1 {
+          margin: 0;
+          font-size: clamp(1.9rem, 2.6vw, 2.8rem);
+          letter-spacing: -0.02em;
+          color: #111827;
+        }
+        .btn-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .superadmin-expenses .btn {
+          min-height: 44px;
+          border: none;
+          border-radius: 12px;
+          padding: 0 16px;
+          font-weight: 600;
+          color: #ffffff;
+          cursor: pointer;
+          transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .superadmin-expenses .btn:hover {
+          transform: translateY(-1px);
+        }
+        .superadmin-expenses .btn-success {
+          background: #14b8a6;
+          box-shadow: 0 16px 30px rgba(20, 184, 166, 0.18);
+        }
+        .superadmin-expenses .btn-warning {
+          background: #f59e0b;
+          box-shadow: 0 16px 30px rgba(245, 158, 11, 0.18);
+        }
+        .superadmin-expenses .btn-primary {
+          background: #3b82f6;
+          box-shadow: 0 16px 30px rgba(59, 130, 246, 0.18);
+        }
+        .superadmin-expenses .btn-danger {
+          background: #ef4444;
+        }
+        .superadmin-expenses .btn-clear {
+          background: #ffffff;
+          color: #0f172a;
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+        .stat-cards {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(220px, 1fr));
+          gap: 18px;
+          margin-bottom: 24px;
+        }
+        .stat-card {
+          background: #ffffff;
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          border-radius: 18px;
+          padding: 24px;
+          box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+        }
+        .stat-card .label {
+          color: #475569;
+          font-size: 0.95rem;
+          margin-bottom: 10px;
+        }
+        .stat-card .value {
+          color: #0f172a;
+          font-size: 2rem;
+          font-weight: 700;
+        }
+        .filter-bar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 14px;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 18px;
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          padding: 18px;
+          box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+          margin-bottom: 24px;
+          align-items: center;
+        }
+        .filter-bar .filter-group {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex: 1 1 220px;
+          min-width: 220px;
+          background: #f8fafc;
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          border-radius: 14px;
+          padding: 10px 14px;
+        }
+        .filter-bar .filter-group svg {
+          color: #64748b;
+          min-width: 20px;
+        }
+        .filter-bar input,
+        .filter-bar select,
+        .filter-bar .btn-clear {
+          border-radius: 12px;
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          padding: 12px 14px;
+          font-size: 0.95rem;
+          color: #0f172a;
+          background: #ffffff;
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+        }
+        .filter-bar input::placeholder {
+          color: #94a3b8;
+        }
+        .filter-bar select {
+          min-width: 180px;
+          flex: 1 1 170px;
+        }
+        .filter-bar button.btn-clear {
+          flex: 0 0 auto;
+        }
+        .table-wrapper {
+          overflow-x: auto;
+          border-radius: 18px;
+          background: #ffffff;
+          border: 1px solid rgba(15, 23, 42, 0.08);
+          box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
+        }
+        table {
+          width: 100%;
+          min-width: 760px;
+          border-collapse: collapse;
+        }
+        thead {
+          background: #f8fafc;
+        }
+        th,
+        td {
+          padding: 18px 16px;
+          text-align: left;
+          border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+          color: #334155;
+        }
+        th {
+          font-size: 0.95rem;
+          font-weight: 700;
+        }
+        td {
+          font-size: 0.95rem;
+        }
+        tr:hover td {
+          background: rgba(14, 165, 233, 0.05);
+        }
+        .pagination {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          margin-top: 22px;
+          flex-wrap: wrap;
+        }
+        .pagination .info {
+          color: #475569;
+          font-size: 0.95rem;
+        }
+        .pagination button {
+          min-width: 100px;
+          padding: 12px 18px;
+          border-radius: 12px;
+          border: 1px solid rgba(15, 23, 42, 0.12);
+          background: #0f172a;
+          color: #ffffff;
+          cursor: pointer;
+          transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .pagination button:hover:not(:disabled) {
+          background: #2563eb;
+          transform: translateY(-1px);
+        }
+        .pagination button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+        .maintenance-section {
+          margin-top: 40px;
+        }
+        .maintenance-section h2 {
+          margin-bottom: 18px;
+          color: #1e293b;
+        }
+        .maintenance-section .table-wrapper {
+          margin-top: 10px;
+        }
+        @media (max-width: 992px) {
+          .stat-cards {
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+          }
+          .filter-bar {
+            padding: 16px;
+          }
+          .filter-bar .filter-group,
+          .filter-bar input,
+          .filter-bar select,
+          .filter-bar button {
+            min-width: 0;
+            width: 100%;
+          }
+          .filter-bar .filter-group {
+            flex-wrap: wrap;
+          }
+        }
+        @media (max-width: 700px) {
+          .page-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .btn-group {
+            justify-content: flex-start;
+          }
+          table {
+            min-width: 100%;
+          }
+          th,
+          td {
+            padding: 14px 12px;
+          }
+        }
+        @media (max-width: 560px) {
+          .page-header {
+            gap: 12px;
+          }
+          .stat-cards {
+            grid-template-columns: 1fr;
+          }
+          .filter-bar {
+            gap: 12px;
+          }
+          .filter-bar .filter-group,
+          .filter-bar select,
+          .filter-bar input,
+          .filter-bar button {
+            width: 100%;
+          }
+          .pagination {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .pagination button {
+            width: 100%;
+          }
+          table,
+          thead,
+          tbody,
+          th,
+          td,
+          tr {
+            display: block;
+          }
+          thead {
+            display: none;
+          }
+          tr {
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+          }
+          td {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border: none;
+          }
+          td::before {
+            content: attr(data-label);
+            display: block;
+            width: 45%;
+            color: #475569;
+            font-weight: 600;
+          }
+          td[data-label="Actions"] {
+            justify-content: flex-end;
+          }
+        }
+      `}</style>
 
       {/* ---------- Header ---------- */}
       <div className="page-header">
@@ -150,7 +504,7 @@ const SuperAdminExpenses = () => {
           <div className="stat-card">
             <div className="label">Total Expenses</div>
             <div className="value">
-              ₹{Number(reportData.total_expenses).toFixed(2)}
+              ₹{totalExpenseAmount.toFixed(2)}
             </div>
           </div>
           {reportData.by_category && reportData.by_category.length > 0 && (
@@ -159,7 +513,7 @@ const SuperAdminExpenses = () => {
               <div className="value" style={{ fontSize: "18px" }}>
                 {reportData.by_category[0].category__name} <br />
                 <span style={{ fontSize: "14px", color: "#94a3b8" }}>
-                  ₹{Number(reportData.by_category[0].total).toFixed(2)}
+                  ₹{Number(reportData.by_category[0]?.total || 0).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -168,19 +522,30 @@ const SuperAdminExpenses = () => {
             <div className="label">Maintenance Count</div>
             <div className="value">{maintenanceList.length}</div>
           </div>
+          <div className="stat-card">
+            <div className="label">Today&apos;s Expenses</div>
+            <div className="value">{todaysExpenseCount}</div>
+          </div>
+          <div className="stat-card">
+            <div className="label">Today&apos;s Maintenances</div>
+            <div className="value">{todaysMaintenanceCount}</div>
+          </div>
         </div>
       )}
 
       {/* ---------- Filter Bar ---------- */}
       <div className="filter-bar">
-        <input
-          type="text"
-          placeholder="Search expenses..."
-          value={filters.search}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, search: e.target.value }))
-          }
-        />
+        <div className="filter-group">
+          <FaSearch />
+          <input
+            type="text"
+            placeholder="Search expenses..."
+            value={filters.search}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, search: e.target.value }))
+            }
+          />
+        </div>
         <select
           value={filters.category}
           onChange={(e) =>
@@ -191,6 +556,19 @@ const SuperAdminExpenses = () => {
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.shop}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, shop: e.target.value }))
+          }
+        >
+          <option value="">All Shops</option>
+          {shops.map((shop) => (
+            <option key={shop.id} value={shop.id}>
+              {shop.name}
             </option>
           ))}
         </select>
@@ -210,7 +588,7 @@ const SuperAdminExpenses = () => {
           }
         />
         <button
-          className="btn"
+          className="btn btn-clear"
           onClick={() =>
             setFilters({
               category: "",
@@ -254,12 +632,12 @@ const SuperAdminExpenses = () => {
             ) : (
               expenses.map((exp) => (
                 <tr key={exp.id}>
-                  <td>{format(new Date(exp.expense_date), "dd/MM/yy")}</td>
-                  <td>{exp.shop?.name || "N/A"}</td>
-                  <td>{exp.category?.name || "N/A"}</td>
-                  <td>₹{Number(exp.total_amount).toFixed(2)}</td>
-                  <td>{exp.notes || "-"}</td>
-                  <td>
+                  <td data-label="Date">{format(new Date(exp.expense_date), "dd/MM/yy")}</td>
+                  <td data-label="Shop">{getShopName(exp.shop || exp.shop_id)}</td>
+                  <td data-label="Category">{exp.category?.name || "N/A"}</td>
+                  <td data-label="Total">₹{Number(exp.total_amount).toFixed(2)}</td>
+                  <td data-label="Notes">{exp.notes || "-"}</td>
+                  <td data-label="Actions">
                     <button
                       className="btn btn-primary"
                       style={{ padding: "4px 10px", marginRight: "6px" }}
@@ -307,7 +685,7 @@ const SuperAdminExpenses = () => {
       </div>
 
       {/* ---------- Maintenance Section ---------- */}
-      <div style={{ marginTop: "40px" }}>
+      <div className="maintenance-section">
         <h2>🔧 Maintenance Expenses</h2>
         <div className="table-wrapper">
           <table>
@@ -323,11 +701,11 @@ const SuperAdminExpenses = () => {
             <tbody>
               {maintenanceList.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.title}</td>
-                  <td>{item.shop?.name || "N/A"}</td>
-                  <td>₹{Number(item.amount).toFixed(2)}</td>
-                  <td>{format(new Date(item.maintenance_date), "dd/MM/yy")}</td>
-                  <td>
+                  <td data-label="Title">{item.title}</td>
+                  <td data-label="Shop">{getShopName(item.shop || item.shop_id)}</td>
+                  <td data-label="Amount">₹{Number(item.amount).toFixed(2)}</td>
+                  <td data-label="Date">{format(new Date(item.maintenance_date), "dd/MM/yy")}</td>
+                  <td data-label="Actions">
                     <button
                       className="btn btn-primary"
                       style={{ padding: "4px 10px", marginRight: "6px" }}

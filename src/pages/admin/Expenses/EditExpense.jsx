@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FaPlus,
   FaTimes,
@@ -9,12 +9,14 @@ import {
 import {
   getExpenseCategories,
   getExpenseMasterItems,
-  createExpense,
+  getExpenseDetail,
+  updateExpense,
 } from "../../../service/expenseServices";
 import { getShops } from "../../../service/shopService";
 import { useAuth } from "../../../context/AuthContext";
 
-const AddExpense = () => {
+const EditExpense = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,8 @@ const AddExpense = () => {
   const [categories, setCategories] = useState([]);
   const [masterItems, setMasterItems] = useState([]);
   const [shops, setShops] = useState([]);
+
+  const managerShopId = user?.shop_id || user?.shop?.id || user?.shop || "";
 
   const [formData, setFormData] = useState({
     shop_id: "",
@@ -41,34 +45,87 @@ const AddExpense = () => {
     ],
   });
 
-  // Fetch categories & shops on mount
   useEffect(() => {
-    const managerShopId =
-      user?.shop_id || user?.shop?.id || user?.shop || "";
+    document.title = "Edit Expense | Roti Wala";
+
+    const getValueId = (value) => {
+      if (!value) return "";
+      if (typeof value === "object") {
+        return value.id || value._id || "";
+      }
+      return value;
+    };
+
+    const getItems = (expenseData) => {
+      const rawItems =
+        expenseData.items ||
+        expenseData.expense_items ||
+        expenseData.expense_items_list ||
+        [];
+
+      return rawItems.map((item) => ({
+        master_item:
+          getValueId(item.master_item) || getValueId(item.master_item_id) || "",
+        custom_item_name:
+          item.custom_item_name || item.custom_item || "",
+        quantity: item.quantity ?? item.qty ?? 1,
+        amount: item.amount ?? item.cost ?? 0,
+        note: item.note ?? item.remarks ?? "",
+      }));
+    };
 
     const fetchData = async () => {
       try {
-        const categoriesData = await getExpenseCategories();
-        setCategories(categoriesData);
+        const [categoriesData, shopsData, expenseData] = await Promise.all([
+          getExpenseCategories(),
+          getShops(),
+          getExpenseDetail(id),
+        ]);
 
-        const shopsData = await getShops();
+        setCategories(categoriesData);
         setShops(shopsData);
 
-        if (user?.role !== "super_admin" && managerShopId) {
-          setFormData((prev) => ({
-            ...prev,
-            shop_id: managerShopId,
-          }));
+        const categoryId =
+          getValueId(expenseData.category_id || expenseData.category);
+        const shopId = getValueId(expenseData.shop_id || expenseData.shop);
+        const items = getItems(expenseData);
+        const finalShopId =
+          user?.role !== "super_admin" && managerShopId ? managerShopId : shopId;
+
+        setFormData({
+          shop_id: finalShopId,
+          category_id: categoryId,
+          expense_date: expenseData.expense_date
+            ? expenseData.expense_date.split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          notes: expenseData.notes || "",
+          items:
+            items.length > 0
+              ? items
+              : [
+                  {
+                    master_item: "",
+                    custom_item_name: "",
+                    quantity: 1,
+                    amount: 0,
+                    note: "",
+                  },
+                ],
+        });
+
+        if (categoryId) {
+          const fetchedItems = await getExpenseMasterItems(categoryId);
+          setMasterItems(fetchedItems);
         }
       } catch (err) {
-        console.error("Error fetching initial data:", err);
-        setError("Failed to load initial data.");
+        console.error("Error loading expense details:", err);
+        setError("Failed to load expense details.");
       }
     };
-    fetchData();
-  }, [user]);
 
-  // Fetch master items when category changes
+    fetchData();
+  }, [id, user]);
+
   const handleCategoryChange = async (e) => {
     const categoryId = e.target.value;
     setFormData((prev) => ({ ...prev, category_id: categoryId, items: [] }));
@@ -162,6 +219,8 @@ const AddExpense = () => {
 
     try {
       const payload = {
+        shop: formData.shop_id,
+        category: formData.category_id,
         shop_id: formData.shop_id,
         category_id: formData.category_id,
         expense_date: formData.expense_date,
@@ -174,33 +233,16 @@ const AddExpense = () => {
           note: item.note || "",
         })),
       };
-      await createExpense(payload);
+
+      await updateExpense(id, payload);
       setSuccess(true);
       setTimeout(() => {
-        setFormData({
-          shop_id:
-            user?.role !== "super_admin"
-              ? user?.shop_id || user?.shop?.id || user?.shop || ""
-              : "",
-          category_id: "",
-          expense_date: new Date().toISOString().split("T")[0],
-          notes: "",
-          items: [
-            {
-              master_item: "",
-              custom_item_name: "",
-              quantity: 1,
-              amount: 0,
-              note: "",
-            },
-          ],
-        });
         setSuccess(false);
         navigate("/admin/expenses");
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      console.error("Error creating expense:", err);
-      setError(err.response?.data?.error || "Failed to create expense.");
+      console.error("Error updating expense:", err);
+      setError(err.response?.data?.error || "Failed to update expense.");
     } finally {
       setLoading(false);
     }
@@ -371,11 +413,11 @@ const AddExpense = () => {
         }
       `}</style>
 
-      <h1 className="page-title">💰 Add New Expense</h1>
+      <h1 className="page-title">✏️ Edit Expense</h1>
 
       <form className="expense-form" onSubmit={handleSubmit}>
         {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">Expense saved successfully! ✅</div>}
+        {success && <div className="success-message">Expense updated successfully! ✅</div>}
 
         <div className="form-group">
           <label>Shop</label>
@@ -394,13 +436,11 @@ const AddExpense = () => {
             ))}
           </select>
           {user?.role !== "super_admin" && (
-            <small
-              style={{
-                display: "block",
-                marginTop: "8px",
-                color: "#475569",
-              }}
-            >
+            <small style={{
+              display: "block",
+              marginTop: "8px",
+              color: "#475569",
+            }}>
               Your assigned shop is preselected and cannot be changed.
             </small>
           )}
@@ -532,7 +572,7 @@ const AddExpense = () => {
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? <FaSpinner className="spinner" /> : <FaSave />}
-            {loading ? "Saving..." : "Save Expense"}
+            {loading ? "Updating..." : "Update Expense"}
           </button>
         </div>
       </form>
@@ -540,4 +580,4 @@ const AddExpense = () => {
   );
 };
 
-export default AddExpense;
+export default EditExpense;
