@@ -1,7 +1,5 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../service/firebase";
 
 const AuthContext = createContext();
 
@@ -9,15 +7,42 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadLocalUser = () => {
+  // Load user from localStorage
+  const loadUser = () => {
+    const access = localStorage.getItem("access");
+    if (!access) {
+      setUser(null);
+      return false;
+    }
     const userData = localStorage.getItem("user");
-    const role = localStorage.getItem("role");
     if (userData) {
       const parsedUser = JSON.parse(userData);
-      setUser({ ...parsedUser, role });
+      parsedUser.role = localStorage.getItem("role") || parsedUser.role;
+      setUser(parsedUser);
       return true;
     }
     return false;
+  };
+
+  useEffect(() => {
+    loadUser();
+    setLoading(false);
+
+    // Listen for auth changes (from other tabs or login/logout)
+    const authChanged = () => loadUser();
+    window.addEventListener("authChanged", authChanged);
+    return () => window.removeEventListener("authChanged", authChanged);
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("selected_shop");
+    setUser(null);
+    window.dispatchEvent(new Event("authChanged"));
   };
 
   const updateUser = (newData) => {
@@ -28,51 +53,6 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  useEffect(() => {
-    loadLocalUser();
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        const role = localStorage.getItem("role");
-        const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-        setUser({
-          ...localUser,
-          uid: firebaseUser.uid,
-          phone: firebaseUser.phoneNumber,
-          role,
-        });
-      } else {
-        const restored = loadLocalUser();
-        if (!restored) {
-          setUser(null);
-        }
-      }
-      setLoading(false);
-    });
-
-    const authChanged = () => {
-      loadLocalUser();
-    };
-    window.addEventListener("authChanged", authChanged);
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener("authChanged", authChanged);
-    };
-  }, []);
-
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch {}
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
-    localStorage.removeItem("user_id");
-    setUser(null);
-  };
-
   return (
     <AuthContext.Provider value={{ user, loading, logout, updateUser }}>
       {children}
@@ -80,12 +60,9 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
 

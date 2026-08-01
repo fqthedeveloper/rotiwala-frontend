@@ -1,129 +1,65 @@
+// src/pages/Login.jsx
 import { useState, useRef, useEffect } from "react";
-import {
-  auth,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "../service/firebase";
-
-import api from "../service/api";
-import { messaging, getToken } from "../service/firebase";
-
 import { Link, useNavigate } from "react-router-dom";
-
-import "./CSS/Register.css";
+import api from "../service/api";
+import "./CSS/Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-
   const otpRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("otp");
-
   const [phone, setPhone] = useState("");
-
   const [otp, setOtp] = useState("");
-
   const [password, setPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
   const [otpSent, setOtpSent] = useState(false);
-
   const [phoneError, setPhoneError] = useState("");
-
   const [passwordError, setPasswordError] = useState("");
-
   const [error, setError] = useState("");
 
-  const [confirmationResult, setConfirmationResult] = useState(null);
-
   const formatPhoneNumber = (number) => {
-    let mobile = number.trim();
-
-    mobile = mobile.replace(/\s+/g, "");
-
-    if (/^\d{10}$/.test(mobile)) {
-      mobile = `+91${mobile}`;
-    }
-
-    if (/^91\d{10}$/.test(mobile)) {
-      mobile = `+${mobile}`;
-    }
-
+    let mobile = number.trim().replace(/\s+/g, "");
+    if (/^\d{10}$/.test(mobile)) mobile = `+91${mobile}`;
+    if (/^91\d{10}$/.test(mobile)) mobile = `+${mobile}`;
     return mobile;
   };
 
   const handleLoginSuccess = async (response) => {
-    console.log("LOGIN RESPONSE:", response.data);
-
-    const currentUser = response.data.user;
+    const user = response.data.user;
     localStorage.setItem("access", response.data.access);
     localStorage.setItem("refresh", response.data.refresh);
-    localStorage.setItem("user", JSON.stringify(currentUser));
-    localStorage.setItem("role", currentUser.role);
-    localStorage.setItem("user_id", currentUser.id);
-
-    if (currentUser.shop_id) {
-      localStorage.setItem("selected_shop", currentUser.shop_id);
-    }
-
-    console.log("SHOP:", localStorage.getItem("selected_shop"));
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("role", user.role);
+    localStorage.setItem("user_id", user.id);
+    if (user.shop_id) localStorage.setItem("selected_shop", user.shop_id);
 
     await saveFCMToken();
-
     window.dispatchEvent(new Event("authChanged"));
 
-    if (currentUser.role === "super_admin") {
-      navigate("/admin/dashboard");
-    } else if (currentUser.role === "manager") {
-      navigate("/manager/dashboard");
-    } else {
-      navigate("/");
-    }
+    if (user.role === "super_admin") navigate("/admin/dashboard");
+    else if (user.role === "manager") navigate("/manager/dashboard");
+    else navigate("/");
   };
 
+  // ---------- WhatsApp OTP ----------
   const sendOTP = async () => {
     try {
       setLoading(true);
       setError("");
-
       const mobile = formatPhoneNumber(phone);
-
       if (!/^\+\d{10,15}$/.test(mobile)) {
         setError("Please enter a valid mobile number");
-
         setLoading(false);
-
         return;
       }
-
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(
-          auth,
-          "recaptcha-container",
-          {
-            size: "invisible",
-          },
-        );
-      }
-
-      const result = await signInWithPhoneNumber(
-        auth,
-        mobile,
-        window.recaptchaVerifier,
-      );
-
-      setConfirmationResult(result);
-
+      await api.post("/accounts/send-otp/", { phone: mobile });
       setPhone(mobile);
-
       setOtpSent(true);
     } catch (err) {
       console.error(err);
-
-      setError(err.message || "Failed to send OTP");
+      setError(err?.response?.data?.error || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
@@ -133,88 +69,75 @@ export default function Login() {
     try {
       setLoading(true);
       setError("");
-
-      if (!confirmationResult) {
-        setError("OTP session expired");
-
+      if (!otp || otp.length < 6) {
+        setError("Please enter a valid 6-digit OTP");
         setLoading(false);
-
         return;
       }
-
-      const result = await confirmationResult.confirm(otp);
-
-      const firebaseToken = await result.user.getIdToken(true);
-
-      const response = await api.post("/accounts/firebase-login/", {
-        token: firebaseToken,
+      const response = await api.post("/accounts/verify-otp/", {
+        phone: phone,
+        otp: otp,
+        // first_name/last_name not needed for login
       });
-
-      handleLoginSuccess(response);
+      await handleLoginSuccess(response);
     } catch (err) {
       console.error(err);
-
       setError(err?.response?.data?.error || "Invalid OTP");
-
+    } finally {
       setLoading(false);
     }
   };
 
+  // ---------- Password Login ----------
   const loginWithPassword = async () => {
-  try {
-    setLoading(true);
-    setError("");
-    setPhoneError("");
-    setPasswordError("");
-
-    if (!phone.trim()) {
-      setPhoneError("Phone number is required");
+    try {
+      setLoading(true);
+      setError("");
+      setPhoneError("");
+      setPasswordError("");
+      if (!phone.trim()) {
+        setPhoneError("Phone number is required");
+        setLoading(false);
+        return;
+      }
+      if (!password.trim()) {
+        setPasswordError("Password is required");
+        setLoading(false);
+        return;
+      }
+      const mobile = formatPhoneNumber(phone);
+      const response = await api.post("/accounts/password-login/", {
+        phone: mobile,
+        password,
+      });
+      await handleLoginSuccess(response);
+    } catch (err) {
+      const data = err?.response?.data;
+      if (data?.field === "phone") setPhoneError(data.message);
+      else if (data?.field === "password") setPasswordError(data.message);
+      else if (err?.response?.status === 401 || err?.response?.status === 400)
+        setPasswordError(data?.message || "Wrong phone number or password");
+      else if (!err.response) setError("Network error — please check your connection");
+      else setError(data?.message || "Login failed. Try again.");
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    if (!password.trim()) {
-      setPasswordError("Password is required");
-      setLoading(false);
-      return;
+  // ---------- FCM Token (uses firebase messaging only) ----------
+  const saveFCMToken = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+      const { messaging, getToken } = await import("../service/firebase");
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      });
+      if (token) await api.post("/accounts/save-fcm-token/", { token });
+    } catch (error) {
+      console.error("FCM Error:", error);
     }
-
-    const mobile = formatPhoneNumber(phone);
-
-    const response = await api.post("/accounts/password-login/", {
-      phone: mobile,
-      password,
-    });
-
-    await handleLoginSuccess(response);
-  } catch (err) {
-    console.error("Login error:", err);
-
-    const status = err?.response?.status;
-    const data = err?.response?.data;
-
-    /* Field-specific error from backend */
-    if (data?.field === "phone") {
-      setPhoneError(data.message || "Invalid phone number");
-    } else if (data?.field === "password") {
-      setPasswordError(data.message || "Wrong password");
-    }
-    /* Common 401 / 400 — most likely wrong password */
-    else if (status === 401 || status === 400) {
-      setPasswordError(
-        data?.message || data?.error || "Wrong phone number or password",
-      );
-    }
-    /* Network / server error */
-    else if (!err.response) {
-      setError("Network error — please check your connection");
-    } else {
-      setError(data?.message || data?.error || "Login failed. Try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     document.title = "Login - Roti Wala";
@@ -222,45 +145,16 @@ export default function Login() {
 
   useEffect(() => {
     if (otpSent && otpRef.current) {
-      setTimeout(() => {
-        otpRef.current?.focus();
-      }, 100);
+      setTimeout(() => otpRef.current?.focus(), 100);
     }
   }, [otpSent]);
 
-  const saveFCMToken = async () => {
-    try {
-      const permission = await Notification.requestPermission();
-
-      if (permission !== "granted") {
-        console.log("Notification permission denied");
-        return;
-      }
-
-      const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-      });
-
-      console.log("FCM TOKEN:", token);
-
-      if (token) {
-        await api.post("/accounts/save-fcm-token/", {
-          token,
-        });
-
-        console.log("FCM Token Saved");
-      }
-    } catch (error) {
-      console.error("FCM Error:", error);
-    }
-  };
-
+  // ---------- Render (unchanged) ----------
   return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
           <h2>Welcome Back</h2>
-
           <p>Login to your account</p>
         </div>
 
@@ -269,22 +163,13 @@ export default function Login() {
         <div className="mb-4">
           <div className="d-flex gap-2">
             <button
-              className={
-                activeTab === "otp"
-                  ? "btn btn-primary flex-fill"
-                  : "btn btn-outline-secondary flex-fill"
-              }
+              className={activeTab === "otp" ? "btn btn-primary flex-fill" : "btn btn-outline-secondary flex-fill"}
               onClick={() => setActiveTab("otp")}
             >
               OTP Login
             </button>
-
             <button
-              className={
-                activeTab === "password"
-                  ? "btn btn-primary flex-fill"
-                  : "btn btn-outline-secondary flex-fill"
-              }
+              className={activeTab === "password" ? "btn btn-primary flex-fill" : "btn btn-outline-secondary flex-fill"}
               onClick={() => setActiveTab("password")}
             >
               Password Login
@@ -304,12 +189,7 @@ export default function Login() {
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
-
-              <button
-                className="btn btn-primary w-100"
-                onClick={sendOTP}
-                disabled={loading}
-              >
+              <button className="btn btn-primary w-100" onClick={sendOTP} disabled={loading}>
                 {loading ? "Sending OTP..." : "Send OTP"}
               </button>
             </>
@@ -320,7 +200,6 @@ export default function Login() {
                 <br />
                 <strong>{phone}</strong>
               </div>
-
               <div className="mb-3">
                 <input
                   ref={otpRef}
@@ -332,24 +211,16 @@ export default function Login() {
                   onChange={(e) => setOtp(e.target.value)}
                 />
               </div>
-
-              <button
-                className="btn btn-success w-100"
-                onClick={verifyOTP}
-                disabled={loading}
-              >
+              <button className="btn btn-success w-100" onClick={verifyOTP} disabled={loading}>
                 {loading ? "Verifying..." : "Verify OTP"}
               </button>
-
-              <button
-                className="btn btn-link mt-3"
-                onClick={() => setOtpSent(false)}
-              >
+              <button className="btn btn-link mt-3" onClick={() => setOtpSent(false)}>
                 Change Number
               </button>
             </>
           )
         ) : (
+          // Password tab – unchanged
           <>
             <div className="mb-3">
               <input
@@ -362,12 +233,8 @@ export default function Login() {
                   setPhoneError("");
                 }}
               />
-
-              {phoneError && (
-                <div className="invalid-feedback d-block">{phoneError}</div>
-              )}
+              {phoneError && <div className="invalid-feedback d-block">{phoneError}</div>}
             </div>
-
             <div className="mb-3">
               <input
                 type={showPassword ? "text" : "password"}
@@ -379,12 +246,8 @@ export default function Login() {
                   setPasswordError("");
                 }}
               />
-
-              {passwordError && (
-                <div className="invalid-feedback d-block">{passwordError}</div>
-              )}
+              {passwordError && <div className="invalid-feedback d-block">{passwordError}</div>}
             </div>
-
             <div className="form-check mb-3">
               <input
                 className="form-check-input"
@@ -393,29 +256,17 @@ export default function Login() {
                 onChange={() => setShowPassword(!showPassword)}
                 id="showPassword"
               />
-
               <label className="form-check-label" htmlFor="showPassword">
                 Show Password
               </label>
             </div>
-
-            <button
-              className="btn btn-primary w-100"
-              onClick={loginWithPassword}
-              disabled={loading}
-            >
+            <button className="btn btn-primary w-100" onClick={loginWithPassword} disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </button>
           </>
         )}
 
-        <div
-          id="recaptcha-container"
-          style={{
-            marginTop: "10px",
-          }}
-        />
-
+        {/* reCAPTCHA container removed */}
         <div className="auth-footer">
           Don't have an account?
           <Link to="/register" className="ms-2">
