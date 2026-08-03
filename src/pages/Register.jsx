@@ -186,7 +186,7 @@ export default function Register() {
         ) : (
           <>
             <div className="text-center mb-3">
-              OTP sent to
+              OTP sent on WhatsApp to the number:
               <br />
               <strong>{phone}</strong>
             </div>

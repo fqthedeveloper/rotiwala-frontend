@@ -24,7 +24,7 @@ import api from "../../../service/api";
 
 import "./CSS/CartPanel.css";
 
-const QUICK_QUANTITIES = [1, 2, 3, 5, 10, 20, 30, 40, 60];
+const QUICK_QUANTITIES = [1, 2, 3, 5, 10];
 
 export default function CartPanel({
   selectedCart,
@@ -344,12 +344,7 @@ export default function CartPanel({
                 transition={{ duration: 0.25 }}
                 className="cart-item"
               >
-                <div className="cart-image">
-                  <img
-                    src={item.image || "/placeholder.png"}
-                    alt={item.item_name}
-                  />
-                </div>
+
                 <div className="cart-details">
                   <h5>{item.item_name}</h5>
                   <span className="cart-unit">

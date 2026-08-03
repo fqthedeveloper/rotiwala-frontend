@@ -30,6 +30,15 @@ function LocationMarker({ formData, setFormData }) {
       : null,
   );
 
+  useEffect(() => {
+    if (formData.latitude && formData.longitude) {
+      setPosition([
+        Number(formData.latitude),
+        Number(formData.longitude),
+      ]);
+    }
+  }, [formData.latitude, formData.longitude]);
+
   useMapEvents({
     click(e) {
       const lat = e.latlng.lat;
@@ -58,6 +67,8 @@ const AddShop = () => {
 
   const [gettingLocation, setGettingLocation] = useState(false);
 
+  const [map, setMap] = useState(null);
+
   const [formData, setFormData] = useState({
     name: "",
 
@@ -82,6 +93,8 @@ const AddShop = () => {
     is_active: true,
   });
 
+  const defaultPosition = [20.5937, 78.9629];
+
   const handleChange = (e) => {
     const { name, value, checked, type, files } = e.target;
 
@@ -101,6 +114,19 @@ const AddShop = () => {
       [name]: type === "checkbox" ? checked : value,
     });
   };
+
+  useEffect(() => {
+    if (map) {
+      map.invalidateSize();
+
+      if (formData.latitude && formData.longitude) {
+        map.setView([
+          Number(formData.latitude),
+          Number(formData.longitude),
+        ]);
+      }
+    }
+  }, [map, formData.latitude, formData.longitude]);
 
   const getCurrentLocation = () => {
     setGettingLocation(true);
@@ -362,18 +388,18 @@ const AddShop = () => {
 
                       <div className="card-body">
                         <MapContainer
-                          center={[
-                            formData.latitude
-                              ? Number(formData.latitude)
-                              : 20.5937,
-
-                            formData.longitude
-                              ? Number(formData.longitude)
-                              : 78.9629,
-                          ]}
+                          center={
+                            formData.latitude && formData.longitude
+                              ? [
+                                  Number(formData.latitude),
+                                  Number(formData.longitude),
+                                ]
+                              : defaultPosition
+                          }
                           zoom={13}
+                          whenCreated={setMap}
                           style={{
-                            height: "400px",
+                            minHeight: "400px",
                             width: "100%",
                             borderRadius: "10px",
                           }}

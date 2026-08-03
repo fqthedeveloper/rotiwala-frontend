@@ -196,7 +196,7 @@ export default function Login() {
           ) : (
             <>
               <div className="otp-phone">
-                OTP sent to
+                OTP sent on Whatsapp to The number:
                 <br />
                 <strong>{phone}</strong>
               </div>

@@ -120,6 +120,20 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
       </button>
     );
 
+    // Payment collection button for unpaid orders
+    if (payment_status !== "paid" && status !== "collected") {
+      actionButtons.push(
+        <button
+          key="payment"
+          className="btn-action payment"
+          {...commonProps("payment")}
+        >
+          {loadingAction === "payment" ? <span className="spinner-sm" /> : <FaMoneyBill />}
+          {isDelivery ? "Collect Payment" : "Payment Received"}
+        </button>
+      );
+    }
+
     // Status-specific actions
     switch (status) {
       case "pending":
@@ -159,14 +173,7 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         break;
 
       case "ready":
-        if (payment_status !== "paid") {
-          actionButtons.push(
-            <button key="payment" className="btn-action payment" {...commonProps("payment")}>
-              {loadingAction === "payment" ? <span className="spinner-sm" /> : <FaMoneyBill />}
-              Payment Received
-            </button>
-          );
-        } else {
+        if (payment_status === "paid") {
           actionButtons.push(
             <button key="collected" className="btn-action collected" {...commonProps("collected")}>
               {loadingAction === "collected" ? <span className="spinner-sm" /> : <FaCheckCircle />}

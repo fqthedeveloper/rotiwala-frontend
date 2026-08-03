@@ -24,7 +24,20 @@ L.Icon.Default.mergeOptions({
 });
 
 function LocationMarker({ formData, setFormData }) {
-  const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState(
+    formData.latitude && formData.longitude
+      ? [Number(formData.latitude), Number(formData.longitude)]
+      : null,
+  );
+
+  useEffect(() => {
+    if (formData.latitude && formData.longitude) {
+      setPosition([
+        Number(formData.latitude),
+        Number(formData.longitude),
+      ]);
+    }
+  }, [formData.latitude, formData.longitude]);
 
   useMapEvents({
     click(e) {
@@ -42,11 +55,7 @@ function LocationMarker({ formData, setFormData }) {
     },
   });
 
-  return formData.latitude && formData.longitude ? (
-    <Marker
-      position={[Number(formData.latitude), Number(formData.longitude)]}
-    />
-  ) : null;
+  return position ? <Marker position={position} /> : null;
 }
 
 const EditShop = () => {
@@ -55,6 +64,8 @@ const EditShop = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+
+  const [map, setMap] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -70,10 +81,25 @@ const EditShop = () => {
     is_active: true,
   });
 
+  const defaultPosition = [20.5937, 78.9629];
+
   useEffect(() => {
     loadShop();
     document.title = "Edit Shop | Roti Wala";
   }, []);
+
+  useEffect(() => {
+    if (map) {
+      map.invalidateSize();
+
+      if (formData.latitude && formData.longitude) {
+        map.setView([
+          Number(formData.latitude),
+          Number(formData.longitude),
+        ]);
+      }
+    }
+  }, [map, formData.latitude, formData.longitude]);
 
   const loadShop = async () => {
     try {
@@ -308,16 +334,18 @@ const EditShop = () => {
 
                   <div className="card-body">
                     <MapContainer
-                      center={[
-                        formData.latitude ? Number(formData.latitude) : 20.5937,
-
-                        formData.longitude
-                          ? Number(formData.longitude)
-                          : 78.9629,
-                      ]}
+                      center={
+                        formData.latitude && formData.longitude
+                          ? [
+                              Number(formData.latitude),
+                              Number(formData.longitude),
+                            ]
+                          : defaultPosition
+                      }
                       zoom={13}
+                      whenCreated={setMap}
                       style={{
-                        height: "400px",
+                        minHeight: "400px",
                         width: "100%",
                         borderRadius: "10px",
                       }}
