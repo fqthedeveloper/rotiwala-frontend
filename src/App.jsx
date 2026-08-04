@@ -29,6 +29,74 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
+const getPageTitle = (pathname) => {
+  const titles = {
+    "/": "Home - Roti Wala",
+    "/menu": "Menu - Roti Wala",
+    "/about": "About Us - Roti Wala",
+    "/contact": "Contact Us - Roti Wala",
+    "/login": "Login - Roti Wala",
+    "/register": "Register - Roti Wala",
+    "/privacy": "Privacy Policy - Roti Wala",
+    "/terms": "Terms & Conditions - Roti Wala",
+    "/refund": "Refund Policy - Roti Wala",
+    "/cart": "Cart - Roti Wala",
+    "/checkout": "Checkout - Roti Wala",
+    "/my-orders": "My Orders - Roti Wala",
+    "/admin/shops": "Shops - Roti Wala",
+    "/admin/shops/add-shop": "Add Shop - Roti Wala",
+    "/admin/managers": "Managers - Roti Wala",
+    "/admin/managers/add": "Add Manager - Roti Wala",
+    "/admin/categories": "Categories - Roti Wala",
+    "/admin/categories/add": "Add Category - Roti Wala",
+    "/admin/menu-items": "Menu Items - Roti Wala",
+    "/admin/menu-items/add": "Add Menu Item - Roti Wala",
+    "/admin/products/create": "Add Product - Roti Wala",
+    "/admin/dashboard": "Dashboard - Roti Wala",
+    "/admin/orders": "Orders - Roti Wala",
+    "/admin/products": "Products - Roti Wala",
+    "/admin/customer": "Customer Management - Roti Wala",
+    "/admin/coupons": "Coupons - Roti Wala",
+    "/admin/coupons/add": "Add Coupon - Roti Wala",
+    "/admin/discounts": "Discounts - Roti Wala",
+    "/admin/discounts/add": "Add Discount - Roti Wala",
+    "/admin/discounts/usage": "Discount Usage - Roti Wala",
+    "/admin/expenses": "Expenses - Roti Wala",
+    "/admin/expenses/add": "Add Expense - Roti Wala",
+    "/admin/maintenance/add": "Add Maintenance - Roti Wala",
+    "/admin/reports": "Reports - Roti Wala",
+    "/manager/dashboard": "Manager Dashboard - Roti Wala",
+    "/manager/orders": "Manager Orders - Roti Wala",
+    "/manager/walkin": "Walk-in Orders - Roti Wala",
+    "/manager/discounts/usage": "Discount Usage - Roti Wala",
+    "/manager/customers": "Customer Management - Roti Wala",
+    "/manager/expenses": "Manager Expenses - Roti Wala",
+    "/manager/expenses/add": "Add Expense - Roti Wala",
+    "/manager/reports": "Reports - Roti Wala",
+  };
+
+  if (titles[pathname]) return titles[pathname];
+  if (pathname.startsWith("/my-orders/")) return "Order Detail - Roti Wala";
+  if (pathname.startsWith("/admin/shops/edit")) return "Edit Shop - Roti Wala";
+  if (pathname.startsWith("/admin/managers/edit")) return "Edit Manager - Roti Wala";
+  if (pathname.startsWith("/admin/categories/edit")) return "Edit Category - Roti Wala";
+  if (pathname.startsWith("/admin/menu-items/edit")) return "Edit Menu Item - Roti Wala";
+  if (pathname.startsWith("/admin/coupons/edit")) return "Edit Coupon - Roti Wala";
+  if (pathname.startsWith("/admin/discounts/edit")) return "Edit Discount - Roti Wala";
+  if (pathname.startsWith("/admin/expenses/edit")) return "Edit Expense - Roti Wala";
+  if (pathname.startsWith("/manager/expenses/edit")) return "Edit Expense - Roti Wala";
+  if (pathname.startsWith("/admin/shops")) return "Shops - Roti Wala";
+  if (pathname.startsWith("/admin/managers")) return "Managers - Roti Wala";
+  if (pathname.startsWith("/admin/categories")) return "Categories - Roti Wala";
+  if (pathname.startsWith("/admin/menu-items")) return "Menu Items - Roti Wala";
+  if (pathname.startsWith("/admin/coupons")) return "Coupons - Roti Wala";
+  if (pathname.startsWith("/admin/discounts")) return "Discounts - Roti Wala";
+  if (pathname.startsWith("/admin/expenses")) return "Expenses - Roti Wala";
+  if (pathname.startsWith("/manager/expenses")) return "Manager Expenses - Roti Wala";
+  if (pathname.startsWith("/manager")) return "Manager - Roti Wala";
+  return "Roti Wala";
+};
+
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
 import Orders from "./pages/admin/Orders";
@@ -64,6 +132,9 @@ import Cart from "./pages/Customer/Cart";
 import Checkout from "./pages/Customer/Checkout";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetail from "./pages/Customer/OrderDetail";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Refund from "./pages/Refund";
 
 // Manager Pages
 import ManagerLayout from "./components/Manager/ManagerLayout";
@@ -78,6 +149,10 @@ function App() {
   const { showLoading, hideLoading } = useLoading();
 
   // Show loader only if route change takes a little time; hide quickly if the new page is already ready.
+  useEffect(() => {
+    document.title = getPageTitle(location.pathname);
+  }, [location.pathname]);
+
   useEffect(() => {
     const showTimer = setTimeout(() => {
       showLoading('Loading page...', 'warm', 'md');
@@ -102,6 +177,9 @@ function App() {
         <Route path="/menu" element={<Menu />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/refund" element={<Refund />} />
 
         <Route
           path="/login"

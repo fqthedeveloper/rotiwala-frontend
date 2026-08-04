@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import {
   FaPhone,
@@ -72,26 +73,46 @@ const Contact = () => {
 
   if (!contact) {
     return (
-      <div className="page-shell contact-page">
-        <section className="hero-section contact-hero">
+      <motion.div
+        className="page-shell contact-page"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+      >
+        <motion.section
+          className="hero-section contact-hero"
+          initial={{ opacity: 0, y: -18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: "easeOut" }}
+        >
           <div className="container hero-content text-center">
             <span className="hero-badge">We’re ready to help</span>
             <h1>Contact Us</h1>
             <p>Loading our contact details...</p>
           </div>
-        </section>
+        </motion.section>
         <div className="container py-5">
           <div className="loading-card">Preparing your contact experience...</div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   const mapUrl = `https://www.google.com/maps?q=${contact.latitude},${contact.longitude}`;
 
   return (
-    <div className="page-shell contact-page">
-      <section className="menu-hero contact-hero">
+    <motion.div
+      className="page-shell contact-page"
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.68, ease: "easeOut" }}
+    >
+      <motion.section
+        className="menu-hero contact-hero"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.68, ease: "easeOut" }}
+      >
         <div className="menu-hero-blob mh-blob-1" />
         <div className="menu-hero-blob mh-blob-2" />
         <div className="menu-hero-grain" />
@@ -108,11 +129,16 @@ const Contact = () => {
             <FaClock /> Open daily for pickup and support
           </div>
         </div>
-      </section>
+      </motion.section>
 
       <section className="container py-5">
         <div className="row g-4">
-          <div className="col-lg-5">
+          <motion.div
+            className="col-lg-5"
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.12 }}
+          >
             <div className="contact-card info-card">
               <div className="contact-card__head">
                 <h3>{contact.company_name}</h3>
@@ -168,9 +194,14 @@ const Contact = () => {
                 </a>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="col-lg-7">
+          <motion.div
+            className="col-lg-7"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.18 }}
+          >
             <div className="contact-card form-card">
               <div className="contact-card__head">
                 <h3>Send Feedback</h3>
@@ -237,10 +268,10 @@ const Contact = () => {
                 </button>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 };
 

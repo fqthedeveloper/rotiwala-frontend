@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FaStore,
@@ -40,8 +41,18 @@ const About = () => {
   }, []);
 
   return (
-    <div className="page-shell about-page">
-      <section className="menu-hero about-hero">
+    <motion.div
+      className="page-shell about-page"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
+      <motion.section
+        className="menu-hero about-hero"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+      >
         <div className="menu-hero-blob mh-blob-1" />
         <div className="menu-hero-blob mh-blob-2" />
         <div className="menu-hero-grain" />
@@ -71,7 +82,7 @@ const About = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       <section className="container py-5">
         <div className="row align-items-center g-5">
@@ -155,7 +166,7 @@ const About = () => {
           </Link>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 };
 

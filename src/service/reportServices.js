@@ -8,16 +8,14 @@ export const getReport = async (params) => {
   return response.data;
 };
 
-/**
- * Export report as Excel or PDF
- * Manually adds the Authorization header to ensure the token is sent
- * (blob requests sometimes bypass interceptors or have header issues)
- */
 export const exportReport = async (params) => {
-    const response = await api.get("/reports/export/", {
-        params,
-        responseType: "blob",
-    });
-
-    return response;
+  const token = localStorage.getItem('accessToken'); // or however you store it
+  const response = await api.get('/reports/export/', {
+    params,
+    responseType: 'blob',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
 };
