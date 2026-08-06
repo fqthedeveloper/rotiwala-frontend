@@ -140,7 +140,7 @@ import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
 import Profile from './pages/Customer/Profile';
 import ForgotPassword from './pages/ForgotPassword';
-import ChangePassword from './Components/Profile/ChangePassword';
+import ChangePassword from './components/Profile/ChangePassword';
 
 // Manager Pages
 import ManagerLayout from "./components/Manager/ManagerLayout";
