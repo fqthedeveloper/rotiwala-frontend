@@ -16,8 +16,8 @@ const normalizeApiBaseUrl = (value = "") => {
 
 const API_BASE_URL = normalizeApiBaseUrl(
   import.meta.env.VITE_API_URL ||
-    "https://rotiwaale.pythonanywhere.com/api"
-);
+  "http://127.0.0.1:8000/api";
+
 
 // ✅ Add named export for the base URL
 export const API = API_BASE_URL;
