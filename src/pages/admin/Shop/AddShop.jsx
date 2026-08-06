@@ -129,7 +129,9 @@ const AddShop = () => {
               <form onSubmit={handleSubmit}>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-name" className="form-label fw-semibold">Shop Name</label>
+                    <label htmlFor="shop-name" className="form-label fw-semibold">
+                      Shop Name
+                    </label>
                     <input
                       type="text"
                       id="shop-name"
@@ -143,7 +145,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-phone" className="form-label fw-semibold">Phone Number</label>
+                    <label htmlFor="shop-phone" className="form-label fw-semibold">
+                      Phone Number
+                    </label>
                     <input
                       type="text"
                       id="shop-phone"
@@ -157,7 +161,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-12 mb-3">
-                    <label htmlFor="shop-address" className="form-label fw-semibold">Address</label>
+                    <label htmlFor="shop-address" className="form-label fw-semibold">
+                      Address
+                    </label>
                     <textarea
                       id="shop-address"
                       rows="4"
@@ -171,7 +177,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-email" className="form-label fw-semibold">Email</label>
+                    <label htmlFor="shop-email" className="form-label fw-semibold">
+                      Email
+                    </label>
                     <input
                       type="email"
                       id="shop-email"
@@ -184,7 +192,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="shop-opening-time" className="form-label fw-semibold">Opening Time</label>
+                    <label htmlFor="shop-opening-time" className="form-label fw-semibold">
+                      Opening Time
+                    </label>
                     <input
                       type="time"
                       id="shop-opening-time"
@@ -196,7 +206,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="shop-closing-time" className="form-label fw-semibold">Closing Time</label>
+                    <label htmlFor="shop-closing-time" className="form-label fw-semibold">
+                      Closing Time
+                    </label>
                     <input
                       type="time"
                       id="shop-closing-time"
@@ -208,7 +220,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-logo" className="form-label fw-semibold">Shop Logo</label>
+                    <label htmlFor="shop-logo" className="form-label fw-semibold">
+                      Shop Logo
+                    </label>
                     <input
                       type="file"
                       id="shop-logo"
@@ -220,7 +234,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-banner" className="form-label fw-semibold">Shop Banner</label>
+                    <label htmlFor="shop-banner" className="form-label fw-semibold">
+                      Shop Banner
+                    </label>
                     <input
                       type="file"
                       id="shop-banner"
@@ -231,22 +247,23 @@ const AddShop = () => {
                     />
                   </div>
 
+                  {/* SHOP LOCATION CONTAINER */}
                   <div className="col-12 mb-4">
                     <div className="card border">
-                      <div className="card-header bg-light">
-                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                          <h6 className="mb-0">Shop Location</h6>
-                          <button
-                            type="button"
-                            className="btn btn-success btn-sm"
-                            onClick={getCurrentLocation}
-                            disabled={gettingLocation}
-                          >
-                            {gettingLocation ? 'Fetching...' : 'Use My Location'}
-                          </button>
-                        </div>
+                      <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h6 className="mb-0">Shop Location</h6>
+                        <button
+                          type="button"
+                          className="btn btn-success btn-sm"
+                          onClick={getCurrentLocation}
+                          disabled={gettingLocation}
+                        >
+                          {gettingLocation ? 'Fetching...' : 'Use My Location'}
+                        </button>
                       </div>
-                      <div className="card-body">
+
+                      {/* Map rendered cleanly in its own block without overlapping UI elements */}
+                      <div className="card-body p-0" style={{ height: '400px', width: '100%' }}>
                         <LocationPicker
                           formData={formData}
                           setFormData={setFormData}
@@ -257,7 +274,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-latitude" className="form-label fw-semibold">Latitude</label>
+                    <label htmlFor="shop-latitude" className="form-label fw-semibold">
+                      Latitude
+                    </label>
                     <input
                       type="text"
                       id="shop-latitude"
@@ -268,7 +287,9 @@ const AddShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label htmlFor="shop-longitude" className="form-label fw-semibold">Longitude</label>
+                    <label htmlFor="shop-longitude" className="form-label fw-semibold">
+                      Longitude
+                    </label>
                     <input
                       type="text"
                       id="shop-longitude"
@@ -288,7 +309,9 @@ const AddShop = () => {
                         checked={formData.is_active}
                         onChange={handleChange}
                       />
-                      <label htmlFor="shop-is-active" className="form-check-label fw-semibold">Active Shop</label>
+                      <label htmlFor="shop-is-active" className="form-check-label fw-semibold">
+                        Active Shop
+                      </label>
                     </div>
                   </div>
 

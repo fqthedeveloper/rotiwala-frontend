@@ -1,120 +1,132 @@
-import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
-// Fix Leaflet default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+// Paste your Google Maps API Key here
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-// Nashik City Geographical Bounding Box
-const NASHIK_BOUNDS = [
-  [19.8500, 73.6500], // South-West corner
-  [20.1500, 73.9200]  // North-East corner
-];
+// Strict Nashik City Boundary Box
+const NASHIK_BOUNDS = {
+  north: 20.1500,
+  south: 19.8500,
+  east: 73.9200,
+  west: 73.6500,
+};
 
-// Inner component to safely handle map initialization, boundaries, and click events
-const MapHandler = ({ formData, setFormData }) => {
-  const map = useMap();
-  const [position, setPosition] = useState(null);
+const NASHIK_CENTER = { lat: 20.0081, lng: 73.7841 };
 
-  // Apply map restrictions and fix container sizing once map is mounted
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px',
+  borderRadius: '10px',
+};
+
+const mapOptions = {
+  restriction: {
+    latLngBounds: NASHIK_BOUNDS,
+    strictBounds: true, // Prevents users from panning outside Nashik city
+  },
+  zoomControl: true,
+  streetViewControl: false,
+  mapTypeControl: false,
+  fullscreenControl: false,
+};
+
+const LocationPicker = ({ formData, setFormData, mapRef }) => {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+  });
+
+  const localMapRef = useRef(null);
+
+  // Validate initial lat/lng from props
+  const initialLat = Number(formData.latitude);
+  const initialLng = Number(formData.longitude);
+
+  const hasValidCoords =
+    initialLat && initialLng && !isNaN(initialLat) && !isNaN(initialLng);
+
+  const center = hasValidCoords
+    ? { lat: initialLat, lng: initialLng }
+    : NASHIK_CENTER;
+
+  const [markerPosition, setMarkerPosition] = useState(
+    hasValidCoords ? { lat: initialLat, lng: initialLng } : null
+  );
+
+  // Synchronize map center and marker when formData updates externally (e.g. "Use My Location")
   useEffect(() => {
-    if (!map) return;
+    const lat = Number(formData.latitude);
+    const lng = Number(formData.longitude);
 
-    // Set view bounds to strictly lock panning to Nashik city
-    map.setMaxBounds(NASHIK_BOUNDS);
-    map.setMinZoom(12);
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      const newPos = { lat, lng };
+      setMarkerPosition(newPos);
+      if (localMapRef.current) {
+        localMapRef.current.panTo(newPos);
+      }
+    } else {
+      setMarkerPosition(null);
+    }
+  }, [formData.latitude, formData.longitude]);
 
-    // Force map to recalculate its visible size
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
+  const onMapLoad = useCallback(
+    (map) => {
+      localMapRef.current = map;
+      if (mapRef) {
+        mapRef.current = map;
+      }
+    },
+    [mapRef]
+  );
 
-    return () => clearTimeout(timer);
-  }, [map]);
+  const handleMapClick = useCallback(
+    (e) => {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
 
-  // Click event listener to set marker & lat/lng
-  useMapEvents({
-    click(e) {
-      const { lat, lng } = e.latlng;
-      setPosition([lat, lng]);
+      setMarkerPosition({ lat, lng });
       setFormData((prev) => ({
         ...prev,
         latitude: lat.toFixed(7),
         longitude: lng.toFixed(7),
       }));
     },
-  });
+    [setFormData]
+  );
 
-  // Keep marker position synced when formData changes
-  useEffect(() => {
-    if (!map) return;
+  if (loadError) {
+    return (
+      <div className="alert alert-danger text-center p-3">
+        Failed to load Google Maps. Please check your API key.
+      </div>
+    );
+  }
 
-    const lat = Number(formData.latitude);
-    const lng = Number(formData.longitude);
-
-    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-      const newPos = [lat, lng];
-      setPosition(newPos);
-      map.panTo(newPos);
-    } else {
-      setPosition(null);
-    }
-  }, [formData.latitude, formData.longitude, map]);
-
-  return position ? <Marker position={position} /> : null;
-};
-
-// Main Export Component
-const LocationPicker = ({ formData, setFormData, mapRef }) => {
-  // Nashik Default Coordinates
-  const NASHIK_CENTER = [20.0081, 73.7841];
-
-  const center =
-    formData.latitude && formData.longitude && !isNaN(Number(formData.latitude))
-      ? [Number(formData.latitude), Number(formData.longitude)]
-      : NASHIK_CENTER;
+  if (!isLoaded) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center bg-light rounded"
+        style={{ height: '400px' }}
+      >
+        <div className="spinner-border text-success" role="status">
+          <span className="visually-hidden">Loading Map...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Inline styles to guarantee Leaflet container layout */}
-      <style>{`
-        .leaflet-container {
-          width: 100% !important;
-          height: 100% !important;
-          border-radius: 10px;
-        }
-      `}</style>
-
-      <div
-        style={{
-          height: '400px',
-          width: '100%',
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '10px'
-        }}
-      >
-        <MapContainer
-          ref={mapRef}
-          center={center}
-          zoom={13}
-          scrollWheelZoom={true}
-          style={{ height: '400px', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MapHandler formData={formData} setFormData={setFormData} />
-        </MapContainer>
-      </div>
-    </>
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      center={center}
+      zoom={13}
+      options={mapOptions}
+      onLoad={onMapLoad}
+      onClick={handleMapClick}
+    >
+      {markerPosition && <Marker position={markerPosition} />}
+    </GoogleMap>
   );
 };
 

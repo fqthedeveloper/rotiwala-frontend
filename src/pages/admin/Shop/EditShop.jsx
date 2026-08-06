@@ -269,8 +269,8 @@ const EditShop = () => {
                   </div>
                 </div>
 
-                <div className="card mb-4">
-                  <div className="card-header d-flex justify-content-between align-items-center">
+                <div className="card mb-4 border">
+                  <div className="card-header bg-light d-flex justify-content-between align-items-center">
                     <h6 className="mb-0">Shop Location</h6>
                     <button
                       type="button"
@@ -280,7 +280,7 @@ const EditShop = () => {
                       Use Current Location
                     </button>
                   </div>
-                  <div className="card-body">
+                  <div className="card-body p-0" style={{ height: '400px', width: '100%' }}>
                     <LocationPicker
                       formData={formData}
                       setFormData={setFormData}
