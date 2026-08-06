@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { changePassword } from '../../service/api';
 import toast from 'react-hot-toast';
-import '../../pages/Customer/CSS/Profile.css'; // custom styles
+import '../../pages/Customer/CSS/profile.css'; // custom styles
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');

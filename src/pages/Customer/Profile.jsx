@@ -5,7 +5,7 @@ import api from '../../service/api';
 import ChangePassword from '../../components/Profile/ChangePassword';
 import UpdatePhone from '../../components/Profile/UpdatePhone';
 import toast from 'react-hot-toast';
-import './CSS/Profile.css'; // custom styles
+import './CSS/profile.css'; // custom styles
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
