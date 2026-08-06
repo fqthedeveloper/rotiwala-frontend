@@ -172,6 +172,7 @@ const Header = () => {
                     {user.role === "customer" && (
                       <Link to="/my-orders">My Orders</Link>
                     )}
+                    <Link to="/profile">Profile</Link>
 
                     <button onClick={logout}>Logout</button>
                   </div>

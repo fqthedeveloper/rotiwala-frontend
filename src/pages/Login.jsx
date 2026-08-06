@@ -268,6 +268,12 @@ export default function Login() {
 
         {/* reCAPTCHA container removed */}
         <div className="auth-footer">
+          forgot your password?
+          <Link to="/forgot-password" className="ms-2">
+            Reset Password
+          </Link>
+        </div>
+        <div className="auth-footer mt-2">
           Don't have an account?
           <Link to="/register" className="ms-2">
             Register
@@ -276,4 +282,4 @@ export default function Login() {
       </div>
     </div>
   );
-}
+};

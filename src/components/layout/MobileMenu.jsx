@@ -146,6 +146,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
               <NavItem to="/cart" text="🛒 Cart" onClose={onClose} />
 
               <NavItem to="/my-orders" text="📋 My Orders" onClose={onClose} />
+              <NavItem to="/profile" text="👤 Profile" onClose={onClose} />
 
               <button
                 onClick={logout}

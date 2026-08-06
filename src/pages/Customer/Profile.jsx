@@ -1,29 +1,31 @@
 // src/pages/Customer/Profile.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
-import { toast } from 'react-toastify';
+import api from '../../service/api';
+import ChangePassword from '../../components/Profile/ChangePassword';
+import UpdatePhone from '../../components/Profile/UpdatePhone';
+import toast from 'react-hot-toast';
+import './CSS/Profile.css'; // custom styles
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    phone: '',
     email: '',
   });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (user) {
       setFormData({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        phone: user.phone || '',
         email: user.email || '',
       });
-      setLoading(false);
     }
   }, [user]);
 
@@ -33,88 +35,194 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+    setLoading(true);
+
+    // Basic client-side validation
+    if (!formData.first_name.trim()) {
+      const msg = 'First name is required';
+      setErrorMessage(msg);
+      toast.error(msg);
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Use the self-profile endpoint
-      const response = await api.patch('/accounts/profile/', formData);
-      toast.success('Profile updated successfully');
-      // Update user context (if your AuthContext has updateUser)
-      if (updateUser) {
-        updateUser(response.data.user);
-      }
+      const response = await api.put('/accounts/profile/', formData);
+      // Update local state and context
+      const updatedUser = { ...user, ...formData };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      updateUser(updatedUser);
+
+      const successMsg = response.data?.message || 'Profile updated successfully';
+      setSuccessMessage(successMsg);
+      toast.success(successMsg);
+
+      // Clear success after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Update failed');
+      let msg = 'Failed to update profile';
+      if (error.response) {
+        // Handle different error formats
+        const data = error.response.data;
+        if (data.message) {
+          msg = data.message;
+        } else if (data.error) {
+          msg = data.error;
+        } else if (data.errors) {
+          // DRF field errors
+          const fieldErrors = Object.values(data.errors).flat().join(', ');
+          msg = fieldErrors || msg;
+        } else if (data.detail) {
+          msg = data.detail;
+        }
+        // If it's an object with field keys, we can also extract
+        if (typeof data === 'object' && !data.message && !data.error) {
+          const keys = Object.keys(data);
+          if (keys.length) {
+            const firstKey = keys[0];
+            const firstError = data[firstKey];
+            if (Array.isArray(firstError)) {
+              msg = `${firstKey}: ${firstError.join(', ')}`;
+            } else if (typeof firstError === 'string') {
+              msg = `${firstKey}: ${firstError}`;
+            }
+          }
+        }
+      } else if (error.request) {
+        msg = 'No response from server. Check your connection.';
+      } else {
+        msg = error.message || msg;
+      }
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  if (loading) return <div className="text-center py-10">Loading...</div>;
-
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">My Profile</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              First Name
-            </label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Last Name
-            </label>
-            <input
-              type="text"
-              name="last_name"
-              value={formData.last_name}
-              onChange={handleChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-            />
-          </div>
+    <div className="container py-5">
+      {/* Header */}
+      <div className="d-flex align-items-center gap-3 mb-4">
+        <div className="bg-warning bg-opacity-10 p-2 rounded-circle">
+          <svg width="28" height="28" fill="#e67e22" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
         </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Phone
-          </label>
-          <input
-            type="text"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-          />
-        </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-          />
-        </div>
-        <div className="mt-6">
+        <h1 className="h3 mb-0 fw-bold text-dark">My Profile</h1>
+      </div>
+
+      {/* Tabs */}
+      <ul className="nav nav-tabs border-0 mb-4" role="tablist">
+        <li className="nav-item">
           <button
-            type="submit"
-            disabled={saving}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className={`nav-link ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
           >
-            {saving ? 'Saving...' : 'Save Changes'}
+            Edit Profile
           </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === 'password' ? 'active' : ''}`}
+            onClick={() => setActiveTab('password')}
+          >
+            Change Password
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            className={`nav-link ${activeTab === 'phone' ? 'active' : ''}`}
+            onClick={() => setActiveTab('phone')}
+          >
+            Change Phone
+          </button>
+        </li>
+      </ul>
+
+      {/* Tab Content */}
+      <div className="profile-card position-relative" style={{ minHeight: '320px' }}>
+        <div className="fade-slide-in">
+          {activeTab === 'profile' && (
+            <form onSubmit={handleSubmit}>
+              {/* Global success message */}
+              {successMessage && (
+                <div className="alert alert-success py-2" role="alert">
+                  <strong>✅ Success!</strong> {successMessage}
+                </div>
+              )}
+              {/* Global error message */}
+              {errorMessage && (
+                <div className="alert alert-danger py-2" role="alert">
+                  {errorMessage}
+                </div>
+              )}
+
+              <div className="row g-3">
+                <div className="col-sm-6">
+                  <label className="form-label fw-semibold">First Name</label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    className="form-control"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="col-sm-6">
+                  <label className="form-label fw-semibold">Last Name</label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    className="form-control"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label fw-semibold">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="form-control"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label fw-semibold">Phone</label>
+                  <input
+                    type="text"
+                    value={user?.phone || ''}
+                    disabled
+                    className="form-control bg-light"
+                  />
+                  <small className="text-muted">Phone can only be changed via OTP verification.</small>
+                </div>
+                <div className="col-12">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn btn-orange px-5"
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {activeTab === 'password' && <ChangePassword />}
+
+          {activeTab === 'phone' && <UpdatePhone currentPhone={user?.phone} />}
         </div>
-      </form>
+      </div>
     </div>
   );
 };

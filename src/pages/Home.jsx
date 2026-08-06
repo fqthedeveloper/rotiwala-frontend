@@ -46,15 +46,31 @@ import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext";
 
 /* -------------------- STATIC DATA -------------------- */
-const TOP_CATEGORIES = [
-  { icon: <FaBreadSlice />, name: "Roti & Breads", color: "#c98a2b" },
-  { icon: <FaPizzaSlice />, name: "Pizza", color: "#b4443c" },
-  { icon: <FaHamburger />, name: "Burgers", color: "#c07a1f" },
-  { icon: <FaDrumstickBite />, name: "Non-Veg", color: "#8f1d2c" },
-  { icon: <FaLeaf />, name: "Healthy", color: "#3f7a44" },
-  { icon: <FaCarrot />, name: "Veggies", color: "#c2662a" },
-  { icon: <FaIceCream />, name: "Desserts", color: "#b1537a" },
-  { icon: <FaCoffee />, name: "Beverages", color: "#6f4a2f" },
+const VIDEO_SHOWCASE = [
+  {
+    id: "how-to-roll-roti",
+    title: "How to Roll the Perfect Roti",
+    description:
+      "Step-by-step preparation from dough to tandoor, with chef tips for soft, fluffy rotis.",
+    src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    poster: "/video-thumb-01.jpg",
+  },
+  {
+    id: "tandoor-firing-tips",
+    title: "Tandoor Firing & Freshness",
+    description:
+      "Watch how our team keeps the tandoor hot and roti fresh for every order.",
+    src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
+    poster: "/video-thumb-02.jpg",
+  },
+  {
+    id: "packaging-for-delivery",
+    title: "Safe Packaging for Delivery",
+    description:
+      "See the hygienic packing process that keeps your meal hot and secure.",
+    src: "https://www.w3schools.com/html/mov_bbb.mp4",
+    poster: "/video-thumb-03.jpg",
+  },
 ];
 
 const TESTIMONIALS = [
@@ -137,6 +153,8 @@ export default function Home() {
   const [menuItems, setMenuItems] = useState([]);
   const [locationDenied, setLocationDenied] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [activeVideoIdx, setActiveVideoIdx] = useState(0);
+  const [isAutoSlide, setIsAutoSlide] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   /* ---------- LENIS SMOOTH SCROLL ---------- */
@@ -182,6 +200,46 @@ export default function Home() {
     }, 5000);
     return () => clearInterval(id);
   }, []);
+
+  /* Auto-rotate video slideshow */
+  useEffect(() => {
+    if (!isAutoSlide) return;
+
+    const id = setInterval(() => {
+      setActiveVideoIdx((current) => (current + 1) % VIDEO_SHOWCASE.length);
+    }, 7000);
+
+    return () => clearInterval(id);
+  }, [isAutoSlide]);
+
+  const stopSlideshow = () => {
+    setIsAutoSlide(false);
+  };
+
+  const selectVideo = (index) => {
+    setActiveVideoIdx(index);
+    setIsAutoSlide(false);
+  };
+
+  const nextVideo = () => {
+    setActiveVideoIdx((current) => {
+      const next = (current + 1) % VIDEO_SHOWCASE.length;
+      return next;
+    });
+    setIsAutoSlide(false);
+  };
+
+  const prevVideo = () => {
+    setActiveVideoIdx((current) => {
+      const prev = (current - 1 + VIDEO_SHOWCASE.length) % VIDEO_SHOWCASE.length;
+      return prev;
+    });
+    setIsAutoSlide(false);
+  };
+
+  const activeVideo = VIDEO_SHOWCASE[activeVideoIdx];
+  const nextVideoTitle = VIDEO_SHOWCASE[(activeVideoIdx + 1) % VIDEO_SHOWCASE.length].title;
+  const prevVideoTitle = VIDEO_SHOWCASE[(activeVideoIdx - 1 + VIDEO_SHOWCASE.length) % VIDEO_SHOWCASE.length].title;
 
   /* ---------- API HELPERS ---------- */
   const fetchAllShops = async () => {
@@ -586,14 +644,14 @@ export default function Home() {
       {/* ============ CHAPTER 01 — CATEGORIES ============ */}
       <Chapter
         no="01"
-        kicker="Browse By Craving"
-        title="Top"
-        accent="Categories"
-        sub="Pick what you crave the most"
+        kicker="Our Video Journey"
+        title="How to"
+        accent="Prepare"
+        sub="Watch our kitchen stories and food preparation videos"
       />
 
-      <motion.div
-        className="rw-cats"
+      <motion.section
+        className="rw-video-showcase"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.15 }}
@@ -602,26 +660,50 @@ export default function Home() {
           visible: { transition: { staggerChildren: 0.06 } },
         }}
       >
-        {TOP_CATEGORIES.map((cat, i) => (
-          <motion.div
-            key={i}
-            data-testid={`category-card-${i}`}
-            className="rw-cat"
-            variants={{
-              hidden: { opacity: 0, y: 34 },
-              visible: { opacity: 1, y: 0, transition: { ease: EASE } },
-            }}
-            whileHover={{ y: -8 }}
-            style={{ "--cat-color": cat.color }}
-          >
-            <span className="rw-cat-no">
-              {String(i + 1).padStart(2, "0")}
+        <motion.article
+          className="rw-video-card rw-video-main-card"
+          initial={{ opacity: 0, y: 34 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.55, ease: EASE }}
+        >
+          <div className="rw-video-thumb">
+            <video
+              controls
+              preload="metadata"
+              poster={activeVideo.poster}
+              className="rw-video-player"
+              onClick={stopSlideshow}
+            >
+              <source src={activeVideo.src} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="rw-video-copy rw-video-copy--minimal">
+            <span className="rw-video-label">
+              {isAutoSlide ? "Auto slideshow" : "Manual selection"}
             </span>
-            <div className="rw-cat-icon">{cat.icon}</div>
-            <h5>{cat.name}</h5>
-          </motion.div>
-        ))}
-      </motion.div>
+            <h4>{activeVideo.title}</h4>
+          </div>
+          <div className="rw-video-controls">
+            <button
+              className="rw-video-nav-btn"
+              type="button"
+              onClick={prevVideo}
+            >
+              Prev: {prevVideoTitle}
+            </button>
+            <button
+              className="rw-video-nav-btn"
+              type="button"
+              onClick={nextVideo}
+            >
+              Next: {nextVideoTitle}
+            </button>
+          </div>
+        </motion.article>
+
+      </motion.section>
 
       {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
       <Chapter

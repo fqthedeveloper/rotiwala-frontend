@@ -73,6 +73,9 @@ const getPageTitle = (pathname) => {
     "/manager/expenses": "Manager Expenses - Roti Wala",
     "/manager/expenses/add": "Add Expense - Roti Wala",
     "/manager/reports": "Reports - Roti Wala",
+    "/profile": "Profile - Roti Wala",
+    "/forgot-password": "Forgot Password - Roti Wala",
+    "/change-password": "Change Password - Roti Wala",
   };
 
   if (titles[pathname]) return titles[pathname];
@@ -135,6 +138,9 @@ import OrderDetail from "./pages/Customer/OrderDetail";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
+import Profile from './pages/Customer/Profile';
+import ForgotPassword from './pages/ForgotPassword';
+import ChangePassword from './Components/Profile/ChangePassword';
 
 // Manager Pages
 import ManagerLayout from "./components/Manager/ManagerLayout";
@@ -180,6 +186,7 @@ function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund" element={<Refund />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route
           path="/login"
@@ -232,7 +239,24 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+                <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute>
+                <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
       </Route>
+
 
       {/* ADMIN ROUTES */}
       <Route

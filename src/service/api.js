@@ -122,4 +122,60 @@ api.interceptors.response.use(
   }
 );
 
+// ===================== PROFILE & PASSWORD =====================
+
+/**
+ * Change or assign password (authenticated)
+ * @param {string} oldPassword - Required only if user already has a password
+ * @param {string} newPassword
+ */
+export const changePassword = async (oldPassword, newPassword) => {
+  const payload = { new_password: newPassword };
+  if (oldPassword) payload.old_password = oldPassword;
+  return api.put('/accounts/change-password/', payload);
+};
+
+export const updateProfile = async (profileData) => {
+  return api.put('/accounts/profile/', profileData);
+};
+
+// ===================== PHONE UPDATE WITH OTP =====================
+
+/**
+ * Send OTP to new phone number (authenticated)
+ * @param {string} newPhone
+ */
+export const sendPhoneUpdateOTP = async (newPhone) => {
+  return api.post('/accounts/send-phone-update-otp/', { new_phone: newPhone });
+};
+
+/**
+ * Verify OTP and update phone (authenticated)
+ * @param {string} newPhone
+ * @param {string} otp
+ */
+export const verifyPhoneUpdateOTP = async (newPhone, otp) => {
+  return api.post('/accounts/verify-phone-update-otp/', { new_phone: newPhone, otp });
+};
+
+// ===================== FORGOT PASSWORD (RESET) =====================
+
+/**
+ * Send OTP for password reset (no auth)
+ * @param {string} phone
+ */
+export const sendPasswordResetOTP = async (phone) => {
+  return api.post('/accounts/send-password-reset-otp/', { phone });
+};
+
+/**
+ * Verify OTP and reset password (no auth)
+ * @param {string} phone
+ * @param {string} otp
+ * @param {string} newPassword
+ */
+export const verifyPasswordResetOTP = async (phone, otp, newPassword) => {
+  return api.post('/accounts/verify-password-reset-otp/', { phone, otp, new_password: newPassword });
+};
+
 export default api;
