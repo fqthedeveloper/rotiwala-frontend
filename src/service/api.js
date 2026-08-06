@@ -8,15 +8,14 @@ import axios from "axios";
 
 const normalizeApiBaseUrl = (value = "") => {
   const trimmed = value?.trim();
-  if (!trimmed) return "https://rotiwaale.pythonanywhere.com/api";
+  if (!trimmed) return VITE_API_URL;
 
   const withoutPrefix = trimmed.replace(/^VITE_API_URL=/i, "").trim();
   return withoutPrefix.replace(/\/+$/, "");
 };
 
 const API_BASE_URL = normalizeApiBaseUrl(
-  import.meta.env.VITE_API_URL ||
-  "https://rotiwaale.pythonanywhere.com/api"
+  import.meta.env.VITE_API_URL
 );
 
 
