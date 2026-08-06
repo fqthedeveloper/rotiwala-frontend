@@ -1,196 +1,139 @@
-import { useEffect, useState } from "react";
-
-import { useNavigate, useParams } from "react-router-dom";
-
-import Swal from "sweetalert2";
-
-import { getShop, updateShop } from "../../../service/shopService";
-
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
-
-import "leaflet/dist/leaflet.css";
-
-import L from "leaflet";
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
-function LocationMarker({ formData, setFormData }) {
-  const [position, setPosition] = useState(
-    formData.latitude && formData.longitude
-      ? [Number(formData.latitude), Number(formData.longitude)]
-      : null,
-  );
-
-  useEffect(() => {
-    if (formData.latitude && formData.longitude) {
-      setPosition([
-        Number(formData.latitude),
-        Number(formData.longitude),
-      ]);
-    }
-  }, [formData.latitude, formData.longitude]);
-
-  useMapEvents({
-    click(e) {
-      const lat = e.latlng.lat;
-
-      const lng = e.latlng.lng;
-
-      setPosition([lat, lng]);
-
-      setFormData((prev) => ({
-        ...prev,
-        latitude: lat.toFixed(7),
-        longitude: lng.toFixed(7),
-      }));
-    },
-  });
-
-  return position ? <Marker position={position} /> : null;
-}
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { getShop, updateShop } from '../../../service/shopService';
+import LocationPicker from './ShopLocationPicker';
 
 const EditShop = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(false);
-
-  const [map, setMap] = useState(null);
+  const mapRef = useRef(null);
 
   const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    email: "",
-    opening_time: "",
-    closing_time: "",
-    latitude: "",
-    longitude: "",
-    logo: null,
-    banner: null,
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    opening_time: '',
+    closing_time: '',
+    latitude: '',
+    longitude: '',
+    logo: null,        // will hold new File if user uploads
+    banner: null,      // will hold new File if user uploads
     is_active: true,
   });
 
-  const defaultPosition = [20.5937, 78.9629];
-
+  // Load shop data
   useEffect(() => {
-    loadShop();
-    document.title = "Edit Shop | Roti Wala";
-  }, []);
-
-  useEffect(() => {
-    if (map) {
-      map.invalidateSize();
-
-      if (formData.latitude && formData.longitude) {
-        map.setView([
-          Number(formData.latitude),
-          Number(formData.longitude),
-        ]);
+    const loadShop = async () => {
+      try {
+        const data = await getShop(id);
+        // Keep existing logo/banner URLs as strings, but we don't use them directly.
+        // We'll only send new files if the user selects them.
+        setFormData({
+          name: data.name || '',
+          address: data.address || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          opening_time: data.opening_time || '',
+          closing_time: data.closing_time || '',
+          latitude: data.latitude || '',
+          longitude: data.longitude || '',
+          logo: null,   // reset; we'll only append if a new file is chosen
+          banner: null, // reset
+          is_active: data.is_active ?? true,
+        });
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to load shop',
+        });
       }
-    }
-  }, [map, formData.latitude, formData.longitude]);
-
-  const loadShop = async () => {
-    try {
-      const data = await getShop(id);
-
-      setFormData({
-        ...data,
-        logo: null,
-        banner: null,
-      });
-    } catch {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to load shop",
-      });
-    }
-  };
+    };
+    loadShop();
+    document.title = 'Edit Shop | Roti Wala';
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value, checked, type, files } = e.target;
-
-    if (type === "file") {
-      setFormData({
-        ...formData,
-        [name]: files[0],
-      });
-
+    if (type === 'file') {
+      setFormData({ ...formData, [name]: files[0] });
       return;
     }
-
     setFormData({
       ...formData,
-
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
   const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      setFormData((prev) => ({
-        ...prev,
-
-        latitude: position.coords.latitude.toFixed(7),
-
-        longitude: position.coords.longitude.toFixed(7),
-      }));
-
-      Swal.fire({
-        icon: "success",
-        title: "Location Updated",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    });
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude.toFixed(7),
+          longitude: position.coords.longitude.toFixed(7),
+        }));
+        Swal.fire({
+          icon: 'success',
+          title: 'Location Updated',
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      },
+      () => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Location Error',
+          text: 'Unable to fetch your location',
+        });
+      }
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
-
       const submitData = new FormData();
 
-      Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null) {
+      // Append scalar fields only if they have a value
+      const scalarFields = ['name', 'address', 'phone', 'email', 'opening_time', 'closing_time', 'latitude', 'longitude'];
+      scalarFields.forEach((key) => {
+        if (formData[key] !== undefined && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
 
+      // Append is_active as a string
+      submitData.append('is_active', formData.is_active ? 'true' : 'false');
+
+      // Append files only if a new file was selected
+      if (formData.logo && formData.logo instanceof File) {
+        submitData.append('logo', formData.logo);
+      }
+      if (formData.banner && formData.banner instanceof File) {
+        submitData.append('banner', formData.banner);
+      }
+
       await updateShop(id, submitData);
-
       Swal.fire({
-        icon: "success",
-
-        title: "Success",
-
-        text: "Shop Updated Successfully",
-
+        icon: 'success',
+        title: 'Success',
+        text: 'Shop Updated Successfully',
         timer: 2000,
-
         showConfirmButton: false,
       });
-
-      navigate("/admin/shops");
-    } catch {
+      navigate('/admin/shops');
+    } catch (error) {
+      console.error(error);
       Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed To Update Shop",
+        icon: 'error',
+        title: 'Error',
+        text: error?.response?.data?.detail || 'Failed To Update Shop',
       });
     } finally {
       setLoading(false);
@@ -205,11 +148,10 @@ const EditShop = () => {
             <div className="card-header bg-white">
               <div className="d-flex justify-content-between align-items-center">
                 <h4 className="mb-0">Edit Shop</h4>
-
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => navigate("/admin/shops")}
+                  onClick={() => navigate('/admin/shops')}
                 >
                   Back
                 </button>
@@ -220,12 +162,13 @@ const EditShop = () => {
               <form onSubmit={handleSubmit}>
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Shop Name</label>
-
+                    <label htmlFor="shop-name" className="form-label">Shop Name</label>
                     <input
                       type="text"
+                      id="shop-name"
                       name="name"
                       className="form-control"
+                      autoComplete="organization"
                       value={formData.name}
                       onChange={handleChange}
                       required
@@ -233,12 +176,13 @@ const EditShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Phone Number</label>
-
+                    <label htmlFor="shop-phone" className="form-label">Phone Number</label>
                     <input
                       type="text"
+                      id="shop-phone"
                       name="phone"
                       className="form-control"
+                      autoComplete="tel"
                       value={formData.phone}
                       onChange={handleChange}
                       required
@@ -246,12 +190,13 @@ const EditShop = () => {
                   </div>
 
                   <div className="col-12 mb-3">
-                    <label className="form-label">Address</label>
-
+                    <label htmlFor="shop-address" className="form-label">Address</label>
                     <textarea
+                      id="shop-address"
                       rows="4"
                       name="address"
                       className="form-control"
+                      autoComplete="street-address"
                       value={formData.address}
                       onChange={handleChange}
                       required
@@ -259,37 +204,38 @@ const EditShop = () => {
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Email</label>
-
+                    <label htmlFor="shop-email" className="form-label">Email</label>
                     <input
                       type="email"
+                      id="shop-email"
                       name="email"
                       className="form-control"
-                      value={formData.email || ""}
+                      autoComplete="email"
+                      value={formData.email || ''}
                       onChange={handleChange}
                     />
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label className="form-label">Opening Time</label>
-
+                    <label htmlFor="shop-opening-time" className="form-label">Opening Time</label>
                     <input
                       type="time"
+                      id="shop-opening-time"
                       name="opening_time"
                       className="form-control"
-                      value={formData.opening_time || ""}
+                      value={formData.opening_time || ''}
                       onChange={handleChange}
                     />
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label className="form-label">Closing Time</label>
-
+                    <label htmlFor="shop-closing-time" className="form-label">Closing Time</label>
                     <input
                       type="time"
+                      id="shop-closing-time"
                       name="closing_time"
                       className="form-control"
-                      value={formData.closing_time || ""}
+                      value={formData.closing_time || ''}
                       onChange={handleChange}
                     />
                   </div>
@@ -297,32 +243,35 @@ const EditShop = () => {
 
                 <div className="row">
                   <div className="col-md-6 mb-4">
-                    <label className="form-label">Shop Logo</label>
-
+                    <label htmlFor="shop-logo" className="form-label">Shop Logo</label>
                     <input
                       type="file"
+                      id="shop-logo"
                       name="logo"
                       className="form-control"
+                      accept="image/*"
                       onChange={handleChange}
                     />
+                    <small className="text-muted">Leave empty to keep current logo.</small>
                   </div>
 
                   <div className="col-md-6 mb-4">
-                    <label className="form-label">Shop Banner</label>
-
+                    <label htmlFor="shop-banner" className="form-label">Shop Banner</label>
                     <input
                       type="file"
+                      id="shop-banner"
                       name="banner"
                       className="form-control"
+                      accept="image/*"
                       onChange={handleChange}
                     />
+                    <small className="text-muted">Leave empty to keep current banner.</small>
                   </div>
                 </div>
 
                 <div className="card mb-4">
                   <div className="card-header d-flex justify-content-between align-items-center">
                     <h6 className="mb-0">Shop Location</h6>
-
                     <button
                       type="button"
                       className="btn btn-success btn-sm"
@@ -331,54 +280,34 @@ const EditShop = () => {
                       Use Current Location
                     </button>
                   </div>
-
                   <div className="card-body">
-                    <MapContainer
-                      center={
-                        formData.latitude && formData.longitude
-                          ? [
-                              Number(formData.latitude),
-                              Number(formData.longitude),
-                            ]
-                          : defaultPosition
-                      }
-                      zoom={13}
-                      whenCreated={setMap}
-                      style={{
-                        minHeight: "400px",
-                        width: "100%",
-                        borderRadius: "10px",
-                      }}
-                    >
-                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-                      <LocationMarker
-                        formData={formData}
-                        setFormData={setFormData}
-                      />
-                    </MapContainer>
+                    <LocationPicker
+                      formData={formData}
+                      setFormData={setFormData}
+                      mapRef={mapRef}
+                    />
                   </div>
                 </div>
 
                 <div className="row">
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Latitude</label>
-
+                    <label htmlFor="shop-latitude" className="form-label">Latitude</label>
                     <input
                       type="text"
+                      id="shop-latitude"
                       className="form-control"
-                      value={formData.latitude || ""}
+                      value={formData.latitude || ''}
                       readOnly
                     />
                   </div>
 
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Longitude</label>
-
+                    <label htmlFor="shop-longitude" className="form-label">Longitude</label>
                     <input
                       type="text"
+                      id="shop-longitude"
                       className="form-control"
-                      value={formData.longitude || ""}
+                      value={formData.longitude || ''}
                       readOnly
                     />
                   </div>
@@ -387,13 +316,13 @@ const EditShop = () => {
                 <div className="form-check mb-4">
                   <input
                     type="checkbox"
+                    id="shop-is-active"
                     className="form-check-input"
                     name="is_active"
                     checked={formData.is_active}
                     onChange={handleChange}
                   />
-
-                  <label className="form-check-label">Active Shop</label>
+                  <label htmlFor="shop-is-active" className="form-check-label">Active Shop</label>
                 </div>
 
                 <button
@@ -401,7 +330,7 @@ const EditShop = () => {
                   className="btn btn-warning w-100 py-3 fw-bold"
                   disabled={loading}
                 >
-                  {loading ? "Updating Shop..." : "Update Shop"}
+                  {loading ? 'Updating Shop...' : 'Update Shop'}
                 </button>
               </form>
             </div>

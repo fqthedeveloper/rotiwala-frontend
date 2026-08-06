@@ -6,12 +6,20 @@ import axios from "axios";
    API BASE URL
 ========================================================= */
 
-const API_BASE_URL =
+const normalizeApiBaseUrl = (value = "") => {
+  const trimmed = value?.trim();
+  if (!trimmed) return "https://rotiwaale.pythonanywhere.com/api";
+
+  const withoutPrefix = trimmed.replace(/^VITE_API_URL=/i, "").trim();
+  return withoutPrefix.replace(/\/+$/, "");
+};
+
+const API_BASE_URL = normalizeApiBaseUrl(
   import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000/api";
+    "https://rotiwaale.pythonanywhere.com/api"
+);
 
-
-  // ✅ Add named export for the base URL
+// ✅ Add named export for the base URL
 export const API = API_BASE_URL;
 /* =========================================================
    CREATE AXIOS INSTANCE

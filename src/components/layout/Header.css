@@ -1,32 +1,79 @@
 :root {
-  --primary: #F7C600;
-  --primary-dark: #E3B400;
-  --secondary: #5A1700;
-  --secondary-light: #7A2600;
-  --bg-light: #FFFBE6;
+  --rw-bg: #faf3e6;
+  --rw-cream: #fffaf1;
+  --rw-text: #2b1a12;
+  --rw-muted: #8a766b;
+  --rw-maroon: #6d1322;
+  --rw-maroon-deep: #430a15;
+  --rw-gold: #d4a437;
+  --rw-gold-soft: #efdcae;
+  --rw-border: rgba(109, 19, 34, 0.12);
+  --rw-shadow: 0 14px 40px rgba(43, 26, 18, 0.12);
+  --rw-shadow-soft: 0 6px 20px rgba(43, 26, 18, 0.08);
+  --rw-grad-gold: linear-gradient(135deg, #d4a437 0%, #f0dc9f 100%);
+  --rw-grad-maroon: linear-gradient(135deg, #430a15 0%, #6d1322 60%, #8f1d2c 100%);
 }
 
 /* HEADER */
-.main-header{
-  position:sticky;
-  top:0;
-  z-index:9999;
-
-  backdrop-filter:blur(20px);
-
-  background:
-    rgba(255,255,255,.9);
-
-  border-bottom:
-    1px solid rgba(0,0,0,.06);
-
-  transition:.3s;
+.main-header {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(250, 243, 230, 0.96);
+  border-bottom: 1px solid rgba(109, 19, 34, 0.12);
+  box-shadow: 0 14px 40px rgba(43, 26, 18, 0.08);
+  transition: 0.3s ease;
+  color: var(--rw-text);
 }
 
-.main-header.scrolled{
-  box-shadow:
-    0 8px 30px
-    rgba(0,0,0,.08);
+.logo-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
+  background: var(--rw-grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.desktop-nav a {
+  color: var(--rw-maroon)!important;
+}
+
+.desktop-nav a.active,
+.desktop-nav a:hover {
+  color: var(--rw-maroon);
+}
+
+.logout,
+.login-btn {
+  background: var(--rw-grad-gold);
+  color: #2b1a12;
+}
+
+.login-btn:hover {
+  box-shadow: 0 14px 30px rgba(43, 26, 18, 0.18);
+}
+
+.customer-theme .desktop-nav a {
+  color: #fffaf1;
+  font-weight: 700;
+}
+
+.customer-theme .desktop-nav a::after {
+  background: linear-gradient(90deg, #d4a437, #f0dc9f);
+}
+
+.customer-theme .desktop-nav a:hover,
+.customer-theme .desktop-nav a.active {
+  color: #fff;
+}
+
+.main-header.scrolled {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
 .header-wrapper {
@@ -75,21 +122,16 @@
     rgba(0,0,0,.1);
 }
 
-.logo-text{
-  font-size:1.6rem;
-  font-weight:800;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff9800,
-      #ff5722
-    );
-
-  -webkit-background-clip:text;
-
-  -webkit-text-fill-color:
-    transparent;
+.logo-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.14);
+  background: var(--rw-grad-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 @media (max-width: 576px) {
@@ -97,13 +139,6 @@
     width: 40px;
     height: 40px;
   }
-}
-
-.logo-text {
-  color: var(--secondary);
-  font-size: 1.4rem;
-  font-weight: 800;
-  white-space: nowrap;
 }
 
 @media (max-width: 576px) {
@@ -126,50 +161,36 @@
   justify-content: center;
 }
 
-.desktop-nav a{
-
-  position:relative;
-
-  color:#333;
-
-  font-weight:600;
-
-  text-decoration:none;
-
-  transition:.3s;
-
+.desktop-nav a {
+  position: relative;
+  color: var(--rw-text);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.25s ease, opacity 0.25s ease;
 }
 
-.desktop-nav a::after{
-
-  content:"";
-
-  position:absolute;
-
-  left:0;
-  bottom:-8px;
-
-  width:0;
-
-  height:3px;
-
-  border-radius:5px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #ff9800,
-      #ff5722
-    );
-
-  transition:.3s;
+.desktop-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 0;
+  height: 3px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #d4a437, #f0dc9f);
+  transition: width 0.25s ease;
 }
 
 .desktop-nav a:hover::after,
-.desktop-nav a.active::after{
-
-  width:100%;
+.desktop-nav a.active::after {
+  width: 100%;
 }
+
+.desktop-nav a:hover,
+.desktop-nav a.active {
+  color: var(--rw-maroon);
+}
+
 @media (max-width: 576px) {
   .desktop-nav a {
     font-size: 0.9rem;
@@ -204,19 +225,22 @@
 
 .cart-btn {
   position: relative;
-  color: var(--secondary);
+  color: var(--rw-maroon);
   font-size: 1.5rem;
   text-decoration: none;
-  transition: 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: rgba(109, 19, 34, 0.08);
 }
 
 .cart-btn:hover {
-  opacity: 0.8;
+  transform: translateY(-2px);
+  background: rgba(109, 19, 34, 0.15);
 }
 
 @media (max-width: 576px) {
@@ -244,7 +268,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--secondary);
+  background: var(--rw-maroon);
   color: white;
   display: flex;
   align-items: center;
@@ -263,26 +287,20 @@
   }
 }
 
-.login-btn{
+.login-btn {
+  background: var(--rw-grad-gold);
+  color: #2b1a12;
+  border: none;
+  border-radius: 18px;
+  padding: 10px 24px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(43, 26, 18, 0.14);
+}
 
-  background:
-    linear-gradient(
-      135deg,
-      #ff9800,
-      #ff5722
-    );
-
-  color:white;
-
-  border:none;
-
-  border-radius:12px;
-
-  padding:10px 22px;
-
-  font-weight:700;
-
-  transition:.3s;
+.login-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(35, 20, 35, 0.2);
 }
 
 .login-btn:hover{
@@ -291,8 +309,8 @@
     translateY(-2px);
 
   box-shadow:
-    0 8px 20px
-    rgba(255,152,0,.35);
+    0 16px 34px
+    rgba(20,28,45,.22);
 }
 
 @media (max-width: 576px) {
@@ -307,14 +325,14 @@
   border: none;
   background: transparent;
   font-size: 28px;
-  color: var(--secondary);
+  color: var(--rw-maroon);
   cursor: pointer;
   padding: 5px;
   transition: 0.3s ease;
 }
 
 .mobile-toggle:hover {
-  opacity: 0.7;
+  color: var(--rw-gold);
 }
 
 @media (max-width: 576px) {
@@ -336,6 +354,14 @@
   .login-btn {
     display: none;
   }
+}
+
+.mobile-toggle {
+  color: var(--rw-maroon);
+}
+
+.mobile-toggle:hover {
+  color: var(--rw-gold);
 }
 
 @media (max-width: 576px) {
@@ -367,11 +393,11 @@
   right: -300px;
   width: 300px;
   height: 100vh;
-  background: white;
+  background: #fffaf1;
   transition: 0.3s ease;
   z-index: 999;
   overflow-y: auto;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  box-shadow: -2px 0 20px rgba(43, 26, 18, 0.12);
 }
 
 @media (max-width: 576px) {
@@ -390,12 +416,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid rgba(109, 19, 34, 0.12);
 }
 
 .mobile-header h4 {
   margin: 0;
-  color: var(--secondary);
+  color: var(--rw-maroon);
   font-size: 1.2rem;
 }
 
@@ -409,7 +435,7 @@
   border: none;
   background: none;
   font-size: 24px;
-  color: var(--secondary);
+  color: var(--rw-maroon);
   cursor: pointer;
   padding: 5px;
   transition: 0.3s ease;
@@ -427,8 +453,8 @@
 .mobile-links a {
   text-decoration: none;
   padding: 15px 20px;
-  color: var(--secondary);
-  border-bottom: 1px solid #eee;
+  color: var(--rw-text);
+  border-bottom: 1px solid rgba(109, 19, 34, 0.08);
   transition: 0.3s ease;
   font-weight: 500;
 }
@@ -442,13 +468,13 @@
 
 .mobile-links a:active,
 .mobile-links a.active {
-  background: var(--bg-light);
-  color: var(--secondary);
+  background: rgba(250, 243, 230, 0.9);
+  color: var(--rw-maroon);
   font-weight: 600;
 }
 
 .mobile-links a:hover {
-  background: rgba(247, 198, 0, 0.1);
+  background: rgba(212, 164, 55, 0.14);
 }
 
 .mobile-menu,
@@ -469,7 +495,7 @@
 
 .profile-btn {
   border: none;
-  background: white;
+  background: #fffaf1;
   padding: 8px 12px;
   border-radius: 10px;
 
@@ -481,7 +507,7 @@
 
   font-weight: 600;
 
-  color: var(--secondary);
+  color: var(--rw-text);
 }
 
 .avatar {
@@ -490,7 +516,7 @@
 
   border-radius: 50%;
 
-  background: var(--secondary);
+  background: var(--rw-maroon);
 
   color: white;
 

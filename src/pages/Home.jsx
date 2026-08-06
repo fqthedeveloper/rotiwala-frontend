@@ -1,7 +1,13 @@
 // src/pages/Home.jsx
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { Link } from "react-router-dom";
+import {
+  AnimatePresence,
+  motion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import Lenis from "lenis";
 import Swal from "sweetalert2";
 import {
   FaWhatsapp,
@@ -26,6 +32,7 @@ import {
   FaCarrot,
   FaLeaf,
   FaDrumstickBite,
+  FaArrowRight,
 } from "react-icons/fa";
 import "./CSS/Home.css";
 
@@ -35,19 +42,19 @@ import {
   getItemsByCategoryPublic,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
-import Loader from "../components/common/Loader"; // Import the loader
-import { useLoading } from "../context/LoadingContext"; // Import loading context
+import Loader from "../components/common/Loader";
+import { useLoading } from "../context/LoadingContext";
 
 /* -------------------- STATIC DATA -------------------- */
 const TOP_CATEGORIES = [
-  { icon: <FaBreadSlice />, name: "Roti & Breads", color: "#ff9800" },
-  { icon: <FaPizzaSlice />, name: "Pizza", color: "#ef4444" },
-  { icon: <FaHamburger />, name: "Burgers", color: "#f59e0b" },
-  { icon: <FaDrumstickBite />, name: "Non-Veg", color: "#dc2626" },
-  { icon: <FaLeaf />, name: "Healthy", color: "#16a34a" },
-  { icon: <FaCarrot />, name: "Veggies", color: "#f97316" },
-  { icon: <FaIceCream />, name: "Desserts", color: "#ec4899" },
-  { icon: <FaCoffee />, name: "Beverages", color: "#92400e" },
+  { icon: <FaBreadSlice />, name: "Roti & Breads", color: "#c98a2b" },
+  { icon: <FaPizzaSlice />, name: "Pizza", color: "#b4443c" },
+  { icon: <FaHamburger />, name: "Burgers", color: "#c07a1f" },
+  { icon: <FaDrumstickBite />, name: "Non-Veg", color: "#8f1d2c" },
+  { icon: <FaLeaf />, name: "Healthy", color: "#3f7a44" },
+  { icon: <FaCarrot />, name: "Veggies", color: "#c2662a" },
+  { icon: <FaIceCream />, name: "Desserts", color: "#b1537a" },
+  { icon: <FaCoffee />, name: "Beverages", color: "#6f4a2f" },
 ];
 
 const TESTIMONIALS = [
@@ -56,50 +63,72 @@ const TESTIMONIALS = [
     role: "Daily Customer",
     text: "The roti is always hot, fresh, and arrives within minutes. Absolutely love the taste — feels just like home!",
     rating: 5,
-    avatar: "/#",
   },
   {
     name: "Priya Verma",
     role: "Food Blogger",
     text: "Best in town! Hygienic, quick delivery, and the menu variety is incredible. Roti Wala has my heart.",
     rating: 5,
-    avatar: "/#",
   },
   {
     name: "Rahul Mehta",
     role: "Office Goer",
     text: "Lunch problem solved forever. Affordable, tasty, and always on time. My whole team orders daily now!",
     rating: 5,
-    avatar: "/#",
   },
   {
     name: "Sneha Kapoor",
     role: "Home Maker",
     text: "Saves me so much time. Quality is consistent and packaging is super clean. Truly impressed!",
     rating: 5,
-    avatar: "/#",
   },
 ];
 
-const FLOATING_FOODS = [
-  "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", "🫓", 
-  "🫓", "🫓", "🫓", "🫓", "🫓", "🫓"
+const MARQUEE_ITEMS = [
+  "Fresh Tandoor Roti",
+  "Delivered In 40 Minutes",
+  "Made With Love",
+  "Hot & Hygienic",
+  "10+ Local Shops",
+  "5K+ Happy Customers",
 ];
+
+const EASE = [0.22, 1, 0.36, 1];
+
+/* -------------------- CHAPTER HEADING -------------------- */
+const Chapter = ({ no, kicker, title, accent, sub }) => (
+  <motion.div
+    className="rw-chapter"
+    initial={{ opacity: 0, y: 28 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-70px" }}
+    transition={{ duration: 0.7, ease: EASE }}
+  >
+    <div className="rw-chapter-top">
+      <span className="rw-chapter-no">{no}</span>
+      <span className="rw-chapter-kicker">{kicker}</span>
+      <span className="rw-chapter-rule" />
+    </div>
+    <h2 data-testid={`chapter-title-${no}`}>
+      {title} {accent && <em>{accent}</em>}
+    </h2>
+    {sub && <p>{sub}</p>}
+  </motion.div>
+);
 
 /* -------------------- COMPONENT -------------------- */
 export default function Home() {
-  const navigate = useNavigate();
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.4]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 140]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.9], [1, 0]);
+  const plateY = useTransform(scrollYProgress, [0, 1], [0, -90]);
 
-  // Use loading context
   const { showLoading, hideLoading } = useLoading();
-  
+
   const [loading, setLoading] = useState(true);
   const [nearestShop, setNearestShop] = useState(null);
   const [shops, setShops] = useState([]);
@@ -110,14 +139,40 @@ export default function Home() {
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  /* ---------- LENIS SMOOTH SCROLL ---------- */
+  useEffect(() => {
+    const lenis = new Lenis({
+      smooth: true,
+      smoothWheel: true,
+      smoothTouch: true,
+      direction: "vertical",
+      gestureDirection: "vertical",
+      mouseMultiplier: 1,
+      touchMultiplier: 1.4,
+      lerp: 0.09,
+    });
+    let raf;
+    const loop = (time) => {
+      lenis.raf(time);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      lenis.destroy();
+    };
+  }, []);
+
   /* ---------- INIT ---------- */
   useEffect(() => {
     loadLocation();
     document.title = "Home - Roti Wala";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (nearestShop) loadMenu(nearestShop.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nearestShop]);
 
   /* Auto-rotate testimonials */
@@ -146,7 +201,7 @@ export default function Home() {
       setLoading(false);
       return;
     }
-    
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -216,8 +271,8 @@ export default function Home() {
         text: `${item.name} added successfully`,
         timer: 1200,
         showConfirmButton: false,
-        background: '#1a1a1a',
-        color: '#ffffff',
+        background: "#17110c",
+        color: "#f7ead2",
       });
     } catch (error) {
       hideLoading();
@@ -225,8 +280,8 @@ export default function Home() {
         icon: "error",
         title: "Failed",
         text: error.response?.data?.error || "Unable to add item",
-        background: '#1a1a1a',
-        color: '#ffffff',
+        background: "#17110c",
+        color: "#f7ead2",
       });
     }
   };
@@ -245,9 +300,9 @@ export default function Home() {
   /* ---------- LOADER ---------- */
   if (loading) {
     return (
-      <Loader 
-        message="Finding the best food near you..." 
-        variant="warm" 
+      <Loader
+        message="Finding the best food near you..."
+        variant="warm"
         size="lg"
         fullScreen={true}
       />
@@ -256,168 +311,182 @@ export default function Home() {
 
   /* ---------- RENDER ---------- */
   return (
-    <div className="home-page">
-      {/* Show loader for async operations */}
+    <div className="rw-home" data-testid="home-page">
       {isLoadingMore && (
-        <Loader 
-          message="Loading shops..." 
-          variant="cool" 
+        <Loader
+          message="Loading shops..."
+          variant="cool"
           size="md"
           fullScreen={true}
         />
       )}
 
       {/* ============ HERO ============ */}
-      <motion.section
-        ref={heroRef}
-        className="hero-section"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* Animated background blobs */}
-        <div className="hero-blob blob-1" />
-        <div className="hero-blob blob-2" />
-        <div className="hero-blob blob-3" />
-        <div className="hero-grain" />
-
-        {/* Floating food emojis */}
-        {FLOATING_FOODS.map((emoji, i) => (
-          <motion.span
-            key={i}
-            className={`floating-food food-pos-${i}`}
-            animate={{
-              y: [0, -25, 0],
-              rotate: [0, 8, -8, 0],
-            }}
-            transition={{
-              duration: 5 + i * 0.4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.3,
-            }}
-          >
-            {emoji}
-          </motion.span>
-        ))}
+      <section className="rw-hero" ref={heroRef}>
+        <div className="rw-hero-glow" />
+        <div className="rw-hero-grain" />
+        <div className="rw-hero-ring rw-ring-a" />
+        <div className="rw-hero-ring rw-ring-b" />
 
         <motion.div
-          className="hero-content"
+          className="rw-hero-inner"
           style={{ y: heroY, opacity: heroOpacity }}
         >
-          <motion.span
-            className="hero-badge"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <FaFire className="badge-icon" /> Fresh & Fast Making
-          </motion.span>
+          <div className="rw-hero-kicker-mask">
+            <motion.p
+              className="rw-hero-kicker"
+              initial={{ y: "120%" }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.8, delay: 0.15, ease: EASE }}
+            >
+              <FaFire /> № 01 — Roti Wala · Tandoor Fresh Every Day
+            </motion.p>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.7 }}
-          >
-            Delicious Food <br />
-            <span className="hero-gradient-text">Delivered Hot</span>
-          </motion.h1>
+          <h1 className="rw-hero-title" data-testid="hero-title">
+            {[
+              <>Hot tandoor,</>,
+              <>
+                <em>delivered</em> to
+              </>,
+              <>your door.</>,
+            ].map((line, i) => (
+              <span className="rw-line-mask" key={i}>
+                <motion.span
+                  className="rw-line"
+                  initial={{ y: "115%" }}
+                  animate={{ y: 0 }}
+                  transition={{
+                    duration: 0.95,
+                    delay: 0.3 + i * 0.14,
+                    ease: EASE,
+                  }}
+                >
+                  {line}
+                </motion.span>
+              </span>
+            ))}
+          </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            className="rw-hero-sub"
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
+            transition={{ delay: 0.85, duration: 0.7, ease: EASE }}
           >
             Hot roti, mouthwatering meals, and express delivery from your
             nearest shop — straight to your doorstep.
           </motion.p>
 
           <motion.div
-            className="hero-buttons"
-            initial={{ opacity: 0, y: 20 }}
+            className="rw-hero-actions"
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 1, duration: 0.7, ease: EASE }}
           >
             <motion.button
-              className="hero-btn primary"
+              data-testid="hero-explore-shops-btn"
+              className="rw-btn rw-btn-gold"
               onClick={handleChangeShop}
-              whileHover={{ scale: 1.04, y: -3 }}
+              whileHover={{ y: -3 }}
               whileTap={{ scale: 0.97 }}
             >
               Explore Shops <FaLocationArrow />
             </motion.button>
-            <Link to="/menu" className="hero-btn secondary">
-              <motion.span
-                whileHover={{ scale: 1.04, y: -3 }}
-                whileTap={{ scale: 0.97 }}
+            <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }}>
+              <Link
+                to="/menu"
+                data-testid="hero-view-menu-link"
+                className="rw-btn rw-btn-ghost"
               >
-                View Full Menu
-              </motion.span>
-            </Link>
+                View Full Menu <FaArrowRight />
+              </Link>
+            </motion.div>
           </motion.div>
 
-          {/* Mini stats inside hero */}
           <motion.div
-            className="hero-mini-stats"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
+            className="rw-hero-stats"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.8 }}
           >
-            <div className="mini-stat">
-              <strong>10+</strong>
-              <span>Shops</span>
-            </div>
-            <div className="mini-stat">
-              <strong>5K+</strong>
-              <span>Customers</span>
-            </div>
-            <div className="mini-stat">
-              <strong>4.9★</strong>
-              <span>Rating</span>
-            </div>
+            {[
+              ["10+", "Shops"],
+              ["5K+", "Customers"],
+              ["4.9★", "Rating"],
+            ].map(([num, label], i) => (
+              <div className="rw-hero-stat" key={i}>
+                <strong>{num}</strong>
+                <span>{label}</span>
+              </div>
+            ))}
           </motion.div>
         </motion.div>
 
         <motion.div
-          className="hero-visual"
-          initial={{ scale: 0.85, opacity: 0 }}
+          className="rw-hero-visual"
+          style={{ y: plateY }}
+          initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.9, ease: "easeOut" }}
+          transition={{ delay: 0.5, duration: 1, ease: EASE }}
         >
-          <div className="hero-plate">
+          <div className="rw-plate">
+            <div className="rw-plate-orbit" />
             <motion.div
-              className="plate-emoji"
+              className="rw-plate-emoji"
               animate={{ rotate: [0, 360] }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
             >
               🫓
             </motion.div>
           </div>
           <motion.div
-            className="hero-card-tag tag-delivery"
+            className="rw-tag rw-tag-delivery"
             animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <FaTruck /> <span>20 min Delivery</span>
+            <FaTruck /> <span>40 min Delivery</span>
           </motion.div>
           <motion.div
-            className="hero-card-tag tag-rating"
+            className="rw-tag rw-tag-rating"
             animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity }}
+            transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
           >
             <FaStar /> <span>4.9 Rating</span>
           </motion.div>
         </motion.div>
-      </motion.section>
+
+        <motion.div
+          className="rw-scroll-cue"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.6 }}
+        >
+          <span>Scroll</span>
+          <div className="rw-scroll-line" />
+        </motion.div>
+      </section>
+
+      {/* ============ MARQUEE ============ */}
+      <div className="rw-marquee" aria-hidden="true">
+        <div className="rw-marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+            <span className="rw-marquee-item" key={i}>
+              {item} <i>✦</i>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ============ INFO BANNER ============ */}
       <AnimatePresence>
         {locationDenied && !nearestShop && !showShops && (
           <motion.div
-            className="info-banner"
-            initial={{ opacity: 0, y: -20 }}
+            className="rw-banner"
+            data-testid="location-banner"
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.35 }}
           >
             <FaMapMarkerAlt /> Location unavailable. Choose a shop manually to
@@ -430,37 +499,41 @@ export default function Home() {
       <AnimatePresence>
         {nearestShop && !showShops && (
           <motion.div
-            className="shop-card"
+            className="rw-shop-card"
+            data-testid="nearest-shop-card"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, ease: EASE }}
           >
-            <div className="shop-info">
-              <div className="shop-icon-wrap">
+            <div className="rw-shop-info">
+              <div className="rw-shop-icon">
                 <FaMapMarkerAlt />
               </div>
               <div>
+                <span className="rw-shop-label">Your nearest shop</span>
                 <h2>{nearestShop.name}</h2>
                 <p>{nearestShop.address}</p>
-                <span>
+                <span className="rw-shop-phone">
                   <FaPhoneAlt /> {nearestShop.phone}
                 </span>
               </div>
             </div>
-            <div className="shop-actions">
+            <div className="rw-shop-actions">
               <motion.a
+                data-testid="navigate-shop-btn"
                 href={`https://www.google.com/maps/dir/?api=1&destination=${nearestShop.latitude},${nearestShop.longitude}`}
                 target="_blank"
                 rel="noreferrer"
-                className="navigate-btn"
+                className="rw-btn rw-btn-maroon"
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.96 }}
               >
                 <FaLocationArrow /> Navigate
               </motion.a>
               <motion.button
-                className="change-btn"
+                data-testid="change-shop-btn"
+                className="rw-btn rw-btn-outline"
                 onClick={handleChangeShop}
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.96 }}
@@ -476,7 +549,8 @@ export default function Home() {
       <AnimatePresence>
         {showShops && (
           <motion.div
-            className="shops-grid"
+            className="rw-shops-grid"
+            data-testid="shops-grid"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -485,19 +559,20 @@ export default function Home() {
             {shops.map((shop, i) => (
               <motion.div
                 key={shop.id}
-                className="shop-select-card"
+                className="rw-shop-select"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ delay: i * 0.06, ease: EASE }}
+                whileHover={{ y: -8 }}
               >
-                <div className="shop-select-top">
+                <div className="rw-shop-select-top">
                   <FaMapMarkerAlt />
                   <h4>{shop.name}</h4>
                 </div>
                 <p>{shop.address}</p>
                 <button
-                  className="select-shop-btn"
+                  data-testid={`select-shop-btn-${shop.id}`}
+                  className="rw-btn rw-btn-maroon rw-btn-block"
                   onClick={() => selectShop(shop)}
                 >
                   Select Shop
@@ -508,23 +583,20 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* ============ TOP CATEGORIES ============ */}
-      <motion.div
-        className="section-title"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <span className="title-kicker">Browse by</span>
-        <h2>Top Categories</h2>
-        <p>Pick what you crave the most</p>
-      </motion.div>
+      {/* ============ CHAPTER 01 — CATEGORIES ============ */}
+      <Chapter
+        no="01"
+        kicker="Browse By Craving"
+        title="Top"
+        accent="Categories"
+        sub="Pick what you crave the most"
+      />
 
       <motion.div
-        className="categories-grid"
+        className="rw-cats"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.15 }}
         variants={{
           hidden: {},
           visible: { transition: { staggerChildren: 0.06 } },
@@ -533,93 +605,97 @@ export default function Home() {
         {TOP_CATEGORIES.map((cat, i) => (
           <motion.div
             key={i}
-            className="category-card"
+            data-testid={`category-card-${i}`}
+            className="rw-cat"
             variants={{
-              hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0 },
+              hidden: { opacity: 0, y: 34 },
+              visible: { opacity: 1, y: 0, transition: { ease: EASE } },
             }}
-            whileHover={{ y: -8, scale: 1.04 }}
+            whileHover={{ y: -8 }}
             style={{ "--cat-color": cat.color }}
           >
-            <div className="cat-icon">{cat.icon}</div>
+            <span className="rw-cat-no">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div className="rw-cat-icon">{cat.icon}</div>
             <h5>{cat.name}</h5>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* ============ POPULAR MENU ============ */}
-      <motion.div
-        className="section-title"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <span className="title-kicker">Today's Picks</span>
-        <h2>Popular Menu</h2>
-        <p>Freshly prepared dishes loved by everyone</p>
-      </motion.div>
+      {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
+      <Chapter
+        no="02"
+        kicker="Today's Picks"
+        title="Popular"
+        accent="Menu"
+        sub="Freshly prepared dishes loved by everyone"
+      />
 
-      <motion.div className="menu-grid">
+      <motion.div className="rw-foods" data-testid="popular-menu-grid">
         {menuItems.length === 0 ? (
-          <div className="empty-menu">
+          <div className="rw-empty" data-testid="empty-menu">
             <p>No menu items available for this shop.</p>
           </div>
         ) : (
           menuItems.map((item, index) => (
-            <motion.div
+            <motion.article
               key={item.id}
-              className="food-card"
-              initial={{ opacity: 0, y: 40 }}
+              className="rw-food"
+              initial={{ opacity: 0, y: 44 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.15 }}
-              transition={{ delay: (index % 8) * 0.05, duration: 0.5 }}
+              transition={{
+                delay: (index % 8) * 0.05,
+                duration: 0.55,
+                ease: EASE,
+              }}
               whileHover={{ y: -10 }}
             >
-              <div className="food-image-wrapper">
+              <div className="rw-food-frame">
                 <img
-                  src={item.image_url ? item.image_url : "/food-placeholder.jpg"}
+                  src={item.image_url || "/food-placeholder.jpg"}
                   alt={item.name}
-                  className="food-image"
+                  className="rw-food-img"
                   loading="lazy"
                   onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                 />
-                <span className="food-badge">
+                <span className="rw-food-badge">
                   <FaFire /> Hot
                 </span>
-                <div className="food-img-overlay" />
+                <div className="rw-food-overlay" />
               </div>
-              <div className="food-body">
+              <div className="rw-food-body">
                 <h4>{item.name}</h4>
                 <p>
                   {item.description
                     ? item.description.slice(0, 90)
                     : "Delicious freshly prepared food."}
                 </p>
-                <div className="food-footer">
+                <div className="rw-food-meta">
                   <h3>₹ {item.base_price || item.price}</h3>
-                  <div className="food-stars">
+                  <div className="rw-food-stars">
                     <FaStar /> 4.{5 + (index % 4)}
                   </div>
                 </div>
-                <div className="food-actions">
-                  <motion.button
-                    className="add-cart-btn"
-                    onClick={() => handleAddCart(item)}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.96 }}
-                  >
-                    <FaShoppingCart /> Add To Cart
-                  </motion.button>
-                </div>
+                <motion.button
+                  data-testid={`add-cart-btn-${item.id}`}
+                  className="rw-btn rw-btn-maroon rw-btn-block"
+                  onClick={() => handleAddCart(item)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <FaShoppingCart /> Add To Cart
+                </motion.button>
               </div>
-            </motion.div>
+            </motion.article>
           ))
         )}
       </motion.div>
 
-      {/* ============ STATS ============ */}
+      {/* ============ STATS BAND ============ */}
       <motion.section
-        className="stats-section"
+        className="rw-stats"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.3 }}
@@ -636,12 +712,11 @@ export default function Home() {
         ].map((s, i) => (
           <motion.div
             key={i}
-            className="stat-card"
+            className="rw-stat"
             variants={{
               hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0 },
+              visible: { opacity: 1, y: 0, transition: { ease: EASE } },
             }}
-            whileHover={{ y: -6, scale: 1.03 }}
           >
             <h2>{s.num}</h2>
             <span>{s.label}</span>
@@ -649,20 +724,17 @@ export default function Home() {
         ))}
       </motion.section>
 
-      {/* ============ WHY US ============ */}
-      <motion.div
-        className="section-title"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <span className="title-kicker">Why Choose Us</span>
-        <h2>Made With Love</h2>
-        <p>Everything you need from a food partner</p>
-      </motion.div>
+      {/* ============ CHAPTER 03 — WHY US ============ */}
+      <Chapter
+        no="03"
+        kicker="Why Choose Us"
+        title="Made With"
+        accent="Love"
+        sub="Everything you need from a food partner"
+      />
 
       <motion.section
-        className="why-section"
+        className="rw-why"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
@@ -695,35 +767,35 @@ export default function Home() {
         ].map((w, i) => (
           <motion.div
             key={i}
-            className="why-card"
+            data-testid={`why-card-${i}`}
+            className="rw-why-card"
             variants={{
               hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0 },
+              visible: { opacity: 1, y: 0, transition: { ease: EASE } },
             }}
             whileHover={{ y: -8 }}
           >
-            <div className="why-icon">{w.icon}</div>
+            <span className="rw-why-no">{String(i + 1).padStart(2, "0")}</span>
+            <div className="rw-why-icon">{w.icon}</div>
             <h4>{w.title}</h4>
             <p>{w.text}</p>
           </motion.div>
         ))}
       </motion.section>
 
-      {/* ============ TESTIMONIALS ============ */}
-      <motion.div
-        className="section-title"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <span className="title-kicker">Loved By Foodies</span>
-        <h2>What Customers Say</h2>
-        <p>Real reviews from real customers</p>
-      </motion.div>
+      {/* ============ CHAPTER 04 — TESTIMONIALS ============ */}
+      <Chapter
+        no="04"
+        kicker="Loved By Foodies"
+        title="What Customers"
+        accent="Say"
+        sub="Real reviews from real customers"
+      />
 
-      <div className="testimonial-wrap">
+      <div className="rw-t-wrap" data-testid="testimonials">
         <button
-          className="t-arrow t-prev"
+          data-testid="testimonial-prev-btn"
+          className="rw-t-arrow"
           onClick={() =>
             setTestimonialIdx(
               (p) => (p - 1 + TESTIMONIALS.length) % TESTIMONIALS.length
@@ -734,30 +806,29 @@ export default function Home() {
           <FaChevronLeft />
         </button>
 
-        <div className="testimonial-slider">
+        <div className="rw-t-slider">
           <AnimatePresence mode="wait">
             <motion.div
               key={testimonialIdx}
-              className="testimonial-card"
+              className="rw-t-card"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.45 }}
+              transition={{ duration: 0.45, ease: EASE }}
             >
-              <FaQuoteLeft className="t-quote" />
-              <p className="t-text">{TESTIMONIALS[testimonialIdx].text}</p>
-              <div className="t-stars">
-                {Array.from({ length: TESTIMONIALS[testimonialIdx].rating }).map(
-                  (_, i) => (
-                    <FaStar key={i} />
-                  )
-                )}
+              <FaQuoteLeft className="rw-t-quote" />
+              <p className="rw-t-text">{TESTIMONIALS[testimonialIdx].text}</p>
+              <div className="rw-t-stars">
+                {Array.from({
+                  length: TESTIMONIALS[testimonialIdx].rating,
+                }).map((_, i) => (
+                  <FaStar key={i} />
+                ))}
               </div>
-              <div className="t-author">
-                <img
-                  src={TESTIMONIALS[testimonialIdx].avatar}
-                  alt={TESTIMONIALS[testimonialIdx].name}
-                />
+              <div className="rw-t-author">
+                <div className="rw-t-avatar">
+                  {TESTIMONIALS[testimonialIdx].name.charAt(0)}
+                </div>
                 <div>
                   <strong>{TESTIMONIALS[testimonialIdx].name}</strong>
                   <span>{TESTIMONIALS[testimonialIdx].role}</span>
@@ -768,7 +839,8 @@ export default function Home() {
         </div>
 
         <button
-          className="t-arrow t-next"
+          data-testid="testimonial-next-btn"
+          className="rw-t-arrow"
           onClick={() =>
             setTestimonialIdx((p) => (p + 1) % TESTIMONIALS.length)
           }
@@ -778,11 +850,12 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="t-dots">
+      <div className="rw-t-dots">
         {TESTIMONIALS.map((_, i) => (
           <button
             key={i}
-            className={`t-dot ${i === testimonialIdx ? "active" : ""}`}
+            data-testid={`testimonial-dot-${i}`}
+            className={`rw-t-dot ${i === testimonialIdx ? "active" : ""}`}
             onClick={() => setTestimonialIdx(i)}
             aria-label={`Go to testimonial ${i + 1}`}
           />
@@ -791,29 +864,34 @@ export default function Home() {
 
       {/* ============ CTA STRIP ============ */}
       <motion.section
-        className="cta-strip"
+        className="rw-cta"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
+        transition={{ duration: 0.7, ease: EASE }}
       >
-        <div className="cta-text">
-          <h3>Hungry? Don't wait!</h3>
-          <p>Order now & get your favorite dishes hot at your door.</p>
+        <div className="rw-cta-glow" />
+        <div className="rw-cta-text">
+          <h3>Hungry? Don&apos;t wait!</h3>
+          <p>Order now &amp; get your favorite dishes hot at your door.</p>
         </div>
-        <Link to="/menu" className="cta-btn">
-          Order Now <FaShoppingCart />
-        </Link>
+        <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }}>
+          <Link to="/menu" data-testid="cta-order-btn" className="rw-btn rw-btn-gold">
+            Order Now <FaShoppingCart />
+          </Link>
+        </motion.div>
       </motion.section>
 
       {/* ============ WHATSAPP FLOAT ============ */}
       <a
         href="https://wa.me/919876543210"
-        className="floating-cart"
+        className="rw-wa"
+        data-testid="whatsapp-float"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
       >
-        <span className="pulse-ring" />
+        <span className="rw-wa-ring" />
         <FaWhatsapp size={24} />
       </a>
     </div>

@@ -1,26 +1,26 @@
 /* ===================================================
    ROTI WALA — MENU PAGE
-   Premium • Animated • Fully Responsive
+   Luxury Premium Customer Theme
    =================================================== */
 
 :root {
-  --m-primary: #ff6a00;
-  --m-primary-dark: #ef4444;
-  --m-primary-light: #ffb347;
-  --m-accent: #ffc107;
-  --m-bg: #fff8f1;
-  --m-text: #1f2937;
-  --m-muted: #6b7280;
-  --m-card: #ffffff;
-  --m-border: rgba(0, 0, 0, 0.06);
-  --m-shadow-sm: 0 4px 12px rgba(255, 106, 0, 0.08);
-  --m-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --m-shadow-lg: 0 20px 50px rgba(255, 106, 0, 0.18);
+  --m-primary: #6d1322;
+  --m-primary-dark: #430a15;
+  --m-primary-light: #faf3e6;
+  --m-accent: #d4a437;
+  --m-bg: #faf3e6;
+  --m-text: #2b1a12;
+  --m-muted: #8a766b;
+  --m-card: #fffaf1;
+  --m-border: rgba(109, 19, 34, 0.12);
+  --m-shadow-sm: 0 6px 20px rgba(43, 26, 18, 0.08);
+  --m-shadow-md: 0 12px 32px rgba(43, 26, 18, 0.12);
+  --m-shadow-lg: 0 22px 60px rgba(43, 26, 18, 0.18);
   --m-radius-sm: 14px;
-  --m-radius-md: 20px;
-  --m-radius-lg: 28px;
-  --m-grad: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%);
-  --m-grad-hero: linear-gradient(135deg, #ff8c00, #ff3d00 55%, #c2185b);
+  --m-radius-md: 22px;
+  --m-radius-lg: 32px;
+  --m-grad: linear-gradient(135deg, #430a15 0%, #6d1322 45%, #d4a437 100%);
+  --m-grad-hero: linear-gradient(135deg, #430a15 0%, #6d1322 48%, #d4a437 100%);
   --m-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -33,6 +33,7 @@
   padding: 24px;
   font-family: "Plus Jakarta Sans", "Poppins", system-ui, sans-serif;
   color: var(--m-text);
+  background: var(--m-bg);
   overflow-x: hidden;
 }
 
@@ -41,14 +42,15 @@
 =================================================== */
 .menu-hero {
   position: relative;
-  background: var(--m-grad-hero);
+  background: radial-gradient(circle at 15% 25%, rgba(255,235,140,0.12), transparent 18%), var(--m-grad-hero);
   border-radius: var(--m-radius-lg);
   padding: 70px 50px;
   text-align: center;
-  color: #fff;
+  color: #fdf4d7;
   margin-bottom: 36px;
   overflow: hidden;
   isolation: isolate;
+  box-shadow: 0 28px 82px rgba(16, 24, 43, 0.2);
 }
 .menu-hero-blob {
   position: absolute;
@@ -60,12 +62,12 @@
 }
 .mh-blob-1 {
   width: 320px; height: 320px;
-  background: #ffeb3b;
+  background: #d4af37;
   top: -80px; left: -50px;
 }
 .mh-blob-2 {
   width: 280px; height: 280px;
-  background: #ff1744;
+  background: rgba(123, 17, 36, 0.88);
   bottom: -80px; right: -40px;
   animation-delay: -5s;
 }
@@ -88,13 +90,13 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 8px 16px;
-  border-radius: 50px;
+  gap: 10px;
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.32);
+  padding: 10px 18px;
+  border-radius: 999px;
   font-weight: 700;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -111,7 +113,7 @@
   line-height: 1.1;
 }
 .menu-grad-text {
-  background: linear-gradient(90deg, #ffeb3b, #fff);
+  background: linear-gradient(90deg, #f0dc9f, #fffaf1);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -130,25 +132,25 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #fff;
+  background: rgba(255,255,255,0.95);
   color: var(--m-primary-dark);
-  padding: 10px 20px;
-  border-radius: 50px;
+  padding: 12px 22px;
+  border-radius: 999px;
   font-weight: 800;
   font-size: 0.95rem;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 28px rgba(20,24,43,0.16);
 }
 
 /* ===================================================
    FILTER BAR
 =================================================== */
 .filter-bar {
-  background: rgba(255,255,255,0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(209,178,94,0.2);
   border-radius: var(--m-radius-lg);
-  padding: 22px;
+  padding: 24px;
   margin-bottom: 32px;
   box-shadow: var(--m-shadow-md);
   display: grid;
@@ -173,7 +175,7 @@
 }
 .filter-search input {
   width: 100%;
-  border: 1.5px solid var(--m-border);
+  border: 1.5px solid rgba(209,178,94,0.3);
   border-radius: 50px;
   padding: 14px 44px 14px 44px;
   font-size: 0.95rem;
@@ -183,7 +185,7 @@
 }
 .filter-search input:focus {
   border-color: var(--m-primary);
-  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.12);
+  box-shadow: 0 0 0 4px rgba(213,171,63,0.16);
 }
 .clear-search {
   position: absolute;
@@ -250,7 +252,7 @@
 .filter-field select:focus,
 .filter-field input:focus {
   border-color: var(--m-primary);
-  box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.12);
+  box-shadow: 0 0 0 4px rgba(212, 171, 63, 0.16);
 }
 
 /* Toggle */
@@ -658,7 +660,7 @@
   border-radius: 50px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(255,106,0,0.35);
+  box-shadow: 0 10px 22px rgba(109, 19, 34, 0.28);
   transition: transform 0.25s var(--m-ease);
 }
 .empty-reset:hover { transform: translateY(-3px); }
