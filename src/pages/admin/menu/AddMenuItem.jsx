@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
-
 import Swal from "sweetalert2";
-
 import { getCategories } from "../../../service/categoryService";
-
 import { createMenuItem } from "../../../service/menuItemService";
+import { getShops } from "../../../service/shopService"; // <-- new import
 
 const AddMenuItem = () => {
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
-
+  const [shops, setShops] = useState([]);           // <-- new
+  const [userRole, setUserRole] = useState(null);   // <-- new
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
+    shop: "",                // <-- new field
     category: "",
     name: "",
     description: "",
@@ -27,24 +26,33 @@ const AddMenuItem = () => {
   });
 
   useEffect(() => {
-    loadCategories();
     document.title = "Add Menu Item | Roti Wala";
+
+    // Load categories, shops (if super_admin), and get user role
+    const loadData = async () => {
+      const cats = await getCategories();
+      setCategories(cats);
+
+      // Get current user from localStorage (or your auth context)
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserRole(user.role);
+        if (user.role === "super_admin") {
+          const shopsData = await getShops();
+          setShops(shopsData);
+        }
+      }
+    };
+
+    loadData();
   }, []);
-
-  const loadCategories = async () => {
-    const data = await getCategories();
-
-    setCategories(data);
-  };
 
   const handleChange = (e) => {
     const { name, value, checked, files, type } = e.target;
-
     setFormData({
       ...formData,
-
-      [name]:
-        type === "checkbox" ? checked : type === "file" ? files[0] : value,
+      [name]: type === "checkbox" ? checked : type === "file" ? files[0] : value,
     });
   };
 
@@ -52,27 +60,24 @@ const AddMenuItem = () => {
     e.preventDefault();
 
     const data = new FormData();
-
     Object.keys(formData).forEach((key) => {
-      data.append(key, formData[key]);
+      // Only append non‑null values; skip `shop` if empty
+      if (formData[key] !== null && formData[key] !== "") {
+        data.append(key, formData[key]);
+      }
     });
 
     try {
       setLoading(true);
-
       await createMenuItem(data);
-
       Swal.fire({
         icon: "success",
-
         title: "Menu Item Created",
       });
-
       navigate("/admin/menu-items");
     } catch {
       Swal.fire({
         icon: "error",
-
         title: "Failed",
       });
     } finally {
@@ -91,17 +96,37 @@ const AddMenuItem = () => {
 
             <div className="card-body">
               <form onSubmit={handleSubmit}>
+                {/* Shop dropdown – only for super_admin */}
+                {userRole === "super_admin" && (
+                  <div className="mb-3">
+                    <label>Shop</label>
+                    <select
+                      name="shop"
+                      className="form-select"
+                      required
+                      value={formData.shop}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select Shop</option>
+                      {shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="mb-3">
                   <label>Category</label>
-
                   <select
                     name="category"
                     className="form-select"
                     required
+                    value={formData.category}
                     onChange={handleChange}
                   >
                     <option value="">Select Category</option>
-
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -112,43 +137,42 @@ const AddMenuItem = () => {
 
                 <div className="mb-3">
                   <label>Item Name</label>
-
                   <input
                     type="text"
                     name="name"
                     className="form-control"
                     required
+                    value={formData.name}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className="mb-3">
                   <label>Description</label>
-
                   <textarea
                     rows="3"
                     name="description"
                     className="form-control"
+                    value={formData.description}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className="mb-3">
                   <label>Price</label>
-
                   <input
                     type="number"
                     step="0.01"
                     name="base_price"
                     className="form-control"
                     required
+                    value={formData.base_price}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className="mb-3">
                   <label>Image</label>
-
                   <input
                     type="file"
                     name="image"
@@ -165,7 +189,6 @@ const AddMenuItem = () => {
                     checked={formData.is_available}
                     onChange={handleChange}
                   />
-
                   <label className="form-check-label">Available</label>
                 </div>
 
@@ -177,7 +200,6 @@ const AddMenuItem = () => {
                     checked={formData.is_popular}
                     onChange={handleChange}
                   />
-
                   <label className="form-check-label">Popular Item</label>
                 </div>
 

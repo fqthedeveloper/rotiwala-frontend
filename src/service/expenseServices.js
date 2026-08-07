@@ -1,18 +1,58 @@
+// frontend/src/service/expenseServices.js
+
 import api from "./api";
 
+// ============================================================
+// 1. EXPENSE CATEGORY CRUD (Super Admin only)
+// ============================================================
 
-
-
-// ---------- Expense APIs ----------
 export const getExpenseCategories = async () => {
   const response = await api.get("/expenses/categories/");
   return response.data;
 };
 
+export const createExpenseCategory = async (data) => {
+  const response = await api.post("/expenses/categories/create/", data);
+  return response.data;
+};
+
+export const updateExpenseCategory = async (id, data) => {
+  const response = await api.put(`/expenses/categories/${id}/`, data);
+  return response.data;
+};
+
+export const deleteExpenseCategory = async (id) => {
+  const response = await api.delete(`/expenses/categories/${id}/`);
+  return response.data;
+};
+
+// ============================================================
+// 2. MASTER ITEMS (Raw Materials) - FULL CRUD
+// ============================================================
+
 export const getExpenseMasterItems = async (categoryId) => {
   const response = await api.get(`/expenses/category/${categoryId}/items/`);
   return response.data;
 };
+
+export const createMasterItem = async (data) => {
+  const response = await api.post("/expenses/master-items/create/", data);
+  return response.data;
+};
+
+export const updateMasterItem = async (id, data) => {
+  const response = await api.put(`/expenses/master-items/${id}/`, data);
+  return response.data;
+};
+
+export const deleteMasterItem = async (id) => {
+  const response = await api.delete(`/expenses/master-items/${id}/`);
+  return response.data;
+};
+
+// ============================================================
+// 3. EXPENSE ENTRIES (Manager adds KG + Price)
+// ============================================================
 
 export const createExpense = async (data) => {
   const response = await api.post("/expenses/create/", data);
@@ -39,7 +79,10 @@ export const deleteExpense = async (id) => {
   return response.data;
 };
 
-// ---------- Maintenance APIs ----------
+// ============================================================
+// 4. MAINTENANCE EXPENSES
+// ============================================================
+
 export const createMaintenance = async (data) => {
   const response = await api.post("/expenses/maintenance/create/", data);
   return response.data;
@@ -60,8 +103,59 @@ export const deleteMaintenance = async (id) => {
   return response.data;
 };
 
+// ============================================================
+// 5. REPORTS & ANALYTICS
+// ============================================================
 
-export const getExpenseReport = async () => {
-  const response = await api.get("/expenses/categories/");
+export const getExpenseReport = async (params = {}) => {
+  const response = await api.get("/expenses/report/", { params });
+  return response.data;
+};
+
+// ============================================================
+// 6. STAFF MANAGEMENT (SINGLE COPY - NO DUPLICATES)
+// ============================================================
+
+export const getStaffList = async (params = {}) => {
+  const response = await api.get("/expenses/staff/", { params });
+  return response.data;
+};
+
+export const createStaff = async (data) => {
+  const response = await api.post("/expenses/staff/", data);
+  return response.data;
+};
+
+export const updateStaff = async (id, data) => {
+  const response = await api.put(`/expenses/staff/${id}/`, data);
+  return response.data;
+};
+
+export const deleteStaff = async (id) => {
+  const response = await api.delete(`/expenses/staff/${id}/`);
+  return response.data;
+};
+
+// ============================================================
+// 7. STAFF SALARY
+// ============================================================
+
+export const addStaffSalary = async (data) => {
+  const response = await api.post("/expenses/staff/salary/add/", data);
+  return response.data;
+};
+
+export const getStaffSalaryDetail = async (staffId) => {
+  const response = await api.get(`/expenses/staff/salary/detail/${staffId}/`);
+  return response.data;
+};
+
+export const getStaffSalaryList = async () => {
+  const response = await api.get("/expenses/staff/salary/list/");
+  return response.data;
+};
+
+export const getStaffSalaryReport = async (params = {}) => {
+  const response = await api.get("/expenses/staff/salary/report/", { params });
   return response.data;
 };

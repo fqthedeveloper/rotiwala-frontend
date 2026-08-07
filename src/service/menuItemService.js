@@ -125,3 +125,11 @@ export const getItemsPublic = async () => {
 
   return response.data;
 };
+
+// src/service/menuItemService.js
+export const getPublicMenuItems = async (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  const url = `/menu/public/items/${query ? `?${query}` : ""}`;
+  const res = await api.get(url);
+  return res.data;
+};

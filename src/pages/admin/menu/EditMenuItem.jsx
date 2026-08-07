@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
-
 import { useNavigate, useParams } from "react-router-dom";
-
 import Swal from "sweetalert2";
-
 import { getCategories } from "../../../service/categoryService";
-
 import {
   getMenuItemById,
   updateMenuItem,
 } from "../../../service/menuItemService";
+import { getShops } from "../../../service/shopService"; // <-- new import
 
 const EditMenuItem = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
-
+  const [shops, setShops] = useState([]);           // <-- new
+  const [userRole, setUserRole] = useState(null);   // <-- new
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    shop: "",
+    shop: "",                // <-- new field
     category: "",
     name: "",
     description: "",
@@ -33,19 +30,28 @@ const EditMenuItem = () => {
   });
 
   useEffect(() => {
-    loadData();
     document.title = "Edit Menu Item | Roti Wala";
+    loadData();
   }, []);
 
   const loadData = async () => {
     const item = await getMenuItemById(id);
-
     const cats = await getCategories();
-
     setCategories(cats);
 
+    // Get user role and load shops if super_admin
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setUserRole(user.role);
+      if (user.role === "super_admin") {
+        const shopsData = await getShops();
+        setShops(shopsData);
+      }
+    }
+
     setFormData({
-      shop: item.shop,
+      shop: item.shop || "",        // pre‑select the item's shop
       category: item.category,
       name: item.name,
       description: item.description,
@@ -59,12 +65,9 @@ const EditMenuItem = () => {
 
   const handleChange = (e) => {
     const { name, value, checked, files, type } = e.target;
-
     setFormData({
       ...formData,
-
-      [name]:
-        type === "checkbox" ? checked : type === "file" ? files[0] : value,
+      [name]: type === "checkbox" ? checked : type === "file" ? files[0] : value,
     });
   };
 
@@ -72,29 +75,24 @@ const EditMenuItem = () => {
     e.preventDefault();
 
     const data = new FormData();
-
     Object.keys(formData).forEach((key) => {
-      if (formData[key] !== null) {
+      // Only append if value is not null/undefined; skip empty strings for shop
+      if (formData[key] !== null && formData[key] !== "") {
         data.append(key, formData[key]);
       }
     });
 
     try {
       setLoading(true);
-
       await updateMenuItem(id, data);
-
       Swal.fire({
         icon: "success",
-
         title: "Menu Item Updated",
       });
-
       navigate("/admin/menu-items");
     } catch {
       Swal.fire({
         icon: "error",
-
         title: "Failed",
       });
     } finally {
@@ -113,9 +111,29 @@ const EditMenuItem = () => {
 
             <div className="card-body">
               <form onSubmit={handleSubmit}>
+                {/* Shop dropdown – only for super_admin */}
+                {userRole === "super_admin" && (
+                  <div className="mb-3">
+                    <label>Shop</label>
+                    <select
+                      name="shop"
+                      className="form-select"
+                      required
+                      value={formData.shop}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select Shop</option>
+                      {shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="mb-3">
                   <label>Category</label>
-
                   <select
                     className="form-select"
                     name="category"
@@ -132,7 +150,6 @@ const EditMenuItem = () => {
 
                 <div className="mb-3">
                   <label>Item Name</label>
-
                   <input
                     type="text"
                     className="form-control"
@@ -144,7 +161,6 @@ const EditMenuItem = () => {
 
                 <div className="mb-3">
                   <label>Description</label>
-
                   <textarea
                     rows="4"
                     className="form-control"
@@ -156,7 +172,6 @@ const EditMenuItem = () => {
 
                 <div className="mb-3">
                   <label>Price</label>
-
                   <input
                     type="number"
                     className="form-control"
@@ -168,7 +183,6 @@ const EditMenuItem = () => {
 
                 <div className="mb-3">
                   <label>New Image</label>
-
                   <input
                     type="file"
                     className="form-control"
@@ -185,7 +199,6 @@ const EditMenuItem = () => {
                     checked={formData.is_available}
                     onChange={handleChange}
                   />
-
                   <label className="form-check-label">Available</label>
                 </div>
 
@@ -197,7 +210,6 @@ const EditMenuItem = () => {
                     checked={formData.is_popular}
                     onChange={handleChange}
                   />
-
                   <label className="form-check-label">Popular Item</label>
                 </div>
 

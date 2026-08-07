@@ -24,14 +24,6 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaQuoteLeft,
-  FaPizzaSlice,
-  FaHamburger,
-  FaIceCream,
-  FaCoffee,
-  FaBreadSlice,
-  FaCarrot,
-  FaLeaf,
-  FaDrumstickBite,
   FaArrowRight,
 } from "react-icons/fa";
 import "./CSS/Home.css";
@@ -40,78 +32,16 @@ import { getNearestShop, getShopsPublic } from "../service/shopService";
 import {
   getCategoriesByShopPublic,
   getItemsByCategoryPublic,
+  // NEW: import the public items list (we'll use it for shop filter)
+  getPublicMenuItems,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext";
-
-/* -------------------- STATIC DATA -------------------- */
-const VIDEO_SHOWCASE = [
-  {
-    id: "how-to-roll-roti",
-    title: "How to Roll the Perfect Roti",
-    description:
-      "Step-by-step preparation from dough to tandoor, with chef tips for soft, fluffy rotis.",
-    src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    poster: "/video-thumb-01.jpg",
-  },
-  {
-    id: "tandoor-firing-tips",
-    title: "Tandoor Firing & Freshness",
-    description:
-      "Watch how our team keeps the tandoor hot and roti fresh for every order.",
-    src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
-    poster: "/video-thumb-02.jpg",
-  },
-  {
-    id: "packaging-for-delivery",
-    title: "Safe Packaging for Delivery",
-    description:
-      "See the hygienic packing process that keeps your meal hot and secure.",
-    src: "https://www.w3schools.com/html/mov_bbb.mp4",
-    poster: "/video-thumb-03.jpg",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Aarav Sharma",
-    role: "Daily Customer",
-    text: "The roti is always hot, fresh, and arrives within minutes. Absolutely love the taste — feels just like home!",
-    rating: 5,
-  },
-  {
-    name: "Priya Verma",
-    role: "Food Blogger",
-    text: "Best in town! Hygienic, quick delivery, and the menu variety is incredible. Roti Wala has my heart.",
-    rating: 5,
-  },
-  {
-    name: "Rahul Mehta",
-    role: "Office Goer",
-    text: "Lunch problem solved forever. Affordable, tasty, and always on time. My whole team orders daily now!",
-    rating: 5,
-  },
-  {
-    name: "Sneha Kapoor",
-    role: "Home Maker",
-    text: "Saves me so much time. Quality is consistent and packaging is super clean. Truly impressed!",
-    rating: 5,
-  },
-];
-
-const MARQUEE_ITEMS = [
-  "Fresh Tandoor Roti",
-  "Delivered In 40 Minutes",
-  "Made With Love",
-  "Hot & Hygienic",
-  "10+ Local Shops",
-  "5K+ Happy Customers",
-];
+import { getApprovedVideos, getMarqueeTestimonials } from "../service/videoApi";
 
 const EASE = [0.22, 1, 0.36, 1];
 
-/* -------------------- CHAPTER HEADING -------------------- */
 const Chapter = ({ no, kicker, title, accent, sub }) => (
   <motion.div
     className="rw-chapter"
@@ -132,7 +62,6 @@ const Chapter = ({ no, kicker, title, accent, sub }) => (
   </motion.div>
 );
 
-/* -------------------- COMPONENT -------------------- */
 export default function Home() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -145,6 +74,7 @@ export default function Home() {
 
   const { showLoading, hideLoading } = useLoading();
 
+  // ----- State -----
   const [loading, setLoading] = useState(true);
   const [nearestShop, setNearestShop] = useState(null);
   const [shops, setShops] = useState([]);
@@ -152,12 +82,18 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Videos & testimonials
+  const [videos, setVideos] = useState([]);
+  const [marqueeItems, setMarqueeItems] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [activeVideoIdx, setActiveVideoIdx] = useState(0);
   const [isAutoSlide, setIsAutoSlide] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const videoRef = useRef(null);
 
-  /* ---------- LENIS SMOOTH SCROLL ---------- */
+  /* ---------- LENIS ---------- */
   useEffect(() => {
     const lenis = new Lenis({
       smooth: true,
@@ -181,67 +117,212 @@ export default function Home() {
     };
   }, []);
 
-  /* ---------- INIT ---------- */
+  /* ---------- Init ---------- */
   useEffect(() => {
     loadLocation();
+    fetchDynamicContent();
     document.title = "Home - Roti Wala";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ---------- Load menu when shop changes ---------- */
   useEffect(() => {
     if (nearestShop) loadMenu(nearestShop.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nearestShop]);
 
-  /* Auto-rotate testimonials */
+  /* ---------- Dynamic content (videos & testimonials) ---------- */
+  const fetchDynamicContent = async () => {
+    try {
+      const videoRes = await getApprovedVideos();
+      if (videoRes.data && videoRes.data.length > 0) {
+        setVideos(videoRes.data);
+      } else {
+        // fallback
+        setVideos([
+          {
+            id: "fallback-1",
+            title: "How to Roll the Perfect Roti",
+            description: "Step‑by‑step preparation from dough to tandoor.",
+            video_type: "upload",
+            video_src:
+              "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+            poster: "/video-thumb-01.jpg",
+          },
+          {
+            id: "fallback-2",
+            title: "Tandoor Firing & Freshness",
+            description: "Keeping the tandoor hot and roti fresh.",
+            video_type: "upload",
+            video_src:
+              "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
+            poster: "/video-thumb-02.jpg",
+          },
+        ]);
+      }
+
+      const marqRes = await getMarqueeTestimonials();
+      if (marqRes.data && marqRes.data.length > 0) {
+        const items = marqRes.data.map((t) => `“${t.text}” — ${t.author}`);
+        setMarqueeItems(items);
+        setTestimonials(marqRes.data);
+      } else {
+        setMarqueeItems([
+          "Fresh Tandoor Roti",
+          "Delivered In 40 Minutes",
+          "Made With Love",
+          "Hot & Hygienic",
+          "10+ Local Shops",
+          "5K+ Happy Customers",
+        ]);
+        setTestimonials([
+          {
+            name: "Aarav Sharma",
+            role: "Daily Customer",
+            text: "The roti is always hot, fresh, and arrives within minutes.",
+            rating: 5,
+          },
+          {
+            name: "Priya Verma",
+            role: "Food Blogger",
+            text: "Best in town! Hygienic, quick delivery, and incredible variety.",
+            rating: 5,
+          },
+          {
+            name: "Rahul Mehta",
+            role: "Office Goer",
+            text: "Lunch problem solved forever. Affordable, tasty, and on time.",
+            rating: 5,
+          },
+          {
+            name: "Sneha Kapoor",
+            role: "Home Maker",
+            text: "Saves me so much time. Quality consistent, packaging super clean.",
+            rating: 5,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dynamic content:", error);
+      // fallback static data
+      setMarqueeItems([
+        "Fresh Tandoor Roti",
+        "Delivered In 40 Minutes",
+        "Made With Love",
+        "Hot & Hygienic",
+        "10+ Local Shops",
+        "5K+ Happy Customers",
+      ]);
+      setTestimonials([
+        {
+          name: "Aarav Sharma",
+          role: "Daily Customer",
+          text: "The roti is always hot, fresh, and arrives within minutes.",
+          rating: 5,
+        },
+        {
+          name: "Priya Verma",
+          role: "Food Blogger",
+          text: "Best in town! Hygienic, quick delivery, and incredible variety.",
+          rating: 5,
+        },
+        {
+          name: "Rahul Mehta",
+          role: "Office Goer",
+          text: "Lunch problem solved forever. Affordable, tasty, and on time.",
+          rating: 5,
+        },
+        {
+          name: "Sneha Kapoor",
+          role: "Home Maker",
+          text: "Saves me so much time. Quality consistent, packaging super clean.",
+          rating: 5,
+        },
+      ]);
+      setVideos([
+        {
+          id: "fallback-1",
+          title: "How to Roll the Perfect Roti",
+          description: "Step‑by‑step preparation from dough to tandoor.",
+          video_type: "upload",
+          video_src:
+            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+          poster: "/video-thumb-01.jpg",
+        },
+        {
+          id: "fallback-2",
+          title: "Tandoor Firing & Freshness",
+          description: "Keeping the tandoor hot and roti fresh.",
+          video_type: "upload",
+          video_src:
+            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
+          poster: "/video-thumb-02.jpg",
+        },
+      ]);
+    }
+  };
+
+  /* ---------- Auto-rotate testimonials ---------- */
   useEffect(() => {
+    if (testimonials.length === 0) return;
     const id = setInterval(() => {
-      setTestimonialIdx((p) => (p + 1) % TESTIMONIALS.length);
+      setTestimonialIdx((p) => (p + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [testimonials]);
 
-  /* Auto-rotate video slideshow */
+  /* ---------- Video slideshow ---------- */
   useEffect(() => {
-    if (!isAutoSlide) return;
-
+    if (!isAutoSlide || videos.length === 0) return;
     const id = setInterval(() => {
-      setActiveVideoIdx((current) => (current + 1) % VIDEO_SHOWCASE.length);
+      setActiveVideoIdx((current) => (current + 1) % videos.length);
     }, 7000);
-
     return () => clearInterval(id);
-  }, [isAutoSlide]);
+  }, [isAutoSlide, videos]);
 
-  const stopSlideshow = () => {
-    setIsAutoSlide(false);
-  };
+  useEffect(() => {
+    if (!videoRef.current || videos.length === 0) return;
+    const video = videoRef.current;
+    const handleEnded = () => {
+      setActiveVideoIdx((current) => (current + 1) % videos.length);
+    };
+    video.addEventListener("ended", handleEnded);
+    return () => {
+      video.removeEventListener("ended", handleEnded);
+    };
+  }, [activeVideoIdx, videos]);
 
-  const selectVideo = (index) => {
-    setActiveVideoIdx(index);
-    setIsAutoSlide(false);
-  };
+  useEffect(() => {
+    if (!videoRef.current || videos.length === 0) return;
+    const video = videoRef.current;
+    if (videos[activeVideoIdx]?.video_type === "upload") {
+      video.load();
+      if (isAutoSlide) {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {});
+        }
+      }
+    }
+  }, [activeVideoIdx, isAutoSlide, videos]);
 
+  const stopSlideshow = () => setIsAutoSlide(false);
   const nextVideo = () => {
-    setActiveVideoIdx((current) => {
-      const next = (current + 1) % VIDEO_SHOWCASE.length;
-      return next;
-    });
+    if (videos.length === 0) return;
+    setActiveVideoIdx((current) => (current + 1) % videos.length);
     setIsAutoSlide(false);
   };
-
   const prevVideo = () => {
-    setActiveVideoIdx((current) => {
-      const prev = (current - 1 + VIDEO_SHOWCASE.length) % VIDEO_SHOWCASE.length;
-      return prev;
-    });
+    if (videos.length === 0) return;
+    setActiveVideoIdx((current) =>
+      current === 0 ? videos.length - 1 : current - 1
+    );
     setIsAutoSlide(false);
   };
 
-  const activeVideo = VIDEO_SHOWCASE[activeVideoIdx];
-  const nextVideoTitle = VIDEO_SHOWCASE[(activeVideoIdx + 1) % VIDEO_SHOWCASE.length].title;
-  const prevVideoTitle = VIDEO_SHOWCASE[(activeVideoIdx - 1 + VIDEO_SHOWCASE.length) % VIDEO_SHOWCASE.length].title;
+  const activeVideo = videos.length > 0 ? videos[activeVideoIdx] : null;
 
-  /* ---------- API HELPERS ---------- */
+  /* ---------- Shops & Menu ---------- */
   const fetchAllShops = async () => {
     try {
       const data = await getShopsPublic();
@@ -287,13 +368,12 @@ export default function Home() {
 
   const loadMenu = async (shopId) => {
     try {
+      // Fetch categories for the shop (if categories are global, this may return all – but we'll use it for grouping)
       const categoryData = await getCategoriesByShopPublic(shopId);
       setCategories(categoryData);
-      const allItems = [];
-      for (const c of categoryData) {
-        const items = await getItemsByCategoryPublic(c.id);
-        allItems.push(...items);
-      }
+
+      // NEW: Fetch ALL menu items for this shop directly using the shop filter
+      const allItems = await getPublicMenuItems({ shop: shopId });
       setMenuItems(allItems);
     } catch (e) {
       console.log(e);
@@ -355,7 +435,7 @@ export default function Home() {
     }
   };
 
-  /* ---------- LOADER ---------- */
+  /* ---------- Loader ---------- */
   if (loading) {
     return (
       <Loader
@@ -367,7 +447,7 @@ export default function Home() {
     );
   }
 
-  /* ---------- RENDER ---------- */
+  /* ---------- Render ---------- */
   return (
     <div className="rw-home" data-testid="home-page">
       {isLoadingMore && (
@@ -528,15 +608,16 @@ export default function Home() {
       {/* ============ MARQUEE ============ */}
       <div className="rw-marquee" aria-hidden="true">
         <div className="rw-marquee-track">
-          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span className="rw-marquee-item" key={i}>
-              {item} <i>✦</i>
-            </span>
-          ))}
+          {marqueeItems.length > 0 &&
+            [...marqueeItems, ...marqueeItems].map((item, i) => (
+              <span className="rw-marquee-item" key={i}>
+                {item} <i>✦</i>
+              </span>
+            ))}
         </div>
       </div>
 
-      {/* ============ INFO BANNER ============ */}
+      {/* ============ LOCATION BANNER ============ */}
       <AnimatePresence>
         {locationDenied && !nearestShop && !showShops && (
           <motion.div
@@ -641,7 +722,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* ============ CHAPTER 01 — CATEGORIES ============ */}
+      {/* ============ CHAPTER 01 — VIDEOS ============ */}
       <Chapter
         no="01"
         kicker="Our Video Journey"
@@ -660,58 +741,77 @@ export default function Home() {
           visible: { transition: { staggerChildren: 0.06 } },
         }}
       >
-        <motion.article
-          className="rw-video-card rw-video-main-card"
-          initial={{ opacity: 0, y: 34 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.15 }}
-          transition={{ duration: 0.55, ease: EASE }}
-        >
-          <div className="rw-video-thumb">
-            <video
-              controls
-              preload="metadata"
-              poster={activeVideo.poster}
-              className="rw-video-player"
-              onClick={stopSlideshow}
-            >
-              <source src={activeVideo.src} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div className="rw-video-copy rw-video-copy--minimal">
-            <span className="rw-video-label">
-              {isAutoSlide ? "Auto slideshow" : "Manual selection"}
-            </span>
-            <h4>{activeVideo.title}</h4>
-          </div>
-          <div className="rw-video-controls">
-            <button
-              className="rw-video-nav-btn"
-              type="button"
-              onClick={prevVideo}
-            >
-              Prev: {prevVideoTitle}
-            </button>
-            <button
-              className="rw-video-nav-btn"
-              type="button"
-              onClick={nextVideo}
-            >
-              Next: {nextVideoTitle}
-            </button>
-          </div>
-        </motion.article>
-
+        {activeVideo ? (
+          <motion.article
+            className="rw-video-card rw-video-main-card"
+            initial={{ opacity: 0, y: 34 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.55, ease: EASE }}
+          >
+            <div className="rw-video-thumb">
+              {activeVideo.video_type === "youtube" ? (
+                <iframe
+                  src={activeVideo.embed_url}
+                  title={activeVideo.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rw-video-player"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  controls
+                  preload="metadata"
+                  poster={activeVideo.poster}
+                  className="rw-video-player"
+                  onClick={stopSlideshow}
+                  muted
+                  playsInline
+                  autoPlay={isAutoSlide}
+                >
+                  <source src={activeVideo.video_src} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </div>
+            <div className="rw-video-copy rw-video-copy--minimal">
+              <span className="rw-video-label">
+                {isAutoSlide ? "Auto slideshow" : "Manual selection"}
+              </span>
+              <h4>{activeVideo.title}</h4>
+              <p>{activeVideo.description}</p>
+            </div>
+            <div className="rw-video-controls">
+              <button
+                className="rw-video-nav-btn"
+                type="button"
+                onClick={prevVideo}
+              >
+                <FaChevronLeft /> Previous
+              </button>
+              <button
+                className="rw-video-nav-btn"
+                type="button"
+                onClick={nextVideo}
+              >
+                Next <FaChevronRight />
+              </button>
+            </div>
+          </motion.article>
+        ) : (
+          <div className="rw-empty">No videos available.</div>
+        )}
       </motion.section>
 
-      {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
+      {/* ============ CHAPTER 02 — POPULAR MENU (by Shop) ============ */}
       <Chapter
         no="02"
         kicker="Today's Picks"
         title="Popular"
         accent="Menu"
-        sub="Freshly prepared dishes loved by everyone"
+        sub={`Freshly prepared dishes from ${nearestShop?.name || "your shop"}`}
       />
 
       <motion.div className="rw-foods" data-testid="popular-menu-grid">
@@ -874,75 +974,83 @@ export default function Home() {
         sub="Real reviews from real customers"
       />
 
-      <div className="rw-t-wrap" data-testid="testimonials">
-        <button
-          data-testid="testimonial-prev-btn"
-          className="rw-t-arrow"
-          onClick={() =>
-            setTestimonialIdx(
-              (p) => (p - 1 + TESTIMONIALS.length) % TESTIMONIALS.length
-            )
-          }
-          aria-label="Previous"
-        >
-          <FaChevronLeft />
-        </button>
-
-        <div className="rw-t-slider">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={testimonialIdx}
-              className="rw-t-card"
-              initial={{ opacity: 0, x: 60 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.45, ease: EASE }}
+      {testimonials.length > 0 ? (
+        <>
+          <div className="rw-t-wrap" data-testid="testimonials">
+            <button
+              data-testid="testimonial-prev-btn"
+              className="rw-t-arrow"
+              onClick={() =>
+                setTestimonialIdx(
+                  (p) => (p - 1 + testimonials.length) % testimonials.length
+                )
+              }
+              aria-label="Previous"
             >
-              <FaQuoteLeft className="rw-t-quote" />
-              <p className="rw-t-text">{TESTIMONIALS[testimonialIdx].text}</p>
-              <div className="rw-t-stars">
-                {Array.from({
-                  length: TESTIMONIALS[testimonialIdx].rating,
-                }).map((_, i) => (
-                  <FaStar key={i} />
-                ))}
-              </div>
-              <div className="rw-t-author">
-                <div className="rw-t-avatar">
-                  {TESTIMONIALS[testimonialIdx].name.charAt(0)}
-                </div>
-                <div>
-                  <strong>{TESTIMONIALS[testimonialIdx].name}</strong>
-                  <span>{TESTIMONIALS[testimonialIdx].role}</span>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+              <FaChevronLeft />
+            </button>
 
-        <button
-          data-testid="testimonial-next-btn"
-          className="rw-t-arrow"
-          onClick={() =>
-            setTestimonialIdx((p) => (p + 1) % TESTIMONIALS.length)
-          }
-          aria-label="Next"
-        >
-          <FaChevronRight />
-        </button>
-      </div>
+            <div className="rw-t-slider">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={testimonialIdx}
+                  className="rw-t-card"
+                  initial={{ opacity: 0, x: 60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -60 }}
+                  transition={{ duration: 0.45, ease: EASE }}
+                >
+                  <FaQuoteLeft className="rw-t-quote" />
+                  <p className="rw-t-text">
+                    {testimonials[testimonialIdx].text}
+                  </p>
+                  <div className="rw-t-stars">
+                    {Array.from({
+                      length: testimonials[testimonialIdx].rating || 5,
+                    }).map((_, i) => (
+                      <FaStar key={i} />
+                    ))}
+                  </div>
+                  <div className="rw-t-author">
+                    <div className="rw-t-avatar">
+                      {testimonials[testimonialIdx].name.charAt(0)}
+                    </div>
+                    <div>
+                      <strong>{testimonials[testimonialIdx].name}</strong>
+                      <span>{testimonials[testimonialIdx].role || "Customer"}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-      <div className="rw-t-dots">
-        {TESTIMONIALS.map((_, i) => (
-          <button
-            key={i}
-            data-testid={`testimonial-dot-${i}`}
-            className={`rw-t-dot ${i === testimonialIdx ? "active" : ""}`}
-            onClick={() => setTestimonialIdx(i)}
-            aria-label={`Go to testimonial ${i + 1}`}
-          />
-        ))}
-      </div>
+            <button
+              data-testid="testimonial-next-btn"
+              className="rw-t-arrow"
+              onClick={() =>
+                setTestimonialIdx((p) => (p + 1) % testimonials.length)
+              }
+              aria-label="Next"
+            >
+              <FaChevronRight />
+            </button>
+          </div>
+
+          <div className="rw-t-dots">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                data-testid={`testimonial-dot-${i}`}
+                className={`rw-t-dot ${i === testimonialIdx ? "active" : ""}`}
+                onClick={() => setTestimonialIdx(i)}
+                aria-label={`Go to testimonial ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="rw-empty">No testimonials yet.</div>
+      )}
 
       {/* ============ CTA STRIP ============ */}
       <motion.section

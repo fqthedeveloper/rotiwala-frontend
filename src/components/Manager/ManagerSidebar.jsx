@@ -1,162 +1,171 @@
-import {
-  NavLink,
-  useNavigate,
-} from "react-router-dom";
+// frontend/src/components/Manager/ManagerSidebar.jsx
 
-import {
-  logoutConfirm,
-} from "../../utils/alerts";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { logoutConfirm } from "../../utils/alerts";
 
-const ManagerSidebar = ({
-  isOpen,
-  closeSidebar,
-}) => {
+const ManagerSidebar = ({ isOpen, closeSidebar }) => {
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [expandedSections, setExpandedSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem("managerSidebarExpanded");
+      return saved ? JSON.parse(saved) : {
+        orders: true,
+        customers: true,
+        staff: true,
+        finance: true,
+      };
+    } catch {
+      return {
+        orders: true,
+        customers: true,
+        staff: true,
+        finance: true,
+      };
+    }
+  });
 
-  const handleLogout =
-    async () => {
+  useEffect(() => {
+    localStorage.setItem("managerSidebarExpanded", JSON.stringify(expandedSections));
+  }, [expandedSections]);
 
-      const result =
-        await logoutConfirm();
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
-      if (
-        result.isConfirmed
-      ) {
+  const handleLogout = async () => {
+    const result = await logoutConfirm();
 
-        localStorage.removeItem(
-          "access"
-        );
+    if (result.isConfirmed) {
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
+      localStorage.removeItem("user_id");
 
-        localStorage.removeItem(
-          "refresh"
-        );
-
-        localStorage.removeItem(
-          "user"
-        );
-
-        localStorage.removeItem(
-          "role"
-        );
-
-        localStorage.removeItem(
-          "user_id"
-        );
-
-        navigate("/login");
-      }
-    };
+      navigate("/login");
+    }
+  };
 
   return (
     <>
       <div
-        className={`sidebar-overlay ${
-          isOpen ? "show" : ""
-        }`}
+        className={`sidebar-overlay ${isOpen ? "show" : ""}`}
         onClick={closeSidebar}
       />
 
-      <aside
-        className={`admin-sidebar ${
-          isOpen ? "open" : ""
-        }`}
-      >
-
+      <aside className={`admin-sidebar ${isOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
-
-          <h3>
-            🍽️ Roti Waale
-          </h3>
-
-          <p>
-            Manager Panel
-          </p>
-
+          <h3>🍽️ Roti Waale</h3>
+          <p>Manager Panel</p>
         </div>
 
         <nav className="sidebar-nav">
-
-          <NavLink
-            to="/manager/dashboard"
-            onClick={closeSidebar}
-          >
+          {/* Dashboard */}
+          <NavLink to="/manager/dashboard" onClick={closeSidebar}>
             <i className="bi bi-grid"></i>
             Dashboard
           </NavLink>
 
-          <div className="sidebar-section">
-            Orders
+          {/* ===== Orders ===== */}
+          <div
+            className="sidebar-section clickable"
+            onClick={() => toggleSection("orders")}
+          >
+            <span>Orders</span>
+            <i className={`bi bi-chevron-${expandedSections.orders ? "down" : "right"}`}></i>
           </div>
 
-          <NavLink
-            to="/manager/orders"
-            onClick={closeSidebar}
-          >
-            <i className="bi bi-bag"></i>
-            Orders
-          </NavLink>
+          {expandedSections.orders && (
+            <>
+              <NavLink to="/manager/orders" onClick={closeSidebar}>
+                <i className="bi bi-bag"></i>
+                Orders
+              </NavLink>
+              <NavLink to="/manager/walkin" onClick={closeSidebar}>
+                <i className="bi bi-cart-plus"></i>
+                Walk-In Orders
+              </NavLink>
+            </>
+          )}
 
-          <NavLink
-            to="/manager/walkin"
-            onClick={closeSidebar}
+          {/* ===== Customers ===== */}
+          <div
+            className="sidebar-section clickable"
+            onClick={() => toggleSection("customers")}
           >
-            <i className="bi bi-cart-plus"></i>
-            Walk-In Orders
-          </NavLink>
-
-          <div className="sidebar-section">
-            Customers
-          </div>
-          <NavLink
-            to="/manager/discounts/usage"
-            onClick={closeSidebar}
-          >
-            <i className="bi bi-people"></i>
-            Usage Analytics
-          </NavLink>
-
-          <NavLink
-            to="/manager/customers"
-            onClick={closeSidebar}
-          >
-            <i className="bi bi-people"></i>
-            Customers
-          </NavLink>
-
-          <div className="sidebar-section">
-            Reports
+            <span>Customers</span>
+            <i className={`bi bi-chevron-${expandedSections.customers ? "down" : "right"}`}></i>
           </div>
 
-          <NavLink
-            to="/manager/expenses"
-            onClick={closeSidebar}
-          >
-            <i className="bi bi-graph-up"></i>
-            Expense
-          </NavLink>
+          {expandedSections.customers && (
+            <>
+              <NavLink to="/manager/customers" onClick={closeSidebar}>
+                <i className="bi bi-people"></i>
+                Customers
+              </NavLink>
+              <NavLink to="/manager/discounts/usage" onClick={closeSidebar}>
+                <i className="bi bi-graph-up"></i>
+                Usage Analytics
+              </NavLink>
+            </>
+          )}
 
-          <NavLink
-            to="/manager/reports"
-            onClick={closeSidebar}
+          {/* ===== Staff ===== */}
+          <div
+            className="sidebar-section clickable"
+            onClick={() => toggleSection("staff")}
           >
-            <i className="bi bi-graph-up"></i>
-            Reports
-          </NavLink>
+            <span>Staff</span>
+            <i className={`bi bi-chevron-${expandedSections.staff ? "down" : "right"}`}></i>
+          </div>
+
+          {expandedSections.staff && (
+            <>
+              <NavLink to="/manager/staff" onClick={closeSidebar}>
+                <i className="bi bi-person-badge"></i>
+                Staff Management
+              </NavLink>
+              <NavLink to="/manager/staff/salary/add" onClick={closeSidebar}>
+                <i className="bi bi-cash"></i>
+                Add Salary
+              </NavLink>
+            </>
+          )}
+
+          {/* ===== Finance ===== */}
+          <div
+            className="sidebar-section clickable"
+            onClick={() => toggleSection("finance")}
+          >
+            <span>Finance</span>
+            <i className={`bi bi-chevron-${expandedSections.finance ? "down" : "right"}`}></i>
+          </div>
+
+          {expandedSections.finance && (
+            <>
+              <NavLink to="/manager/expenses" onClick={closeSidebar}>
+                <i className="bi bi-wallet2"></i>
+                Expenses
+              </NavLink>
+              <NavLink to="/manager/reports" onClick={closeSidebar}>
+                <i className="bi bi-graph-up"></i>
+                Reports
+              </NavLink>
+            </>
+          )}
 
         </nav>
 
         <div className="p-3 mt-auto">
-
-          <button
-            onClick={handleLogout}
-            className="btn btn-danger w-100"
-          >
+          <button onClick={handleLogout} className="btn btn-danger w-100">
             <i className="bi bi-box-arrow-right me-2"></i>
             Logout
           </button>
-
         </div>
 
       </aside>

@@ -10,7 +10,6 @@ import "./styles/forms.css";
 import "./styles/pages.css";
 import "./styles/theme.css";
 
-
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -123,12 +122,19 @@ import CouponForm from "./pages/admin/Coupons/CouponForm";
 import Discounts from "./pages/admin/Discount/Discounts";
 import DiscountForm from "./pages/admin/Discount/DiscountForm";
 import UsageAnalytics from "./pages/admin/Usage-Discount/UsageAnalytics";
+import CategoryList from "./pages/admin/Expenses/CategoryList";
+import AddCategoryExpense from "./pages/admin/Expenses/AddCategory";
 import AdminExpenses from "./pages/admin/Expenses/AdminExpenses";
+import MasterItemList from "./pages/admin/Expenses/MasterItemList";
 import AddExpense from "./pages/admin/Expenses/AddExpense";
 import EditExpense from "./pages/admin/Expenses/EditExpense";
 import AddMaintenance from "./pages/admin/Expenses/AddMaintenance";
-import Report from './pages/Report';  // add import
-
+import StaffManagement from "./pages/admin/Expenses/StaffManagement";
+import StaffSalaryForm from "./pages/admin/Expenses/StaffSalaryForm";
+import StaffSalaryDetail from "./pages/admin/Expenses/StaffSalaryDetail";
+import Report from './pages/Report';
+import TestimonialManagement from './pages/admin/TestimonialManagement';
+import VideoManagement from './pages/admin/VideoManagement';
 
 // Customer Pages
 import Cart from "./pages/Customer/Cart";
@@ -154,7 +160,6 @@ function App() {
   const location = useLocation();
   const { showLoading, hideLoading } = useLoading();
 
-  // Show loader only if route change takes a little time; hide quickly if the new page is already ready.
   useEffect(() => {
     document.title = getPageTitle(location.pathname);
   }, [location.pathname]);
@@ -257,7 +262,6 @@ function App() {
         />
       </Route>
 
-
       {/* ADMIN ROUTES */}
       <Route
         path="/admin"
@@ -298,6 +302,13 @@ function App() {
         <Route path="expenses/edit/:id" element={<EditExpense />} />
         <Route path="maintenance/add" element={<AddMaintenance />} />
         <Route path="reports" element={<Report />} />
+        <Route path="expenses/categories" element={<CategoryList />} />
+        <Route path="expenses/categories/add" element={<AddCategoryExpense />} />
+        <Route path="expenses/master-items" element={<MasterItemList />} />
+        <Route path="expenses/staff" element={<StaffManagement />} />
+        <Route path="expenses/staff/salary/add" element={<StaffSalaryForm />} />
+        <Route path="expenses/staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
+
         <Route path="*" element={<NotFound />} />
       </Route>
 
@@ -322,6 +333,12 @@ function App() {
         <Route path="expenses/edit/:id" element={<EditExpense />} />
         <Route path="expenses/maintenance/add" element={<AddMaintenance />} />
         <Route path="reports" element={<Report />} />
+
+        {/* 🆕 Manager Staff Management & Salary Details */}
+        <Route path="staff" element={<StaffManagement />} />
+        <Route path="staff/salary/add" element={<StaffSalaryForm />} />
+        <Route path="staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
+
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

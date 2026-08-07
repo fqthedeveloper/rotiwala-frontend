@@ -1,21 +1,28 @@
-import api from './api';
+// frontend/src/service/reportServices.js
+
+import api from "./api";
 
 /**
- * Fetch report data (works with interceptor)
+ * Get report data with filters
  */
-export const getReport = async (params) => {
-  const response = await api.get('/reports/report/', { params });
+export const getReport = async (params = {}) => {
+  const response = await api.get("/reports/report/", { params });
   return response.data;
 };
 
-export const exportReport = async (params) => {
-  const token = localStorage.getItem('accessToken'); // or however you store it
-  const response = await api.get('/reports/export/', {
+/**
+ * Export report to Excel or PDF
+ * @param {Object} params - { format, filter, start, end, shop }
+ * @param {string} format - 'excel' or 'pdf'
+ * @returns {Promise<Blob>}
+ */
+export const exportReport = async (params = {}) => {
+  const response = await api.get("/reports/export/", {
     params,
-    responseType: 'blob',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    responseType: "blob",
+    // 🔥 Ensure we don't transform the response
+    transformResponse: [(data) => data],
   });
-  return response;
+  // response.data is a Blob
+  return response.data;
 };

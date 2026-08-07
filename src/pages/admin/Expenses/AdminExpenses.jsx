@@ -1,5 +1,7 @@
+// frontend/src/pages/admin/Expenses/AdminExpenses.jsx
+
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ added
+import { useNavigate } from "react-router-dom";
 import {
   FaPlus,
   FaTimes,
@@ -15,15 +17,12 @@ import {
   getExpenseReport,
   getMaintenanceList,
   deleteMaintenance,
-  updateExpense,   // ✅ added – implement in expenseServices
-  updateMaintenance, // ✅ added – implement in expenseServices
 } from "../../../service/expenseServices";
 import { getShops } from "../../../service/shopService";
 
 const SuperAdminExpenses = () => {
-  const navigate = useNavigate(); // ✅
+  const navigate = useNavigate();
 
-  // ---------- State ----------
   const [expenses, setExpenses] = useState([]);
   const [maintenanceList, setMaintenanceList] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -124,8 +123,9 @@ const SuperAdminExpenses = () => {
     );
   };
 
+  // ✅ FIX: use entry_datetime instead of expense_date
   const todaysExpenseCount = useMemo(
-    () => expenses.filter((exp) => isSameDay(exp.expense_date)).length,
+    () => expenses.filter((exp) => isSameDay(exp.entry_datetime)).length,
     [expenses]
   );
 
@@ -608,7 +608,7 @@ const SuperAdminExpenses = () => {
         <table>
           <thead>
             <tr>
-              <th>Date</th>
+              <th>Date & Time</th>
               <th>Shop</th>
               <th>Category</th>
               <th>Total</th>
@@ -632,7 +632,12 @@ const SuperAdminExpenses = () => {
             ) : (
               expenses.map((exp) => (
                 <tr key={exp.id}>
-                  <td data-label="Date">{format(new Date(exp.expense_date), "dd/MM/yy")}</td>
+                  {/* ✅ FIX: use entry_datetime with null check */}
+                  <td data-label="Date & Time">
+                    {exp.entry_datetime
+                      ? format(new Date(exp.entry_datetime), "dd/MM/yy HH:mm")
+                      : "N/A"}
+                  </td>
                   <td data-label="Shop">{getShopName(exp.shop || exp.shop_id)}</td>
                   <td data-label="Category">{exp.category?.name || "N/A"}</td>
                   <td data-label="Total">₹{Number(exp.total_amount).toFixed(2)}</td>
@@ -704,7 +709,11 @@ const SuperAdminExpenses = () => {
                   <td data-label="Title">{item.title}</td>
                   <td data-label="Shop">{getShopName(item.shop || item.shop_id)}</td>
                   <td data-label="Amount">₹{Number(item.amount).toFixed(2)}</td>
-                  <td data-label="Date">{format(new Date(item.maintenance_date), "dd/MM/yy")}</td>
+                  <td data-label="Date">
+                    {item.maintenance_date
+                      ? format(new Date(item.maintenance_date), "dd/MM/yy")
+                      : "N/A"}
+                  </td>
                   <td data-label="Actions">
                     <button
                       className="btn btn-primary"

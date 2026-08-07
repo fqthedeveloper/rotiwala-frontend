@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-
-import {
-  getCategories,
-  deleteCategory,
-} from "../../../service/categoryService";
+import { getCategories, deleteCategory } from "../../../service/categoryService";
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -19,16 +15,7 @@ const Categories = () => {
   const loadCategories = async () => {
     try {
       const data = await getCategories();
-
-      console.log("Categories:", data);
-
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if (data?.results) {
-        setCategories(data.results);
-      } else {
-        setCategories([]);
-      }
+      setCategories(Array.isArray(data) ? data : data?.results || []);
     } catch (error) {
       console.error(error);
       setCategories([]);
@@ -47,39 +34,21 @@ const Categories = () => {
       cancelButtonColor: "#6c757d",
       confirmButtonText: "Delete",
     });
-
     if (!result.isConfirmed) return;
 
     try {
       await deleteCategory(id);
-
-      Swal.fire({
-        icon: "success",
-        title: "Deleted Successfully",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-
+      Swal.fire({ icon: "success", title: "Deleted Successfully", timer: 1500, showConfirmButton: false });
       loadCategories();
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Delete Failed",
-        text: error?.message || "Something went wrong",
-      });
+      Swal.fire({ icon: "error", title: "Delete Failed", text: error?.message || "Something went wrong" });
     }
   };
 
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "300px" }}
-      >
-        <div
-          className="spinner-border text-warning"
-          style={{ width: "3rem", height: "3rem" }}
-        />
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+        <div className="spinner-border text-warning" style={{ width: "3rem", height: "3rem" }} />
       </div>
     );
   }
@@ -91,17 +60,10 @@ const Categories = () => {
           <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
             <div>
               <h4 className="fw-bold mb-1">Categories</h4>
-              <small className="text-muted">
-                Manage your shop categories
-              </small>
+              <small className="text-muted">Manage your global categories</small>
             </div>
-
-            <Link
-              to="/admin/categories/add"
-              className="btn btn-warning fw-semibold px-4 py-2"
-            >
-              <i className="fas fa-plus me-2"></i>
-              Add Category
+            <Link to="/admin/categories/add" className="btn btn-warning fw-semibold px-4 py-2">
+              <i className="fas fa-plus me-2"></i>Add Category
             </Link>
           </div>
         </div>
@@ -109,25 +71,10 @@ const Categories = () => {
         <div className="card-body p-3 p-md-4">
           {categories.length === 0 ? (
             <div className="text-center py-5">
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png"
-                alt=""
-                width="120"
-                className="mb-3 opacity-75"
-              />
-
+              <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="" width="120" className="mb-3 opacity-75" />
               <h5>No Categories Found</h5>
-
-              <p className="text-muted">
-                Create your first category to get started.
-              </p>
-
-              <Link
-                to="/admin/categories/add"
-                className="btn btn-warning"
-              >
-                Add Category
-              </Link>
+              <p className="text-muted">Create your first category to get started.</p>
+              <Link to="/admin/categories/add" className="btn btn-warning">Add Category</Link>
             </div>
           ) : (
             <>
@@ -136,75 +83,26 @@ const Categories = () => {
                 <table className="table align-middle table-hover">
                   <thead className="table-light">
                     <tr>
-                      <th>Image</th>
-                      <th>Shop</th>
                       <th>Name</th>
                       <th>Status</th>
                       <th width="180">Action</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     {categories.map((category) => (
                       <tr key={category.id}>
-                        <td>
-                          <img
-                            src={
-                              category.image_url ||
-                              category.image ||
-                              "/no-image.png"
-                            }
-                            alt={category.name}
-                            width="60"
-                            height="60"
-                            className="rounded-3 border object-fit-cover"
-                            style={{
-                              objectFit: "cover",
-                            }}
-                          />
-                        </td>
-
-                        <td>
-                          <span className="fw-semibold">
-                            Shop #{category.shop}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className="fw-bold">
-                            {category.name}
-                          </span>
-                        </td>
-
+                        <td><span className="fw-bold">{category.name}</span></td>
                         <td>
                           {category.is_active ? (
-                            <span className="badge bg-success">
-                              Active
-                            </span>
+                            <span className="badge bg-success">Active</span>
                           ) : (
-                            <span className="badge bg-danger">
-                              Inactive
-                            </span>
+                            <span className="badge bg-danger">Inactive</span>
                           )}
                         </td>
-
                         <td>
                           <div className="d-flex gap-2">
-                            <Link
-                              to={`/admin/categories/edit/${category.id}`}
-                              className="btn btn-sm btn-warning"
-                            >
-                              Edit
-                            </Link>
-
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() =>
-                                handleDelete(category.id)
-                              }
-                            >
-                              Delete
-                            </button>
+                            <Link to={`/admin/categories/edit/${category.id}`} className="btn btn-sm btn-warning">Edit</Link>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(category.id)}>Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -217,67 +115,21 @@ const Categories = () => {
               <div className="d-lg-none">
                 <div className="row g-3">
                   {categories.map((category) => (
-                    <div
-                      className="col-12 col-sm-6"
-                      key={category.id}
-                    >
+                    <div className="col-12 col-sm-6" key={category.id}>
                       <div className="card border-0 shadow-sm h-100 rounded-4">
                         <div className="card-body">
+                          
+                          <h5 className="fw-bold text-center">{category.name}</h5>
                           <div className="text-center mb-3">
-                            <img
-                              src={
-                                category.image_url ||
-                                category.image ||
-                                "/no-image.png"
-                              }
-                              alt={category.name}
-                              width="100"
-                              height="100"
-                              className="rounded-4 border"
-                              style={{
-                                objectFit: "cover",
-                              }}
-                            />
-                          </div>
-
-                          <h5 className="fw-bold text-center">
-                            {category.name}
-                          </h5>
-
-                          <div className="text-center mb-3">
-                            <small className="text-muted">
-                              Shop #{category.shop}
-                            </small>
-                          </div>
-
-                          <div className="text-center mb-3">
-                            {category.is_active ? (
-                              <span className="badge bg-success">
-                                Active
-                              </span>
+                            {category.is_active === true ? (
+                              <span className="badge bg-success">Active</span>
                             ) : (
-                              <span className="badge bg-danger">
-                                Inactive
-                              </span>
+                              <span className="badge bg-danger">Inactive</span>
                             )}
                           </div>
-
                           <div className="d-grid gap-2">
-                            <Link
-                              to={`/admin/categories/edit/${category.id}`}
-                              className="btn btn-warning"
-                            >
-                              Edit
-                            </Link>
-
-                            <button
-                              className="btn btn-danger"
-                              onClick={() =>
-                                handleDelete(category.id)
-                              }
-                            >
-                              Delete
-                            </button>
+                            <Link to={`/admin/categories/edit/${category.id}`} className="btn btn-warning">Edit</Link>
+                            <button className="btn btn-danger" onClick={() => handleDelete(category.id)}>Delete</button>
                           </div>
                         </div>
                       </div>
