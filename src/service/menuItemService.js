@@ -128,7 +128,11 @@ export const getItemsPublic = async () => {
 
 // src/service/menuItemService.js
 export const getPublicMenuItems = async (params = {}) => {
-  const query = new URLSearchParams(params).toString();
+  const normalized = { ...params };
+  if (params.shop) normalized.shop_id = params.shop;
+  if (params.shopId) normalized.shop_id = params.shopId;
+
+  const query = new URLSearchParams(normalized).toString();
   const url = `/menu/public/items/${query ? `?${query}` : ""}`;
   const res = await api.get(url);
   return res.data;

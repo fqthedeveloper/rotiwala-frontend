@@ -180,6 +180,10 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-graph-up"></i>
                 Reports
               </NavLink>
+              <NavLink to="/manager/feedback" onClick={closeSidebar}>
+                <i className="bi bi-chat-dots"></i>
+                Feedback
+              </NavLink>
             </>
           )}
 

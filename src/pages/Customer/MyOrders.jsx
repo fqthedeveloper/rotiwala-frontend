@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+// src/pages/Customer/MyOrders.jsx
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
@@ -12,11 +13,16 @@ import {
   FaRupeeSign,
 } from "react-icons/fa";
 import { getMyOrders } from "../../service/orderService";
+import {
+  isOrderReviewedOrSkipped,
+  showReviewPopup,
+} from "../../utils/reviewPopup";
 import "./CSS/MyOrders.css";
 
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const popupShownRef = useRef(false);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -28,6 +34,37 @@ export default function MyOrders() {
       setLoading(false);
     }
   }, []);
+
+  // Check for collected orders that need review
+  useEffect(() => {
+    if (loading || orders.length === 0) return;
+    if (popupShownRef.current) return;
+
+    // Find the first collected order that hasn't been reviewed or skipped
+    const collectedOrder = orders.find(
+      (order) =>
+        order.status === "collected" &&
+        !isOrderReviewedOrSkipped(order.id)
+    );
+
+    if (collectedOrder) {
+      popupShownRef.current = true;
+      // Show popup with order number
+      showReviewPopup(collectedOrder.id, collectedOrder.order_number)
+        .then(() => {
+          // After popup closes, we can optionally reload orders or just reset flag
+          // but we don't want to show again on this visit
+        })
+        .catch(() => {})
+        .finally(() => {
+          // Allow future popups only if new orders arrive
+          // We'll reset after a short delay to allow any new orders to be processed
+          setTimeout(() => {
+            popupShownRef.current = false;
+          }, 1000);
+        });
+    }
+  }, [orders, loading]);
 
   useEffect(() => {
     loadOrders();
@@ -112,7 +149,7 @@ export default function MyOrders() {
                     <p>Payment : {order.payment_method}</p>
                   </div>
 
-                  {/* ----- Discount Breakdown ----- */}
+                  {/* Discount Breakdown */}
                   {order.discount_amount > 0 && (
                     <div className="discount-info">
                       <span className="original-amount">

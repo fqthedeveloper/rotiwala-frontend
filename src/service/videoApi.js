@@ -1,19 +1,48 @@
 // src/service/videoApi.js
-import api from './api';
+import api, { API } from './api';
 
-// ----- Testimonials -----
-export const getMarqueeTestimonials = () => api.get('/videos/testimonials/marquee/');
-export const submitTestimonial = (data) => api.post('/videos/testimonials/submit/', data);
-export const getAdminTestimonials = () => api.get('/videos/testimonials/admin/');
-export const updateTestimonial = (id, data) => api.patch(`/videos/testimonials/admin/${id}/`, data);
-export const deleteTestimonial = (id) => api.delete(`/videos/testimonials/admin/${id}/`);
+// Base URL for media files (strip /api from API)
+const MEDIA_BASE_URL = API.replace(/\/api\/?$/, '');
 
-// ----- Videos -----
-export const getApprovedVideos = () => api.get('/videos/');
-export const submitVideo = (data) => api.post('/videos/submit/', data);
+// Helper to get full media URL
+export const getMediaUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${MEDIA_BASE_URL}${cleanPath}`;
+};
+
+// ----- MARQUEE -----
+export const getMarqueeItems = () => api.get('/videos/marquee/');
+export const getAdminMarquee = () => api.get('/videos/marquee/admin/');
+export const createMarquee = (data) => api.post('/videos/marquee/admin/', data);
+export const updateMarquee = (id, data) => api.patch(`/videos/marquee/admin/${id}/`, data); // ✅ PATCH for partial updates
+export const deleteMarquee = (id) => api.delete(`/videos/marquee/admin/${id}/`);
+
+// ----- TESTIMONIALS -----
+export const getApprovedReviews = () => api.get('/videos/reviews/');
+export const submitReview = (data) => api.post('/videos/reviews/submit/', data);
+export const getAdminReviews = () => api.get('/videos/reviews/admin/');
+export const updateReview = (id, data) => api.patch(`/videos/reviews/admin/${id}/`, data);
+export const deleteReview = (id) => api.delete(`/videos/reviews/admin/${id}/`);
+
+// ----- VIDEOS -----
+export const getApprovedVideos = () => api.get('/videos/videos/');
+
+// Submit video with FormData
+export const submitVideo = (data) => {
+  return api.post('/videos/videos/submit/', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+// Admin endpoints
 export const getAdminVideos = (status = '') => {
-  const url = status ? `/videos/admin/?status=${status}` : '/videos/admin/';
+  const url = status ? `/videos/videos/admin/?status=${status}` : '/videos/videos/admin/';
   return api.get(url);
 };
-export const updateVideoStatus = (id, status) => api.patch(`/videos/admin/${id}/`, { status });
-export const deleteVideo = (id) => api.delete(`/videos/admin/${id}/`);
+
+export const updateVideoStatus = (id, status) => api.patch(`/videos/videos/admin/${id}/`, { status });
+export const deleteVideo = (id) => api.delete(`/videos/videos/admin/${id}/`);

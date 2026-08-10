@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaSearch,
@@ -13,14 +14,19 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-import { getItemsPublic } from "../service/menuItemService";
+import { getPublicMenuItems } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
+import { getNearestShop } from "../service/shopService";
 
 import "./CSS/Menu.css";
 
 const Menu = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [shopId, setShopId] = useState(
+    localStorage.getItem("selected_shop") || ""
+  );
+  const location = useLocation();
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("default");
@@ -30,17 +36,67 @@ const Menu = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
-    loadMenu();
     document.title = "Menu - Roti Wala";
-  }, []);
+    // prefer shop from URL query param when present
+    const params = new URLSearchParams(location.search);
+    const qShop = params.get("shop");
+    if (qShop) {
+      localStorage.setItem("selected_shop", qShop);
+      setShopId(qShop);
+      return;
+    }
 
-  const loadMenu = async () => {
+    if (!shopId) {
+      initNearestShop();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  useEffect(() => {
+    if (shopId) {
+      loadMenu(shopId);
+    }
+  }, [shopId]);
+
+  const initNearestShop = async () => {
+    if (!navigator.geolocation) {
+      setLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const nearest = await getNearestShop(
+            pos.coords.latitude,
+            pos.coords.longitude
+          );
+
+          if (nearest?.id) {
+            localStorage.setItem("selected_shop", nearest.id);
+            setShopId(nearest.id);
+          }
+        } catch (error) {
+          console.log(error);
+          setLoading(false);
+        }
+      },
+      () => {
+        setLoading(false);
+      }
+    );
+  };
+
+  const loadMenu = async (shopIdToLoad) => {
     try {
-      const data = await getItemsPublic();
+      setLoading(true);
+      const data = await getPublicMenuItems({ shop_id: shopIdToLoad });
+
       if (!Array.isArray(data)) {
         setItems([]);
         return;
       }
+
       const uniqueItems = [];
       const names = new Set();
       data.forEach((item) => {
@@ -459,9 +515,6 @@ const Menu = () => {
               <div className="m-food-body">
                 <div className="m-food-top">
                   <h4>{item.name}</h4>
-                  <div className="m-food-rating">
-                    <FaStar /> 4.{5 + (idx % 4)}
-                  </div>
                 </div>
 
                 <p className="m-food-desc">

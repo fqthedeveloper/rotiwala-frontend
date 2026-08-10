@@ -23,6 +23,14 @@
     0 4px 20px rgba(90,23,0,.12);
 }
 
+/* Utility: force dark readable text on pale/cream backgrounds
+   Use class `bg-cream` on a page root (e.g. <div className="rw-home bg-cream">)
+*/
+.bg-cream, .bg-cream * {
+  color: var(--text-dark) !important;
+}
+.bg-cream a { color: var(--secondary) !important; }
+
 .customer-theme {
   --primary: #d4a437;
   --primary-dark: #b58d2a;

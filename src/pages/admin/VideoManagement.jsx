@@ -86,22 +86,36 @@ const VideoManagement = () => {
   const handleFormChange = (e) => {
     const { name, value, type, files } = e.target;
     if (type === 'file') {
-      setForm({ ...form, [name]: files[0] });
+      // 🔥 Store the File object
+      setForm((prev) => ({
+        ...prev,
+        [name]: files[0] || null,
+      }));
     } else {
-      setForm({ ...form, [name]: value });
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validations
     if (!form.title) {
       toast.error('Title is required');
       return;
     }
-    if (form.video_type === 'upload' && !form.video_file && !editingId) {
-      toast.error('Please select a video file');
-      return;
+
+    if (form.video_type === 'upload') {
+      // 🔥 Check if a file is actually selected
+      if (!form.video_file) {
+        toast.error('Please select a video file');
+        return;
+      }
     }
+
     if (form.video_type === 'youtube' && !form.youtube_url) {
       toast.error('Please enter a YouTube URL');
       return;
@@ -113,19 +127,30 @@ const VideoManagement = () => {
       data.append('title', form.title);
       data.append('description', form.description || '');
       data.append('video_type', form.video_type);
+
       if (form.video_type === 'youtube') {
         data.append('youtube_url', form.youtube_url);
       } else {
-        if (form.video_file) data.append('video_file', form.video_file);
-        if (form.poster) data.append('poster', form.poster);
+        // 🔥 Append the File object
+        if (form.video_file) {
+          data.append('video_file', form.video_file);
+        }
+        if (form.poster) {
+          data.append('poster', form.poster);
+        }
       }
-      // For edit, we only support status change via separate buttons, not full update.
-      // So we only handle create here.
+
+      // 🔥 Debug: Log FormData entries
+      for (let [key, value] of data.entries()) {
+        console.log(key, value);
+      }
+
       await submitVideo(data);
       toast.success('Video submitted for review');
       closeModal();
       fetchVideos();
     } catch (error) {
+      console.error('Submit error:', error);
       toast.error(error.response?.data?.error || 'Submission failed');
     } finally {
       setSubmitting(false);
@@ -279,7 +304,7 @@ const VideoManagement = () => {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Modal – with encType added */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-lg">
@@ -288,7 +313,7 @@ const VideoManagement = () => {
                 <h5 className="modal-title">Submit Video</h5>
                 <button type="button" className="btn-close" onClick={closeModal}></button>
               </div>
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} encType="multipart/form-data">
                 <div className="modal-body">
                   <div className="mb-3">
                     <label className="form-label">Title *</label>
@@ -347,7 +372,7 @@ const VideoManagement = () => {
                           accept="video/mp4"
                           onChange={handleFormChange}
                           ref={fileInputRef}
-                          required={!editingId}
+                          required
                         />
                       </div>
                       <div className="mb-3">

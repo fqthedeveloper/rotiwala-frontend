@@ -26,3 +26,9 @@ export const exportReport = async (params = {}) => {
   // response.data is a Blob
   return response.data;
 };
+
+
+export const getPublicStats = async () => {
+  const response = await api.get('/reports/stats/');
+  return response.data;
+};

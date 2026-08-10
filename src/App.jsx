@@ -97,6 +97,8 @@ const getPageTitle = (pathname) => {
     "/manager/staff": "Staff Management - Roti Wala",
     "/manager/staff/salary/add": "Add Staff Salary - Roti Wala",
     "/manager/staff/salary/detail/:staffId": "Staff Salary Detail - Roti Wala",
+    "/admin/testimonials": "Testimonials Management - Roti Wala",
+    "/admin/videos": "Video Management - Roti Wala",
 
     
   };
@@ -120,6 +122,8 @@ const getPageTitle = (pathname) => {
   if (pathname.startsWith("/admin/expenses")) return "Expenses - Roti Wala";
   if (pathname.startsWith("/manager/expenses")) return "Manager Expenses - Roti Wala";
   if (pathname.startsWith("/manager")) return "Manager - Roti Wala";
+  if (pathname.startsWith("/admin/testimonials")) return "Testimonials Management - Roti Wala";
+  if (pathname.startsWith("/admin/videos")) return "Video Management - Roti Wala";
   return "Roti Wala";
 };
 
@@ -161,6 +165,10 @@ import AddRawMaterialExpense from "./pages/admin/Expenses/AddRawMaterialExpense"
 import Report from './pages/Report';
 import TestimonialManagement from './pages/admin/TestimonialManagement';
 import VideoManagement from './pages/admin/VideoManagement';
+import MarqueeManagement from './pages/admin/MarqueeManagement';
+import FeedbackManagement from './pages/admin/FeedbackManagement';
+
+
 
 // Customer Pages
 import Cart from "./pages/Customer/Cart";
@@ -337,10 +345,13 @@ function App() {
         <Route path="expenses/raw-materials" element={<RawMaterialList />} />
         <Route path="expenses/raw-materials/add" element={<AddRawMaterialExpense />} />
         <Route path="expenses/raw-materials/edit/:id" element={<AddRawMaterialExpense />} />
-
-
+        <Route path="testimonials" element={<TestimonialManagement />} />
+        <Route path="videos" element={<VideoManagement />} />
+        <Route path="marquee" element={<MarqueeManagement />} />
+        <Route path="feedback" element={<FeedbackManagement />} />
         <Route path="*" element={<NotFound />} />
       </Route>
+
 
       {/* MANAGER ROUTES */}
       <Route
@@ -365,14 +376,12 @@ function App() {
         <Route path="expenses/raw-materials" element={<RawMaterialList />} />
         <Route path="expenses/raw-materials/add" element={<AddRawMaterialExpense />} />
         <Route path="expenses/raw-materials/edit/:id" element={<AddRawMaterialExpense />} />
-
         <Route path="reports" element={<Report />} />
-
         {/* 🆕 Manager Staff Management & Salary Details */}
         <Route path="staff" element={<StaffManagement />} />
         <Route path="staff/salary/add" element={<StaffSalaryForm />} />
         <Route path="staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
-
+        <Route path="feedback" element={<FeedbackManagement />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

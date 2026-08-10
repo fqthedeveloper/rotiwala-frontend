@@ -12,16 +12,18 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
   const [expandedSections, setExpandedSections] = useState(() => {
     try {
       const saved = localStorage.getItem("adminSidebarExpanded");
-      return saved ? JSON.parse(saved) : {
-        shopManagement: true,
-        menuManagement: true,
-        orders: true,
-        customers: true,
-        discounts: true,
-        expenseManagement: true,
-        reports: true,
-        settings: false,
-      };
+      return saved
+        ? JSON.parse(saved)
+        : {
+            shopManagement: true,
+            menuManagement: true,
+            orders: true,
+            customers: true,
+            discounts: true,
+            expenseManagement: true,
+            reports: true,
+            settings: false,
+          };
     } catch {
       return {
         shopManagement: true,
@@ -38,7 +40,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
   // Save to localStorage whenever expanded state changes
   useEffect(() => {
-    localStorage.setItem("adminSidebarExpanded", JSON.stringify(expandedSections));
+    localStorage.setItem(
+      "adminSidebarExpanded",
+      JSON.stringify(expandedSections),
+    );
   }, [expandedSections]);
 
   const toggleSection = (section) => {
@@ -92,7 +97,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("shopManagement")}
           >
             <span>Shop Management</span>
-            <i className={`bi bi-chevron-${expandedSections.shopManagement ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.shopManagement ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.shopManagement && (
@@ -114,7 +121,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("menuManagement")}
           >
             <span>Menu Management</span>
-            <i className={`bi bi-chevron-${expandedSections.menuManagement ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.menuManagement ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.menuManagement && (
@@ -136,7 +145,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("orders")}
           >
             <span>Orders</span>
-            <i className={`bi bi-chevron-${expandedSections.orders ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.orders ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.orders && (
@@ -152,7 +163,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("customers")}
           >
             <span>Customers</span>
-            <i className={`bi bi-chevron-${expandedSections.customers ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.customers ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.customers && (
@@ -168,7 +181,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("discounts")}
           >
             <span>Discounts</span>
-            <i className={`bi bi-chevron-${expandedSections.discounts ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.discounts ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.discounts && (
@@ -194,7 +209,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("expenseManagement")}
           >
             <span>Expense Management</span>
-            <i className={`bi bi-chevron-${expandedSections.expenseManagement ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.expenseManagement ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.expenseManagement && (
@@ -215,7 +232,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-person-badge"></i>
                 Staff & Salaries
               </NavLink>
-              <NavLink to="/admin/expenses/raw-materials" onClick={closeSidebar}>
+              <NavLink
+                to="/admin/expenses/raw-materials"
+                onClick={closeSidebar}
+              >
                 <i className="bi bi-boxes"></i>
                 Raw Materials
               </NavLink>
@@ -228,7 +248,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             onClick={() => toggleSection("reports")}
           >
             <span>Reports</span>
-            <i className={`bi bi-chevron-${expandedSections.reports ? "down" : "right"}`}></i>
+            <i
+              className={`bi bi-chevron-${expandedSections.reports ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.reports && (
@@ -243,17 +265,32 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             className="sidebar-section clickable"
             onClick={() => toggleSection("settings")}
           >
-            <span>Settings</span>
-            <i className={`bi bi-chevron-${expandedSections.settings ? "down" : "right"}`}></i>
+            <span>Videos & Testimonials</span>
+            <i
+              className={`bi bi-chevron-${expandedSections.settings ? "down" : "right"}`}
+            ></i>
           </div>
 
           {expandedSections.settings && (
-            <NavLink to="/admin/settings" onClick={closeSidebar}>
-              <i className="bi bi-gear"></i>
-              Settings
-            </NavLink>
+            <>
+              <NavLink to="/admin/marquee" onClick={closeSidebar}>
+                <i className="bi bi-text-paragraph"></i>
+                Marquee
+              </NavLink>
+              <NavLink to="/admin/testimonials" onClick={closeSidebar}>
+                <i className="bi bi-chat-square-dots"></i>
+                Testimonials
+              </NavLink>
+              <NavLink to="/admin/videos" onClick={closeSidebar}>
+                <i className="bi bi-camera-video"></i>
+                Videos
+              </NavLink>
+              <NavLink to="/admin/feedback" onClick={closeSidebar}>
+                <i className="bi bi-chat-dots"></i>
+                Feedback
+              </NavLink>
+            </>
           )}
-
         </nav>
 
         <div className="p-3 mt-auto">
@@ -262,7 +299,6 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
             Logout
           </button>
         </div>
-
       </aside>
     </>
   );

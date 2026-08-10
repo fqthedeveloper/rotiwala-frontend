@@ -331,41 +331,7 @@
   0% { top: -50%; }
   100% { top: 110%; }
 }
-
-/* ===================================================
-   MARQUEE — slow editorial strip
-=================================================== */
-.rw-marquee {
-  margin: 0 -24px 64px;
-  background: var(--rw-maroon-deep);
-  color: var(--rw-gold-soft);
-  overflow: hidden;
-  padding: 20px 0;
-  border-top: 1px solid rgba(212, 164, 55, 0.25);
-  border-bottom: 1px solid rgba(212, 164, 55, 0.25);
-}
-.rw-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: rwMarquee 32s linear infinite;
-}
-.rw-marquee:hover .rw-marquee-track { animation-play-state: paused; }
-.rw-marquee-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 28px;
-  padding: 0 28px;
-  font-family: var(--rw-serif);
-  font-style: italic;
-  font-size: 1.25rem;
-  white-space: nowrap;
-}
-.rw-marquee-item i {
-  font-style: normal;
-  color: var(--rw-gold);
-  font-size: 0.9rem;
-}
-@keyframes rwMarquee { to { transform: translateX(-50%); } }
+same marque use same everting
 
 /* ===================================================
    BANNER & SHOP CARD

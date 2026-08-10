@@ -28,17 +28,19 @@ import {
 } from "react-icons/fa";
 import "./CSS/Home.css";
 
+import Marquee from "../components/Home/Marquee";
+import VideoSlideshow from "../components/Home/VideoSlideshow";
+import TestimonialSection from "../components/Home/TestimonialSection";
+
 import { getNearestShop, getShopsPublic } from "../service/shopService";
 import {
   getCategoriesByShopPublic,
-  getItemsByCategoryPublic,
-  // NEW: import the public items list (we'll use it for shop filter)
   getPublicMenuItems,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext";
-import { getApprovedVideos, getMarqueeTestimonials } from "../service/videoApi";
+import { getPublicStats } from "../service/reportServices";
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -79,19 +81,15 @@ export default function Home() {
   const [nearestShop, setNearestShop] = useState(null);
   const [shops, setShops] = useState([]);
   const [showShops, setShowShops] = useState(false);
-  const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [locationDenied, setLocationDenied] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Videos & testimonials
-  const [videos, setVideos] = useState([]);
-  const [marqueeItems, setMarqueeItems] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
-  const [activeVideoIdx, setActiveVideoIdx] = useState(0);
-  const [isAutoSlide, setIsAutoSlide] = useState(true);
-  const videoRef = useRef(null);
+  const [stats, setStats] = useState([
+    { num: "10+", label: "Shops" },
+    { num: "500+", label: "Daily Orders" },
+    { num: "100+", label: "Menu Items" },
+    { num: "5K+", label: "Happy Customers" },
+  ]);
 
   /* ---------- LENIS ---------- */
   useEffect(() => {
@@ -120,207 +118,19 @@ export default function Home() {
   /* ---------- Init ---------- */
   useEffect(() => {
     loadLocation();
-    fetchDynamicContent();
+    fetchStats();
     document.title = "Home - Roti Wala";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ---------- Load menu when shop changes ---------- */
   useEffect(() => {
-    if (nearestShop) loadMenu(nearestShop.id);
+    if (nearestShop) {
+      setMenuItems([]); // clear old items
+      loadMenu(nearestShop.id);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nearestShop]);
-
-  /* ---------- Dynamic content (videos & testimonials) ---------- */
-  const fetchDynamicContent = async () => {
-    try {
-      const videoRes = await getApprovedVideos();
-      if (videoRes.data && videoRes.data.length > 0) {
-        setVideos(videoRes.data);
-      } else {
-        // fallback
-        setVideos([
-          {
-            id: "fallback-1",
-            title: "How to Roll the Perfect Roti",
-            description: "Step‑by‑step preparation from dough to tandoor.",
-            video_type: "upload",
-            video_src:
-              "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-            poster: "/video-thumb-01.jpg",
-          },
-          {
-            id: "fallback-2",
-            title: "Tandoor Firing & Freshness",
-            description: "Keeping the tandoor hot and roti fresh.",
-            video_type: "upload",
-            video_src:
-              "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
-            poster: "/video-thumb-02.jpg",
-          },
-        ]);
-      }
-
-      const marqRes = await getMarqueeTestimonials();
-      if (marqRes.data && marqRes.data.length > 0) {
-        const items = marqRes.data.map((t) => `“${t.text}” — ${t.author}`);
-        setMarqueeItems(items);
-        setTestimonials(marqRes.data);
-      } else {
-        setMarqueeItems([
-          "Fresh Tandoor Roti",
-          "Delivered In 40 Minutes",
-          "Made With Love",
-          "Hot & Hygienic",
-          "10+ Local Shops",
-          "5K+ Happy Customers",
-        ]);
-        setTestimonials([
-          {
-            name: "Aarav Sharma",
-            role: "Daily Customer",
-            text: "The roti is always hot, fresh, and arrives within minutes.",
-            rating: 5,
-          },
-          {
-            name: "Priya Verma",
-            role: "Food Blogger",
-            text: "Best in town! Hygienic, quick delivery, and incredible variety.",
-            rating: 5,
-          },
-          {
-            name: "Rahul Mehta",
-            role: "Office Goer",
-            text: "Lunch problem solved forever. Affordable, tasty, and on time.",
-            rating: 5,
-          },
-          {
-            name: "Sneha Kapoor",
-            role: "Home Maker",
-            text: "Saves me so much time. Quality consistent, packaging super clean.",
-            rating: 5,
-          },
-        ]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch dynamic content:", error);
-      // fallback static data
-      setMarqueeItems([
-        "Fresh Tandoor Roti",
-        "Delivered In 40 Minutes",
-        "Made With Love",
-        "Hot & Hygienic",
-        "10+ Local Shops",
-        "5K+ Happy Customers",
-      ]);
-      setTestimonials([
-        {
-          name: "Aarav Sharma",
-          role: "Daily Customer",
-          text: "The roti is always hot, fresh, and arrives within minutes.",
-          rating: 5,
-        },
-        {
-          name: "Priya Verma",
-          role: "Food Blogger",
-          text: "Best in town! Hygienic, quick delivery, and incredible variety.",
-          rating: 5,
-        },
-        {
-          name: "Rahul Mehta",
-          role: "Office Goer",
-          text: "Lunch problem solved forever. Affordable, tasty, and on time.",
-          rating: 5,
-        },
-        {
-          name: "Sneha Kapoor",
-          role: "Home Maker",
-          text: "Saves me so much time. Quality consistent, packaging super clean.",
-          rating: 5,
-        },
-      ]);
-      setVideos([
-        {
-          id: "fallback-1",
-          title: "How to Roll the Perfect Roti",
-          description: "Step‑by‑step preparation from dough to tandoor.",
-          video_type: "upload",
-          video_src:
-            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-          poster: "/video-thumb-01.jpg",
-        },
-        {
-          id: "fallback-2",
-          title: "Tandoor Firing & Freshness",
-          description: "Keeping the tandoor hot and roti fresh.",
-          video_type: "upload",
-          video_src:
-            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/animal.mp4",
-          poster: "/video-thumb-02.jpg",
-        },
-      ]);
-    }
-  };
-
-  /* ---------- Auto-rotate testimonials ---------- */
-  useEffect(() => {
-    if (testimonials.length === 0) return;
-    const id = setInterval(() => {
-      setTestimonialIdx((p) => (p + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(id);
-  }, [testimonials]);
-
-  /* ---------- Video slideshow ---------- */
-  useEffect(() => {
-    if (!isAutoSlide || videos.length === 0) return;
-    const id = setInterval(() => {
-      setActiveVideoIdx((current) => (current + 1) % videos.length);
-    }, 7000);
-    return () => clearInterval(id);
-  }, [isAutoSlide, videos]);
-
-  useEffect(() => {
-    if (!videoRef.current || videos.length === 0) return;
-    const video = videoRef.current;
-    const handleEnded = () => {
-      setActiveVideoIdx((current) => (current + 1) % videos.length);
-    };
-    video.addEventListener("ended", handleEnded);
-    return () => {
-      video.removeEventListener("ended", handleEnded);
-    };
-  }, [activeVideoIdx, videos]);
-
-  useEffect(() => {
-    if (!videoRef.current || videos.length === 0) return;
-    const video = videoRef.current;
-    if (videos[activeVideoIdx]?.video_type === "upload") {
-      video.load();
-      if (isAutoSlide) {
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === "function") {
-          playPromise.catch(() => {});
-        }
-      }
-    }
-  }, [activeVideoIdx, isAutoSlide, videos]);
-
-  const stopSlideshow = () => setIsAutoSlide(false);
-  const nextVideo = () => {
-    if (videos.length === 0) return;
-    setActiveVideoIdx((current) => (current + 1) % videos.length);
-    setIsAutoSlide(false);
-  };
-  const prevVideo = () => {
-    if (videos.length === 0) return;
-    setActiveVideoIdx((current) =>
-      current === 0 ? videos.length - 1 : current - 1
-    );
-    setIsAutoSlide(false);
-  };
-
-  const activeVideo = videos.length > 0 ? videos[activeVideoIdx] : null;
 
   /* ---------- Shops & Menu ---------- */
   const fetchAllShops = async () => {
@@ -368,15 +178,12 @@ export default function Home() {
 
   const loadMenu = async (shopId) => {
     try {
-      // Fetch categories for the shop (if categories are global, this may return all – but we'll use it for grouping)
-      const categoryData = await getCategoriesByShopPublic(shopId);
-      setCategories(categoryData);
-
-      // NEW: Fetch ALL menu items for this shop directly using the shop filter
+      // ✅ Use 'shop' as the query parameter (backend expects 'shop')
       const allItems = await getPublicMenuItems({ shop: shopId });
       setMenuItems(allItems);
     } catch (e) {
       console.log(e);
+      setMenuItems([]);
     }
   };
 
@@ -432,6 +239,22 @@ export default function Home() {
     } finally {
       setIsLoadingMore(false);
       hideLoading();
+    }
+  };
+
+  /* ---------- Fetch Stats ---------- */
+  const fetchStats = async () => {
+    try {
+      const data = await getPublicStats();
+      setStats([
+        { num: `${data.shops}+`, label: "Shops" },
+        { num: `${data.daily_orders}+`, label: "Daily Orders" },
+        { num: `${data.menu_items}+`, label: "Menu Items" },
+        { num: `${data.customers}+`, label: "Happy Customers" },
+      ]);
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+      // Keep fallback values already set in state
     }
   };
 
@@ -533,31 +356,13 @@ export default function Home() {
             </motion.button>
             <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }}>
               <Link
-                to="/menu"
+                to={nearestShop ? `/menu?shop=${nearestShop.id}` : "/menu"}
                 data-testid="hero-view-menu-link"
                 className="rw-btn rw-btn-ghost"
               >
                 View Full Menu <FaArrowRight />
               </Link>
             </motion.div>
-          </motion.div>
-
-          <motion.div
-            className="rw-hero-stats"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-          >
-            {[
-              ["10+", "Shops"],
-              ["5K+", "Customers"],
-              ["4.9★", "Rating"],
-            ].map(([num, label], i) => (
-              <div className="rw-hero-stat" key={i}>
-                <strong>{num}</strong>
-                <span>{label}</span>
-              </div>
-            ))}
           </motion.div>
         </motion.div>
 
@@ -606,16 +411,7 @@ export default function Home() {
       </section>
 
       {/* ============ MARQUEE ============ */}
-      <div className="rw-marquee" aria-hidden="true">
-        <div className="rw-marquee-track">
-          {marqueeItems.length > 0 &&
-            [...marqueeItems, ...marqueeItems].map((item, i) => (
-              <span className="rw-marquee-item" key={i}>
-                {item} <i>✦</i>
-              </span>
-            ))}
-        </div>
-      </div>
+      <Marquee />
 
       {/* ============ LOCATION BANNER ============ */}
       <AnimatePresence>
@@ -731,81 +527,9 @@ export default function Home() {
         sub="Watch our kitchen stories and food preparation videos"
       />
 
-      <motion.section
-        className="rw-video-showcase"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.15 }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.06 } },
-        }}
-      >
-        {activeVideo ? (
-          <motion.article
-            className="rw-video-card rw-video-main-card"
-            initial={{ opacity: 0, y: 34 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.15 }}
-            transition={{ duration: 0.55, ease: EASE }}
-          >
-            <div className="rw-video-thumb">
-              {activeVideo.video_type === "youtube" ? (
-                <iframe
-                  src={activeVideo.embed_url}
-                  title={activeVideo.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="rw-video-player"
-                  style={{ width: "100%", height: "100%", border: "none" }}
-                />
-              ) : (
-                <video
-                  ref={videoRef}
-                  controls
-                  preload="metadata"
-                  poster={activeVideo.poster}
-                  className="rw-video-player"
-                  onClick={stopSlideshow}
-                  muted
-                  playsInline
-                  autoPlay={isAutoSlide}
-                >
-                  <source src={activeVideo.video_src} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              )}
-            </div>
-            <div className="rw-video-copy rw-video-copy--minimal">
-              <span className="rw-video-label">
-                {isAutoSlide ? "Auto slideshow" : "Manual selection"}
-              </span>
-              <h4>{activeVideo.title}</h4>
-              <p>{activeVideo.description}</p>
-            </div>
-            <div className="rw-video-controls">
-              <button
-                className="rw-video-nav-btn"
-                type="button"
-                onClick={prevVideo}
-              >
-                <FaChevronLeft /> Previous
-              </button>
-              <button
-                className="rw-video-nav-btn"
-                type="button"
-                onClick={nextVideo}
-              >
-                Next <FaChevronRight />
-              </button>
-            </div>
-          </motion.article>
-        ) : (
-          <div className="rw-empty">No videos available.</div>
-        )}
-      </motion.section>
+      <VideoSlideshow />
 
-      {/* ============ CHAPTER 02 — POPULAR MENU (by Shop) ============ */}
+      {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
       <Chapter
         no="02"
         kicker="Today's Picks"
@@ -875,7 +599,7 @@ export default function Home() {
         )}
       </motion.div>
 
-      {/* ============ STATS BAND ============ */}
+      {/* ============ STATS BAND (now from backend) ============ */}
       <motion.section
         className="rw-stats"
         initial="hidden"
@@ -886,12 +610,7 @@ export default function Home() {
           visible: { transition: { staggerChildren: 0.1 } },
         }}
       >
-        {[
-          { num: "10+", label: "Shops" },
-          { num: "500+", label: "Daily Orders" },
-          { num: "100+", label: "Menu Items" },
-          { num: "5K+", label: "Happy Customers" },
-        ].map((s, i) => (
+        {stats.map((s, i) => (
           <motion.div
             key={i}
             className="rw-stat"
@@ -974,83 +693,7 @@ export default function Home() {
         sub="Real reviews from real customers"
       />
 
-      {testimonials.length > 0 ? (
-        <>
-          <div className="rw-t-wrap" data-testid="testimonials">
-            <button
-              data-testid="testimonial-prev-btn"
-              className="rw-t-arrow"
-              onClick={() =>
-                setTestimonialIdx(
-                  (p) => (p - 1 + testimonials.length) % testimonials.length
-                )
-              }
-              aria-label="Previous"
-            >
-              <FaChevronLeft />
-            </button>
-
-            <div className="rw-t-slider">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={testimonialIdx}
-                  className="rw-t-card"
-                  initial={{ opacity: 0, x: 60 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -60 }}
-                  transition={{ duration: 0.45, ease: EASE }}
-                >
-                  <FaQuoteLeft className="rw-t-quote" />
-                  <p className="rw-t-text">
-                    {testimonials[testimonialIdx].text}
-                  </p>
-                  <div className="rw-t-stars">
-                    {Array.from({
-                      length: testimonials[testimonialIdx].rating || 5,
-                    }).map((_, i) => (
-                      <FaStar key={i} />
-                    ))}
-                  </div>
-                  <div className="rw-t-author">
-                    <div className="rw-t-avatar">
-                      {testimonials[testimonialIdx].name.charAt(0)}
-                    </div>
-                    <div>
-                      <strong>{testimonials[testimonialIdx].name}</strong>
-                      <span>{testimonials[testimonialIdx].role || "Customer"}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <button
-              data-testid="testimonial-next-btn"
-              className="rw-t-arrow"
-              onClick={() =>
-                setTestimonialIdx((p) => (p + 1) % testimonials.length)
-              }
-              aria-label="Next"
-            >
-              <FaChevronRight />
-            </button>
-          </div>
-
-          <div className="rw-t-dots">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                data-testid={`testimonial-dot-${i}`}
-                className={`rw-t-dot ${i === testimonialIdx ? "active" : ""}`}
-                onClick={() => setTestimonialIdx(i)}
-                aria-label={`Go to testimonial ${i + 1}`}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="rw-empty">No testimonials yet.</div>
-      )}
+      <TestimonialSection />
 
       {/* ============ CTA STRIP ============ */}
       <motion.section
