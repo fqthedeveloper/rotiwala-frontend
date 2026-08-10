@@ -1074,7 +1074,7 @@ export default function Home() {
 
       {/* ============ WHATSAPP FLOAT ============ */}
       <a
-        href="https://wa.me/919876543210"
+        href="https://wa.me/917030808095"
         className="rw-wa"
         data-testid="whatsapp-float"
         target="_blank"
