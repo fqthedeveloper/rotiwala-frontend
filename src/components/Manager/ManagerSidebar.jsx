@@ -14,6 +14,7 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
         orders: true,
         customers: true,
         staff: true,
+        rawMaterials: true,  // <-- NEW
         finance: true,
       };
     } catch {
@@ -21,6 +22,7 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
         orders: true,
         customers: true,
         staff: true,
+        rawMaterials: true,
         finance: true,
       };
     }
@@ -133,6 +135,28 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
               <NavLink to="/manager/staff/salary/add" onClick={closeSidebar}>
                 <i className="bi bi-cash"></i>
                 Add Salary
+              </NavLink>
+            </>
+          )}
+
+          {/* ===== Raw Materials ===== */}
+          <div
+            className="sidebar-section clickable"
+            onClick={() => toggleSection("rawMaterials")}
+          >
+            <span>Raw Materials</span>
+            <i className={`bi bi-chevron-${expandedSections.rawMaterials ? "down" : "right"}`}></i>
+          </div>
+
+          {expandedSections.rawMaterials && (
+            <>
+              <NavLink to="/manager/expenses/raw-materials" onClick={closeSidebar}>
+                <i className="bi bi-boxes"></i>
+                All Raw Materials
+              </NavLink>
+              <NavLink to="/manager/expenses/raw-materials/add" onClick={closeSidebar}>
+                <i className="bi bi-plus-circle"></i>
+                Add Raw Material
               </NavLink>
             </>
           )}

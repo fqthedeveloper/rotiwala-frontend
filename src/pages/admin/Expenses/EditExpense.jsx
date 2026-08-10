@@ -1,3 +1,5 @@
+// frontend/src/pages/admin/Expenses/EditExpense.jsx
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -33,14 +35,13 @@ const EditExpense = () => {
     shop_id: "",
     category_id: "",
     expense_date: new Date().toISOString().split("T")[0],
-    notes: "",
+    // ❌ notes removed
     items: [
       {
         master_item: "",
         custom_item_name: "",
-        quantity: 1,
         amount: 0,
-        note: "",
+        note: "", // ✅ per‑item note
       },
     ],
   });
@@ -68,7 +69,7 @@ const EditExpense = () => {
           getValueId(item.master_item) || getValueId(item.master_item_id) || "",
         custom_item_name:
           item.custom_item_name || item.custom_item || "",
-        quantity: item.quantity ?? item.qty ?? 1,
+        // ❌ quantity removed
         amount: item.amount ?? item.cost ?? 0,
         note: item.note ?? item.remarks ?? "",
       }));
@@ -98,7 +99,7 @@ const EditExpense = () => {
           expense_date: expenseData.expense_date
             ? expenseData.expense_date.split("T")[0]
             : new Date().toISOString().split("T")[0],
-          notes: expenseData.notes || "",
+          // ❌ notes removed
           items:
             items.length > 0
               ? items
@@ -106,7 +107,6 @@ const EditExpense = () => {
                   {
                     master_item: "",
                     custom_item_name: "",
-                    quantity: 1,
                     amount: 0,
                     note: "",
                   },
@@ -139,7 +139,6 @@ const EditExpense = () => {
             {
               master_item: "",
               custom_item_name: "",
-              quantity: 1,
               amount: 0,
               note: "",
             },
@@ -173,7 +172,6 @@ const EditExpense = () => {
         {
           master_item: "",
           custom_item_name: "",
-          quantity: 1,
           amount: 0,
           note: "",
         },
@@ -224,11 +222,11 @@ const EditExpense = () => {
         shop_id: formData.shop_id,
         category_id: formData.category_id,
         expense_date: formData.expense_date,
-        notes: formData.notes,
+        // ❌ notes removed – no header notes
         items: formData.items.map((item) => ({
           master_item: item.master_item || null,
           custom_item_name: item.custom_item_name || "",
-          quantity: item.quantity || 1,
+          // ❌ quantity removed
           amount: item.amount,
           note: item.note || "",
         })),
@@ -253,7 +251,7 @@ const EditExpense = () => {
       <style>{`
         .add-expense-page {
           padding: 24px;
-          max-width: 900px;
+          max-width: 1000px;
           margin: 0 auto;
           color: #0c0c0c;
           background: #ffffff;
@@ -288,8 +286,8 @@ const EditExpense = () => {
         .form-group textarea {
           width: 100%;
           padding: 10px 12px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(5, 5, 5, 0.84);
+          background: #ffffff;
+          border: 1px solid rgba(15, 23, 42, 0.14);
           border-radius: 8px;
           color: #0c0c0c;
           font-size: 14px;
@@ -302,9 +300,9 @@ const EditExpense = () => {
         }
         .item-row {
           display: grid;
-          grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr;
-          gap: 12px;
-          background: rgba(255,255,255,0.02);
+          grid-template-columns: 1.8fr 1.8fr 1.2fr 1.2fr 0.5fr;
+          gap: 10px;
+          background: #f8fafc;
           padding: 14px;
           border-radius: 8px;
           margin-bottom: 10px;
@@ -322,7 +320,7 @@ const EditExpense = () => {
         }
         .add-item-btn {
           background: rgba(59,130,246,0.2);
-          color: #60a5fa;
+          color: #1d4ed8;
           border: 1px dashed #3b82f6;
           padding: 8px 16px;
           border-radius: 8px;
@@ -338,11 +336,12 @@ const EditExpense = () => {
         }
         .remove-btn {
           background: rgba(239,68,68,0.2);
-          color: #f87171;
+          color: #b91c1c;
           border: none;
           padding: 6px 10px;
           border-radius: 6px;
           cursor: pointer;
+          margin-top: 6px;
         }
         .remove-btn:hover {
           background: rgba(239,68,68,0.3);
@@ -376,11 +375,12 @@ const EditExpense = () => {
           cursor: not-allowed;
         }
         .btn-secondary {
-          background: rgba(255,255,255,0.05);
-          color: #e8f0fe;
+          background: #e2e8f0;
+          color: #0f172a;
+          border: 1px solid rgba(15, 23, 42, 0.16);
         }
         .btn-secondary:hover {
-          background: rgba(255,255,255,0.1);
+          background: #cbd5e1;
         }
         .btn-success {
           background: #10b981;
@@ -406,9 +406,19 @@ const EditExpense = () => {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        @media (max-width: 992px) {
+          .item-row {
+            grid-template-columns: 1fr 1fr 1fr;
+          }
+        }
         @media (max-width: 768px) {
           .item-row {
             grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (max-width: 480px) {
+          .item-row {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
@@ -474,15 +484,7 @@ const EditExpense = () => {
           />
         </div>
 
-        <div className="form-group">
-          <label>Notes (optional)</label>
-          <textarea
-            name="notes"
-            rows="2"
-            value={formData.notes}
-            onChange={handleInputChange}
-          />
-        </div>
+        {/* ❌ Header notes removed */}
 
         <div className="form-group">
           <label>Expense Items</label>
@@ -516,22 +518,6 @@ const EditExpense = () => {
                 />
               </div>
               <div>
-                <label>Qty</label>
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      "quantity",
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <div>
                 <label>Amount (₹)</label>
                 <input
                   type="number"
@@ -546,6 +532,18 @@ const EditExpense = () => {
                   min="0"
                   step="0.01"
                   required
+                />
+              </div>
+              {/* ✅ Per‑item note – placed before delete button */}
+              <div>
+                <label>Note</label>
+                <input
+                  type="text"
+                  value={item.note}
+                  onChange={(e) =>
+                    handleItemChange(index, "note", e.target.value)
+                  }
+                  placeholder="Optional note"
                 />
               </div>
               <button

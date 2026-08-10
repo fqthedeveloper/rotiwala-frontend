@@ -199,10 +199,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
           {expandedSections.expenseManagement && (
             <>
-              <NavLink to="/admin/expenses/categories" onClick={closeSidebar}>
+              {/* <NavLink to="/admin/expenses/categories" onClick={closeSidebar}>
                 <i className="bi bi-tag"></i>
                 Expense Categories
-              </NavLink>
+              </NavLink> */}
               <NavLink to="/admin/expenses/master-items" onClick={closeSidebar}>
                 <i className="bi bi-list-ul"></i>
                 Master Items
@@ -215,9 +215,9 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-person-badge"></i>
                 Staff & Salaries
               </NavLink>
-              <NavLink to="/admin/expenses/staff/salary/add" onClick={closeSidebar}>
-                <i className="bi bi-cash"></i>
-                Add Salary
+              <NavLink to="/admin/expenses/raw-materials" onClick={closeSidebar}>
+                <i className="bi bi-boxes"></i>
+                Raw Materials
               </NavLink>
             </>
           )}

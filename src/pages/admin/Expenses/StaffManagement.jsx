@@ -375,7 +375,7 @@ const StaffManagement = () => {
           className="btn btn-warning"
           onClick={() => navigate(`${basePath}/staff/salary/add`)}
         >
-          <FaMoneyBillWave /> Add Salary
+          <FaMoneyBillWave /> Add Payment
         </button>
       </div>
 

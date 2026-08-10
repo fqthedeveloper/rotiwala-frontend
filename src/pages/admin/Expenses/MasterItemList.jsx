@@ -11,6 +11,7 @@ import {
   FaArrowLeft,
   FaSpinner,
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 import {
   getExpenseCategories,
   getExpenseMasterItems,
@@ -38,6 +39,7 @@ const MasterItemList = () => {
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editActive, setEditActive] = useState(true);
+  const [editCategory, setEditCategory] = useState(""); // category for editing
 
   // ---------- Fetch Categories ----------
   useEffect(() => {
@@ -50,7 +52,7 @@ const MasterItemList = () => {
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
-        setError("Failed to load categories.");
+        Swal.fire("Error", "Failed to load categories.", "error");
       }
     };
     fetchCategories();
@@ -78,24 +80,48 @@ const MasterItemList = () => {
   // ---------- Handlers ----------
   const handleAddItem = async (e) => {
     e.preventDefault();
-    if (!newItemName.trim()) {
-      setError("Item name is required.");
+
+    // Validation
+    if (!selectedCategoryId) {
+      Swal.fire("Error", "Please select a category first.", "warning");
       return;
     }
+
+    if (!newItemName.trim()) {
+      Swal.fire("Error", "Item name is required.", "warning");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
+
+    const categoryId = Number(selectedCategoryId);
+    if (isNaN(categoryId) || categoryId <= 0) {
+      Swal.fire("Error", "Invalid category selected.", "error");
+      setSubmitting(false);
+      return;
+    }
+
+    const payload = {
+      category: categoryId,
+      name: newItemName.trim(),
+      is_active: newItemActive,
+    };
+
     try {
-      const newItem = await createMasterItem({
-        category: selectedCategoryId,
-        name: newItemName.trim(),
-        is_active: newItemActive,
-      });
+      const newItem = await createMasterItem(payload);
       setItems([...items, newItem]);
       setNewItemName("");
       setNewItemActive(true);
+      Swal.fire("Success", "Item added successfully!", "success");
     } catch (err) {
       console.error("Error adding item:", err);
-      setError(err.response?.data?.name?.[0] || "Failed to add item.");
+      const errorMsg =
+        err.response?.data?.category?.[0] ||
+        err.response?.data?.name?.[0] ||
+        err.response?.data?.detail ||
+        "Failed to add item.";
+      Swal.fire("Error", errorMsg, "error");
     } finally {
       setSubmitting(false);
     }
@@ -105,36 +131,91 @@ const MasterItemList = () => {
     setEditingId(item.id);
     setEditName(item.name);
     setEditActive(item.is_active);
+    setEditCategory(item.category); // store the current category ID
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditActive(true);
+    setEditCategory("");
   };
 
   const handleUpdate = async (id) => {
-    if (!editName.trim()) return;
+    if (!editName.trim()) {
+      Swal.fire("Error", "Name cannot be empty.", "warning");
+      return;
+    }
+
+    // Build payload
+    const payload = {
+      name: editName.trim(),
+      is_active: editActive,
+    };
+
+    // Only include category if it has changed and is selected
+    if (editCategory && editCategory !== "") {
+      payload.category = Number(editCategory);
+    }
+
     try {
-      const updated = await updateMasterItem(id, {
-        name: editName.trim(),
-        is_active: editActive,
-      });
+      const updated = await updateMasterItem(id, payload);
+      // If category changed, we need to refresh items for the current category
+      // Or update the list accordingly.
+      // We'll update the item in the list and if category changed, we might need to remove it.
+      // For simplicity, we'll re-fetch items for the selected category.
       setItems(items.map((item) => (item.id === id ? updated : item)));
       cancelEdit();
+      Swal.fire("Success", "Item updated successfully!", "success");
+      // If category changed, it might disappear from current list if not in the selected category
+      // Better to re-fetch to keep consistency.
+      fetchItemsForCategory(selectedCategoryId);
     } catch (err) {
-      alert("Update failed: " + (err.response?.data?.detail || "Unknown error"));
+      const errorMsg = err.response?.data?.detail || "Update failed.";
+      Swal.fire("Error", errorMsg, "error");
+    }
+  };
+
+  const fetchItemsForCategory = async (categoryId) => {
+    if (!categoryId) return;
+    setLoading(true);
+    try {
+      const data = await getExpenseMasterItems(categoryId);
+      setItems(data);
+    } catch (err) {
+      console.error("Error fetching items:", err);
+      setError("Failed to load items.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this item permanently?")) return;
-    try {
-      await deleteMasterItem(id);
-      setItems(items.filter((item) => item.id !== id));
-    } catch (err) {
-      alert("Delete failed: " + (err.response?.data?.detail || "Unknown error"));
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This item will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+    if (result.isConfirmed) {
+      try {
+        await deleteMasterItem(id);
+        setItems(items.filter((item) => item.id !== id));
+        Swal.fire("Deleted!", "Item has been deleted.", "success");
+      } catch (err) {
+        const errorMsg = err.response?.data?.detail || "Delete failed.";
+        Swal.fire("Error", errorMsg, "error");
+      }
     }
+  };
+
+  const handleCategoryChange = (e) => {
+    const newCatId = Number(e.target.value);
+    setSelectedCategoryId(newCatId);
+    // Items will be fetched via useEffect
   };
 
   // ---------- Render ----------
@@ -172,11 +253,6 @@ const MasterItemList = () => {
         .page-header h1 {
           margin: 0;
           font-size: clamp(1.8rem, 2.5vw, 2.4rem);
-        }
-        .page-header .subtitle {
-          color: #64748b;
-          font-size: 1rem;
-          margin-left: auto;
         }
         .filter-section {
           background: #fff;
@@ -316,12 +392,20 @@ const MasterItemList = () => {
           border: 1px solid rgba(15, 23, 42, 0.2);
           background: #f8fafc;
           font-size: 14px;
-          width: 200px;
+          width: 150px;
         }
         .edit-input:focus {
           border-color: #3b82f6;
           box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
           outline: none;
+        }
+        .edit-select {
+          padding: 6px 10px;
+          border-radius: 8px;
+          border: 1px solid rgba(15, 23, 42, 0.2);
+          background: #f8fafc;
+          font-size: 14px;
+          width: 150px;
         }
         .edit-checkbox {
           width: 18px;
@@ -388,17 +472,15 @@ const MasterItemList = () => {
           td {
             padding: 10px 12px;
           }
-          .edit-input {
-            width: 120px;
+          .edit-input,
+          .edit-select {
+            width: 100px;
           }
         }
         @media (max-width: 560px) {
           .page-header {
             flex-direction: column;
             align-items: flex-start;
-          }
-          .page-header .subtitle {
-            margin-left: 0;
           }
           td[data-label] {
             display: flex;
@@ -432,19 +514,31 @@ const MasterItemList = () => {
 
       {/* ---------- Header ---------- */}
       <div className="page-header">
-        <button className="back-btn" onClick={() => navigate("/admin/expenses")}>
-          <FaArrowLeft />
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button
+            className="back-btn"
+            onClick={() => navigate("/admin/expenses")}
+          >
+            <FaArrowLeft />
+          </button>
+          <h1>📦 Master Items</h1>
+        </div>
+        <button
+          className="btn btn-warning"
+          onClick={() => navigate("/admin/expenses/categories")}
+        >
+          <FaPlus /> Manage Categories
         </button>
-        <h1>📦 Master Items (Raw Materials)</h1>
-        <span className="subtitle">Manage items like Atta, Sugar, Oil</span>
       </div>
 
       {/* ---------- Category Selector ---------- */}
       <div className="filter-section">
-        <label style={{ fontWeight: 600, marginRight: "12px" }}>Select Category:</label>
+        <label style={{ fontWeight: 600, marginRight: "12px" }}>
+          Select Category:
+        </label>
         <select
           value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(Number(e.target.value))}
+          onChange={handleCategoryChange}
         >
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -452,6 +546,11 @@ const MasterItemList = () => {
             </option>
           ))}
         </select>
+        {!categories.length && (
+          <span style={{ color: "#ef4444", marginLeft: "12px" }}>
+            No categories found. Please create one first.
+          </span>
+        )}
       </div>
 
       {/* ---------- Error Display ---------- */}
@@ -464,7 +563,7 @@ const MasterItemList = () => {
           placeholder="Enter item name (e.g., Atta)"
           value={newItemName}
           onChange={(e) => setNewItemName(e.target.value)}
-          disabled={submitting}
+          disabled={submitting || !categories.length}
         />
         <div className="checkbox-group">
           <input
@@ -472,11 +571,15 @@ const MasterItemList = () => {
             id="newItemActive"
             checked={newItemActive}
             onChange={(e) => setNewItemActive(e.target.checked)}
-            disabled={submitting}
+            disabled={submitting || !categories.length}
           />
           <label htmlFor="newItemActive">Active</label>
         </div>
-        <button type="submit" className="btn btn-success" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn btn-success"
+          disabled={submitting || !categories.length}
+        >
           {submitting ? <FaSpinner className="spinner" /> : <FaPlus />}
           {submitting ? "Adding..." : "Add Item"}
         </button>
@@ -489,6 +592,7 @@ const MasterItemList = () => {
             <tr>
               <th>ID</th>
               <th>Name</th>
+              <th>Category</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -496,11 +600,13 @@ const MasterItemList = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4" className="empty-state">Loading items...</td>
+                <td colSpan="5" className="empty-state">
+                  Loading items...
+                </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan="4" className="empty-state">
+                <td colSpan="5" className="empty-state">
                   No items found in this category. Add one above!
                 </td>
               </tr>
@@ -519,6 +625,23 @@ const MasterItemList = () => {
                       item.name
                     )}
                   </td>
+                  <td data-label="Category">
+                    {editingId === item.id ? (
+                      <select
+                        className="edit-select"
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value)}
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      categories.find((cat) => cat.id === item.category)?.name || "N/A"
+                    )}
+                  </td>
                   <td data-label="Status">
                     {editingId === item.id ? (
                       <input
@@ -528,7 +651,9 @@ const MasterItemList = () => {
                         onChange={(e) => setEditActive(e.target.checked)}
                       />
                     ) : (
-                      <span className={`status-badge ${item.is_active ? "" : "inactive"}`}>
+                      <span
+                        className={`status-badge ${item.is_active ? "" : "inactive"}`}
+                      >
                         {item.is_active ? "Active" : "Inactive"}
                       </span>
                     )}
@@ -542,7 +667,10 @@ const MasterItemList = () => {
                         >
                           <FaSave />
                         </button>
-                        <button className="btn btn-secondary btn-sm" onClick={cancelEdit}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={cancelEdit}
+                        >
                           <FaTimes />
                         </button>
                       </div>

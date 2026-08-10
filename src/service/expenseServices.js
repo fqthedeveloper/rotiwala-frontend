@@ -159,3 +159,56 @@ export const getStaffSalaryReport = async (params = {}) => {
   const response = await api.get("/expenses/staff/salary/report/", { params });
   return response.data;
 };
+
+// ============================================================
+// 8. VENDOR MANAGEMENT
+// ============================================================
+
+export const getVendors = async (params = {}) => {
+  const response = await api.get("/expenses/vendors/", { params });
+  return response.data;
+};
+
+export const createVendor = async (data) => {
+  const response = await api.post("/expenses/vendors/", data);
+  return response.data;
+};
+
+export const updateVendor = async (id, data) => {
+  const response = await api.put(`/expenses/vendors/${id}/`, data);
+  return response.data;
+};
+
+export const deleteVendor = async (id) => {
+  const response = await api.delete(`/expenses/vendors/${id}/`);
+  return response.data;
+};
+
+// ============================================================
+// 9. RAW MATERIAL EXPENSES
+// ============================================================
+
+export const getRawMaterialExpenses = async (params = {}) => {
+  const response = await api.get("/expenses/raw-materials/", { params });
+  return response.data;
+};
+
+export const getRawMaterialExpense = async (id) => {
+  const response = await api.get(`/expenses/raw-materials/${id}/`);
+  return response.data;
+};
+
+export const createRawMaterialExpense = async (data) => {
+  const response = await api.post("/expenses/raw-materials/", data);
+  return response.data;
+};
+
+export const updateRawMaterialExpense = async (id, data) => {
+  const response = await api.put(`/expenses/raw-materials/${id}/`, data);
+  return response.data;
+};
+
+export const deleteRawMaterialExpense = async (id) => {
+  const response = await api.delete(`/expenses/raw-materials/${id}/`);
+  return response.data;
+};

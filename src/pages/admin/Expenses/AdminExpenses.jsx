@@ -9,7 +9,6 @@ import {
   FaTrash,
   FaSearch,
 } from "react-icons/fa";
-import { format } from "date-fns";
 import {
   getExpenseCategories,
   getExpenses,
@@ -19,6 +18,23 @@ import {
   deleteMaintenance,
 } from "../../../service/expenseServices";
 import { getShops } from "../../../service/shopService";
+
+// 🕒 Helper to format date/time in IST with AM/PM
+const formatIST = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  // Check if date is valid
+  if (isNaN(date.getTime())) return "N/A";
+  return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 const SuperAdminExpenses = () => {
   const navigate = useNavigate();
@@ -64,9 +80,15 @@ const SuperAdminExpenses = () => {
           delete params[k];
       });
       const response = await getExpenses(params);
-      setExpenses(response.results || []);
-      setTotalCount(response.count || 0);
-      setTotalPages(Math.ceil((response.count || 0) / pageSize));
+      
+      // Filter out "Staff Salary" category
+      const filteredResults = (response.results || []).filter(
+        (exp) => exp.category?.name !== "Staff Salary"
+      );
+      
+      setExpenses(filteredResults);
+      setTotalCount(filteredResults.length);
+      setTotalPages(Math.ceil(filteredResults.length / pageSize));
     } catch (err) {
       console.error("Error fetching expenses:", err);
       setError("Failed to load expenses.");
@@ -123,7 +145,6 @@ const SuperAdminExpenses = () => {
     );
   };
 
-  // ✅ FIX: use entry_datetime instead of expense_date
   const todaysExpenseCount = useMemo(
     () => expenses.filter((exp) => isSameDay(exp.entry_datetime)).length,
     [expenses]
@@ -523,11 +544,11 @@ const SuperAdminExpenses = () => {
             <div className="value">{maintenanceList.length}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Today&apos;s Expenses</div>
+            <div className="label">Today's Expenses</div>
             <div className="value">{todaysExpenseCount}</div>
           </div>
           <div className="stat-card">
-            <div className="label">Today&apos;s Maintenances</div>
+            <div className="label">Today's Maintenances</div>
             <div className="value">{todaysMaintenanceCount}</div>
           </div>
         </div>
@@ -608,11 +629,10 @@ const SuperAdminExpenses = () => {
         <table>
           <thead>
             <tr>
-              <th>Date & Time</th>
+              <th>Date &amp; Time (IST)</th>
               <th>Shop</th>
               <th>Category</th>
               <th>Total</th>
-              <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -632,16 +652,13 @@ const SuperAdminExpenses = () => {
             ) : (
               expenses.map((exp) => (
                 <tr key={exp.id}>
-                  {/* ✅ FIX: use entry_datetime with null check */}
-                  <td data-label="Date & Time">
-                    {exp.entry_datetime
-                      ? format(new Date(exp.entry_datetime), "dd/MM/yy HH:mm")
-                      : "N/A"}
+                  {/* ✅ Format with IST and AM/PM */}
+                  <td data-label="Date & Time (IST)">
+                    {formatIST(exp.entry_datetime)}
                   </td>
                   <td data-label="Shop">{getShopName(exp.shop || exp.shop_id)}</td>
                   <td data-label="Category">{exp.category?.name || "N/A"}</td>
                   <td data-label="Total">₹{Number(exp.total_amount).toFixed(2)}</td>
-                  <td data-label="Notes">{exp.notes || "-"}</td>
                   <td data-label="Actions">
                     <button
                       className="btn btn-primary"
@@ -711,7 +728,12 @@ const SuperAdminExpenses = () => {
                   <td data-label="Amount">₹{Number(item.amount).toFixed(2)}</td>
                   <td data-label="Date">
                     {item.maintenance_date
-                      ? format(new Date(item.maintenance_date), "dd/MM/yy")
+                      ? new Date(item.maintenance_date).toLocaleDateString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })
                       : "N/A"}
                   </td>
                   <td data-label="Actions">

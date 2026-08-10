@@ -42,6 +42,8 @@ const getPageTitle = (pathname) => {
     "/cart": "Cart - Roti Wala",
     "/checkout": "Checkout - Roti Wala",
     "/my-orders": "My Orders - Roti Wala",
+
+
     "/admin/shops": "Shops - Roti Wala",
     "/admin/shops/add-shop": "Add Shop - Roti Wala",
     "/admin/managers": "Managers - Roti Wala",
@@ -64,6 +66,17 @@ const getPageTitle = (pathname) => {
     "/admin/expenses/add": "Add Expense - Roti Wala",
     "/admin/maintenance/add": "Add Maintenance - Roti Wala",
     "/admin/reports": "Reports - Roti Wala",
+    "/admin/expenses/categories": "Expense Categories - Roti Wala",
+    "/admin/expenses/categories/add": "Add Expense Category - Roti Wala",
+    "/admin/expenses/master-items": "Master Items - Roti Wala",
+    "/admin/expenses/staff": "Staff Management - Roti Wala",
+    "/admin/expenses/staff/salary/add": "Add Staff Salary - Roti Wala",
+    "/admin/expenses/staff/salary/detail/:staffId": "Staff Salary Detail - Roti Wala",
+    "/admin/expenses/raw-materials": "Raw Material Expenses - Roti Wala",
+    "/admin/expenses/raw-materials/add": "Add Raw Material Expense - Roti Wala",
+    "/admin/expenses/raw-materials/edit/:id": "Edit Raw Material Expense - Roti Wala",
+
+
     "/manager/dashboard": "Manager Dashboard - Roti Wala",
     "/manager/orders": "Manager Orders - Roti Wala",
     "/manager/walkin": "Walk-in Orders - Roti Wala",
@@ -75,6 +88,17 @@ const getPageTitle = (pathname) => {
     "/profile": "Profile - Roti Wala",
     "/forgot-password": "Forgot Password - Roti Wala",
     "/change-password": "Change Password - Roti Wala",
+    "/manager/expenses/add": "Add Expense - Roti Wala",
+    "/manager/expenses/edit": "Edit Expense - Roti Wala",
+    "/manager/expenses/maintenance/add": "Add Maintenance - Roti Wala",
+    "/manager/expenses/raw-materials": "Raw Material Expenses - Roti Wala",
+    "/manager/expenses/raw-materials/add": "Add Raw Material Expense - Roti Wala",
+    "/manager/expenses/raw-materials/edit/:id": "Edit Raw Material Expense - Roti Wala",
+    "/manager/staff": "Staff Management - Roti Wala",
+    "/manager/staff/salary/add": "Add Staff Salary - Roti Wala",
+    "/manager/staff/salary/detail/:staffId": "Staff Salary Detail - Roti Wala",
+
+    
   };
 
   if (titles[pathname]) return titles[pathname];
@@ -132,6 +156,8 @@ import AddMaintenance from "./pages/admin/Expenses/AddMaintenance";
 import StaffManagement from "./pages/admin/Expenses/StaffManagement";
 import StaffSalaryForm from "./pages/admin/Expenses/StaffSalaryForm";
 import StaffSalaryDetail from "./pages/admin/Expenses/StaffSalaryDetail";
+import RawMaterialList from "./pages/admin/Expenses/RawMaterialList";
+import AddRawMaterialExpense from "./pages/admin/Expenses/AddRawMaterialExpense";
 import Report from './pages/Report';
 import TestimonialManagement from './pages/admin/TestimonialManagement';
 import VideoManagement from './pages/admin/VideoManagement';
@@ -308,6 +334,10 @@ function App() {
         <Route path="expenses/staff" element={<StaffManagement />} />
         <Route path="expenses/staff/salary/add" element={<StaffSalaryForm />} />
         <Route path="expenses/staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
+        <Route path="expenses/raw-materials" element={<RawMaterialList />} />
+        <Route path="expenses/raw-materials/add" element={<AddRawMaterialExpense />} />
+        <Route path="expenses/raw-materials/edit/:id" element={<AddRawMaterialExpense />} />
+
 
         <Route path="*" element={<NotFound />} />
       </Route>
@@ -332,6 +362,10 @@ function App() {
         <Route path="expenses/add" element={<AddExpense />} />
         <Route path="expenses/edit/:id" element={<EditExpense />} />
         <Route path="expenses/maintenance/add" element={<AddMaintenance />} />
+        <Route path="expenses/raw-materials" element={<RawMaterialList />} />
+        <Route path="expenses/raw-materials/add" element={<AddRawMaterialExpense />} />
+        <Route path="expenses/raw-materials/edit/:id" element={<AddRawMaterialExpense />} />
+
         <Route path="reports" element={<Report />} />
 
         {/* 🆕 Manager Staff Management & Salary Details */}
