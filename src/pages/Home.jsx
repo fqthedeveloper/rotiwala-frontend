@@ -300,7 +300,7 @@ export default function Home() {
               animate={{ y: 0 }}
               transition={{ duration: 0.8, delay: 0.15, ease: EASE }}
             >
-              <FaFire /> № 01 — Roti Wala · Tandoor Fresh Every Day
+              <FaFire /> № 01 — Roti Wala · Faizan Qureshi Test
             </motion.p>
           </div>
 

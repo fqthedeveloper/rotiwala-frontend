@@ -73,6 +73,11 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
             Dashboard
           </NavLink>
 
+          <NavLink to="/manager/menu-items" onClick={closeSidebar}>
+                <i className="bi bi-box"></i>
+                Menu Items
+          </NavLink>
+
           {/* ===== Orders ===== */}
           <div
             className="sidebar-section clickable"

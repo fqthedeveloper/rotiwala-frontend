@@ -365,6 +365,9 @@ function App() {
         }
       >
         <Route path="dashboard" element={<ManagerDashboard />} />
+        <Route path="menu-items" element={<MenuItems />} />
+        <Route path="menu-items/add" element={<AddMenuItem />} />
+        <Route path="menu-items/edit/:id" element={<EditMenuItem />} />        
         <Route path="orders" element={<ManagerOrders />} />
         <Route path="walkin" element={<WalkInOrder />} />
         <Route path="discounts/usage" element={<UsageAnalytics />} />
