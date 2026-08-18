@@ -179,3 +179,4 @@ export const verifyPasswordResetOTP = async (phone, otp, newPassword) => {
 };
 
 export default api;
+
