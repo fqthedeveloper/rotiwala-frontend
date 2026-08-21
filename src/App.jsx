@@ -167,6 +167,9 @@ import TestimonialManagement from './pages/admin/TestimonialManagement';
 import VideoManagement from './pages/admin/VideoManagement';
 import MarqueeManagement from './pages/admin/MarqueeManagement';
 import FeedbackManagement from './pages/admin/FeedbackManagement';
+// In your main App.js or routes file
+import DeliveryManagement from './pages/manager/DeliveryManagement';
+
 
 
 
@@ -385,6 +388,7 @@ function App() {
         <Route path="staff/salary/add" element={<StaffSalaryForm />} />
         <Route path="staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
         <Route path="feedback" element={<FeedbackManagement />} />
+        <Route path="delivery" element={<DeliveryManagement />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

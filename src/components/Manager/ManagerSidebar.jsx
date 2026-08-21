@@ -3,6 +3,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { logoutConfirm } from "../../utils/alerts";
+import { FaTruck } from 'react-icons/fa';
+
 
 const ManagerSidebar = ({ isOpen, closeSidebar }) => {
   const navigate = useNavigate();
@@ -97,6 +99,11 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-cart-plus"></i>
                 Walk-In Orders
               </NavLink>
+
+              <NavLink to="/manager/delivery" onClick={closeSidebar}>
+                <FaTruck className="me-2" /> Delivery
+              </NavLink>
+
             </>
           )}
 
@@ -191,6 +198,7 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
               </NavLink>
             </>
           )}
+
 
         </nav>
 

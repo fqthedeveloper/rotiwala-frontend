@@ -1,3 +1,5 @@
+// frontend/src/pages/Customer/Cart.jsx
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -40,6 +42,11 @@ const Cart = () => {
   useEffect(() => {
     document.title = "Cart - Roti Wala";
     loadCart();
+
+    // Refresh cart when coming back from checkout
+    const handleCartUpdate = () => loadCart();
+    window.addEventListener("cartUpdated", handleCartUpdate);
+    return () => window.removeEventListener("cartUpdated", handleCartUpdate);
   }, []);
 
   const increaseQty = async (item) => {
@@ -117,7 +124,9 @@ const Cart = () => {
   if (loading) {
     return (
       <div className="container py-5 text-center">
-        <div className="spinner-border text-warning"></div>
+        <div className="spinner-border text-warning" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -138,76 +147,90 @@ const Cart = () => {
   }
 
   return (
-    <div className="cart-page container py-4">
-      <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <h2 className="fw-bold mb-0">Shopping Cart</h2>
-        <button onClick={handleClearCart} className="btn btn-danger">
-          <FaTrash className="me-2" /> Clear Cart
-        </button>
-      </div>
+    <div className="cart-page">
+      <div className="container py-4">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <h2 className="fw-bold mb-0">Shopping Cart</h2>
+          <button onClick={handleClearCart} className="btn btn-outline-danger btn-sm">
+            <FaTrash className="me-2" /> Clear Cart
+          </button>
+        </div>
 
-      <div className="row g-4">
-        <div className="col-12 col-lg-8">
-          {cart.items.map((item) => (
-            <div key={item.id} className="cart-item card border-0 shadow-sm mb-3">
-              <div className="card-body">
-                <div className="item-row">
-                  <div className="item-details">
-                    <h5>{item.item_name}</h5>
-                    <p className="item-price-text">Price: ₹{item.item_price}</p>
-                  </div>
+        <div className="row g-4">
+          <div className="col-12 col-lg-8">
+            {cart.items.map((item) => (
+              <div key={item.id} className="cart-item card border-0 shadow-sm mb-3">
+                <div className="card-body">
+                  <div className="item-row">
+                    <div className="item-details">
+                      <h5 className="item-name">{item.item_name}</h5>
+                      <p className="item-price-text">Price: ₹{item.item_price}</p>
+                    </div>
 
-                  <div className="quantity-controls">
-                    <button className="btn" onClick={() => decreaseQty(item)}>
-                      <FaMinus />
-                    </button>
-                    <span className="qty-number">{item.quantity}</span>
-                    <button className="btn" onClick={() => increaseQty(item)}>
-                      <FaPlus />
-                    </button>
-                  </div>
+                    <div className="quantity-controls">
+                      <button
+                        className="btn qty-btn"
+                        onClick={() => decreaseQty(item)}
+                        aria-label="Decrease quantity"
+                      >
+                        <FaMinus />
+                      </button>
+                      <span className="qty-number">{item.quantity}</span>
+                      <button
+                        className="btn qty-btn"
+                        onClick={() => increaseQty(item)}
+                        aria-label="Increase quantity"
+                      >
+                        <FaPlus />
+                      </button>
+                    </div>
 
-                  <div className="price-actions">
-                    <span className="item-total">₹{item.total_price}</span>
-                    <button className="btn-remove" onClick={() => removeItem(item.id)}>
-                      <FaTrash />
-                    </button>
+                    <div className="price-actions">
+                      <span className="item-total">₹{item.total_price}</span>
+                      <button
+                        className="btn-remove"
+                        onClick={() => removeItem(item.id)}
+                        aria-label="Remove item"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="col-12 col-lg-4">
-          <div className="summary-card card border-0 shadow-sm">
-            <div className="card-body">
-              <h4 className="fw-bold">Order Summary</h4>
-              <hr />
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <strong>₹{cart.total_amount}</strong>
+          <div className="col-12 col-lg-4">
+            <div className="summary-card card border-0 shadow-sm sticky-top" style={{ top: '20px' }}>
+              <div className="card-body">
+                <h4 className="fw-bold">Order Summary</h4>
+                <hr />
+                <div className="summary-row">
+                  <span>Subtotal</span>
+                  <strong>₹{cart.total_amount}</strong>
+                </div>
+                <hr />
+                <button
+                  className="btn-checkout"
+                  onClick={() => {
+                    if (!cart?.items?.length) {
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Cart Empty",
+                        text: "Please add items first",
+                      });
+                      return;
+                    }
+                    navigate("/checkout");
+                  }}
+                >
+                  Proceed To Checkout
+                </button>
+                <Link to="/menu" className="btn-continue mt-3">
+                  <FaArrowLeft className="me-2" /> Continue Shopping
+                </Link>
               </div>
-              <hr />
-              <button
-                className="btn-checkout"
-                onClick={() => {
-                  if (!cart?.items?.length) {
-                    Swal.fire({
-                      icon: "warning",
-                      title: "Cart Empty",
-                      text: "Please add items first",
-                    });
-                    return;
-                  }
-                  navigate("/checkout");
-                }}
-              >
-                Proceed To Checkout
-              </button>
-              <Link to="/menu" className="btn-continue mt-3">
-                <FaArrowLeft className="me-2" /> Continue Shopping
-              </Link>
             </div>
           </div>
         </div>

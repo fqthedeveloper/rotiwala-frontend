@@ -178,5 +178,59 @@ export const verifyPasswordResetOTP = async (phone, otp, newPassword) => {
   return api.post('/accounts/verify-password-reset-otp/', { phone, otp, new_password: newPassword });
 };
 
+// ===================== DELIVERY ADDRESSES =====================
+
+/**
+ * Get all saved addresses for the authenticated customer.
+ */
+export const getAddresses = async () => {
+  const response = await api.get('/accounts/addresses/');
+  return response.data;
+};
+
+/**
+ * Create a new delivery address.
+ * @param {Object} addressData - { label, address, latitude, longitude, is_default? }
+ */
+export const createAddress = async (addressData) => {
+  const response = await api.post('/accounts/addresses/', addressData);
+  return response.data;
+};
+
+/**
+ * Update an existing delivery address.
+ * @param {number} addressId
+ * @param {Object} addressData - { label, address, latitude, longitude, is_default? }
+ */
+export const updateAddress = async (addressId, addressData) => {
+  const response = await api.patch(`/accounts/addresses/${addressId}/`, addressData);
+  return response.data;
+};
+
+/**
+ * Delete a delivery address.
+ * @param {number} addressId
+ */
+export const deleteAddress = async (addressId) => {
+  await api.delete(`/accounts/addresses/${addressId}/`);
+};
+
+/**
+ * Set an address as default.
+ * @param {number} addressId
+ */
+export const setDefaultAddress = async (addressId) => {
+  const response = await api.post(`/accounts/addresses/${addressId}/set_default/`);
+  return response.data;
+};
+
+/**
+ * Get the default address for the customer.
+ */
+export const getDefaultAddress = async () => {
+  const response = await api.get('/accounts/addresses/default/');
+  return response.data;
+};
+
 export default api;
 
