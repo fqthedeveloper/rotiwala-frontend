@@ -1,43 +1,43 @@
+// frontend/src/pages/manager/AddMenuItem.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getCategories } from "../../../service/categoryService";
 import { createMenuItem } from "../../../service/menuItemService";
-import { getShops } from "../../../service/shopService"; // <-- new import
+import { getShops } from "../../../service/shopService";
 
 const AddMenuItem = () => {
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
-  const [shops, setShops] = useState([]);           // <-- new
-  const [userRole, setUserRole] = useState(null);   // <-- new
+  const [shops, setShops] = useState([]);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    shop: "",                // <-- new field
+    shop: "",
     category: "",
     name: "",
     description: "",
     base_price: "",
     image: null,
     is_available: true,
-    is_popular: false,
-    display_order: 0,
   });
 
   useEffect(() => {
     document.title = "Add Menu Item | Roti Wala";
 
-    // Load categories, shops (if super_admin), and get user role
     const loadData = async () => {
       const cats = await getCategories();
       setCategories(cats);
 
-      // Get current user from localStorage (or your auth context)
+      // Get user role from localStorage
       const userStr = localStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
         setUserRole(user.role);
+        // Only super_admin needs to fetch shops
         if (user.role === "super_admin") {
           const shopsData = await getShops();
           setShops(shopsData);
@@ -61,7 +61,6 @@ const AddMenuItem = () => {
 
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
-      // Only append non‑null values; skip `shop` if empty
       if (formData[key] !== null && formData[key] !== "") {
         data.append(key, formData[key]);
       }
@@ -74,11 +73,12 @@ const AddMenuItem = () => {
         icon: "success",
         title: "Menu Item Created",
       });
-      navigate("/admin/menu-items");
-    } catch {
+      navigate("/manager/menu-items");
+    } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Failed",
+        text: error.response?.data?.detail || "Something went wrong",
       });
     } finally {
       setLoading(false);
@@ -86,20 +86,19 @@ const AddMenuItem = () => {
   };
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid py-4">
       <div className="row justify-content-center">
         <div className="col-lg-8">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-white">
-              <h4>Add Menu Item</h4>
+          <div className="card border-0 shadow-sm rounded-4">
+            <div className="card-header bg-white border-0 p-4">
+              <h4 className="fw-bold mb-0">Add Menu Item</h4>
             </div>
-
-            <div className="card-body">
+            <div className="card-body p-4">
               <form onSubmit={handleSubmit}>
-                {/* Shop dropdown – only for super_admin */}
+                {/* Shop dropdown – ONLY for super_admin */}
                 {userRole === "super_admin" && (
                   <div className="mb-3">
-                    <label>Shop</label>
+                    <label className="form-label fw-semibold">Shop</label>
                     <select
                       name="shop"
                       className="form-select"
@@ -118,7 +117,7 @@ const AddMenuItem = () => {
                 )}
 
                 <div className="mb-3">
-                  <label>Category</label>
+                  <label className="form-label fw-semibold">Category</label>
                   <select
                     name="category"
                     className="form-select"
@@ -136,7 +135,7 @@ const AddMenuItem = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label>Item Name</label>
+                  <label className="form-label fw-semibold">Item Name</label>
                   <input
                     type="text"
                     name="name"
@@ -148,7 +147,7 @@ const AddMenuItem = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label>Description</label>
+                  <label className="form-label fw-semibold">Description</label>
                   <textarea
                     rows="3"
                     name="description"
@@ -159,7 +158,7 @@ const AddMenuItem = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label>Price</label>
+                  <label className="form-label fw-semibold">Price (₹)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -172,38 +171,35 @@ const AddMenuItem = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label>Image</label>
+                  <label className="form-label fw-semibold">Image</label>
                   <input
                     type="file"
                     name="image"
                     className="form-control"
+                    accept="image/*"
                     onChange={handleChange}
                   />
-                </div>
-
-                <div className="form-check mb-2">
-                  <input
-                    type="checkbox"
-                    name="is_available"
-                    className="form-check-input"
-                    checked={formData.is_available}
-                    onChange={handleChange}
-                  />
-                  <label className="form-check-label">Available</label>
                 </div>
 
                 <div className="form-check mb-4">
                   <input
                     type="checkbox"
-                    name="is_popular"
                     className="form-check-input"
-                    checked={formData.is_popular}
+                    name="is_available"
+                    checked={formData.is_available}
                     onChange={handleChange}
+                    id="isAvailable"
                   />
-                  <label className="form-check-label">Popular Item</label>
+                  <label className="form-check-label" htmlFor="isAvailable">
+                    Available for sale
+                  </label>
                 </div>
 
-                <button className="btn btn-warning w-100" disabled={loading}>
+                <button
+                  type="submit"
+                  className="btn btn-warning w-100 py-2 fw-bold"
+                  disabled={loading}
+                >
                   {loading ? "Saving..." : "Create Menu Item"}
                 </button>
               </form>

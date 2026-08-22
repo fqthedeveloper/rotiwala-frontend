@@ -8,9 +8,7 @@ import {
   FaCheck,
   FaTimes,
   FaEdit,
-  FaTrash,
   FaTruck,
-  FaUser,
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import {
@@ -28,7 +26,6 @@ const DeliveryBoyList = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBoy, setEditingBoy] = useState(null);
   const [formData, setFormData] = useState({
-    user: '',
     full_name: '',
     phone: '',
   });
@@ -59,7 +56,7 @@ const DeliveryBoyList = () => {
   const resetForm = () => {
     setShowAddForm(false);
     setEditingBoy(null);
-    setFormData({ user: '', full_name: '', phone: '' });
+    setFormData({ full_name: '', phone: '' });
   };
 
   const handleSubmit = async (e) => {
@@ -74,7 +71,6 @@ const DeliveryBoyList = () => {
         Swal.fire('Updated', 'Delivery boy updated successfully', 'success');
       } else {
         await createDeliveryBoy({
-          user: parseInt(formData.user),
           full_name: formData.full_name,
           phone: formData.phone,
         });
@@ -83,11 +79,11 @@ const DeliveryBoyList = () => {
       resetForm();
       loadBoys();
     } catch (error) {
-      Swal.fire(
-        'Error',
-        error.response?.data?.error || error.response?.data?.detail || 'Operation failed',
-        'error'
-      );
+      const errorMsg = error.response?.data?.phone?.[0] ||
+                       error.response?.data?.full_name?.[0] ||
+                       error.response?.data?.detail ||
+                       'Operation failed';
+      Swal.fire('Error', errorMsg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +92,6 @@ const DeliveryBoyList = () => {
   const handleEdit = (boy) => {
     setEditingBoy(boy);
     setFormData({
-      user: boy.user_id || '',
       full_name: boy.full_name || '',
       phone: boy.phone || '',
     });
@@ -152,22 +147,7 @@ const DeliveryBoyList = () => {
         <div className="card p-3 mb-3 shadow-sm">
           <form onSubmit={handleSubmit}>
             <div className="row g-2">
-              <div className="col-md-3">
-                <input
-                  type="number"
-                  className="form-control form-control-sm"
-                  placeholder="User ID"
-                  name="user"
-                  value={formData.user}
-                  onChange={handleInputChange}
-                  required={!editingBoy}
-                  disabled={!!editingBoy}
-                />
-                {!editingBoy && (
-                  <small className="text-muted">Existing user ID with role 'delivery_boy'</small>
-                )}
-              </div>
-              <div className="col-md-3">
+              <div className="col-md-5">
                 <input
                   type="text"
                   className="form-control form-control-sm"
@@ -178,16 +158,17 @@ const DeliveryBoyList = () => {
                   required
                 />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-4">
                 <input
-                  type="text"
+                  type="tel"
                   className="form-control form-control-sm"
-                  placeholder="Phone"
+                  placeholder="Phone (e.g., 9876543210)"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
                 />
+                <small className="text-muted">+91 will be added automatically</small>
               </div>
               <div className="col-md-3 d-flex gap-2">
                 <button type="submit" className="btn btn-success btn-sm" disabled={submitting}>

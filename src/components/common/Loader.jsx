@@ -1,1018 +1,250 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import "./Loader.css";
 
-const PHASES = [
+const STAGES = [
   {
-    key: "prepare",
-    label: "Preparing fresh roti",
-    short: "Preparing",
+    id: "igniting",
+    label: "Preheating Tandoor",
+    subtitle: "Getting the clay oven to intense baking heat...",
+    progress: 25,
+    badge: "Tandoor",
   },
   {
-    key: "walking",
-    label: "Taking roti to the tandoor",
-    short: "Tandoor",
+    id: "placing",
+    label: "Putting Roti Inside 🔥",
+    subtitle: "Placing dough on the hot clay wall...",
+    progress: 52,
+    badge: "Putting Roti Inside",
   },
   {
-    key: "baking",
-    label: "Baking in the tandoor",
-    short: "Baking",
+    id: "baking",
+    label: "Baking Inside Tandoor",
+    subtitle: "Puffing up with golden blisters...",
+    progress: 82,
+    badge: "Baking",
   },
   {
-    key: "ready",
-    label: "Fresh roti is almost ready",
-    short: "Almost Ready",
+    id: "ready",
+    label: "Fresh Roti Ready! ✨",
+    subtitle: "Crisp, hot tandoori roti is ready to serve...",
+    progress: 100,
+    badge: "Almost Ready",
   },
 ];
 
-const clamp = (value, min, max) =>
-  Math.min(Math.max(value, min), max);
-
-const Loader = ({
-  message,
-  fullScreen = true,
-  size = "md",
-}) => {
-  const [phaseIndex, setPhaseIndex] = useState(0);
-
-  const phase = PHASES[phaseIndex];
+const Loader = ({ fullScreen = true }) => {
+  const [activeIdx, setActiveIdx] = useState(1);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setPhaseIndex((current) => (current + 1) % PHASES.length);
-    }, 2600);
+      setActiveIdx((prev) => (prev + 1) % STAGES.length);
+    }, 3200);
 
     return () => clearInterval(timer);
   }, []);
 
-  const progress = useMemo(() => {
-    const values = [18, 42, 72, 94];
-    return values[phaseIndex];
-  }, [phaseIndex]);
-
-  const sceneScale = {
-    sm: 0.72,
-    md: 0.9,
-    lg: 1,
-  };
-
-  const scale = sceneScale[size] || sceneScale.md;
-
-  /*
-   * ---------------------------------------------------------
-   * MAIN SCENE
-   * ---------------------------------------------------------
-   */
-
-  const sceneVariants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.94,
-      y: 12,
-    },
-
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-
-      transition: {
-        duration: 0.7,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * CHARACTER WALK
-   * ---------------------------------------------------------
-   */
-
-  const characterVariants = {
-    prepare: {
-      x: -190,
-      y: 0,
-      rotate: 0,
-    },
-
-    walking: {
-      x: [-190, -150, -100, -50, 0, 18],
-      y: [0, -3, 0, -3, 0, 0],
-      rotate: [0, -1, 1, -1, 1, 0],
-
-      transition: {
-        duration: 2.5,
-        ease: "easeInOut",
-        times: [0, 0.2, 0.4, 0.6, 0.82, 1],
-      },
-    },
-
-    baking: {
-      x: 18,
-      y: 0,
-      rotate: 0,
-
-      transition: {
-        duration: 0.35,
-        ease: "easeOut",
-      },
-    },
-
-    ready: {
-      x: 5,
-      y: 0,
-      rotate: 0,
-
-      transition: {
-        duration: 0.35,
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * WALKING LEGS
-   * ---------------------------------------------------------
-   */
-
-  const leftLegVariants = {
-    prepare: {
-      rotate: 8,
-    },
-
-    walking: {
-      rotate: [22, -20, 22, -20, 8],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      rotate: 5,
-    },
-
-    ready: {
-      rotate: 4,
-    },
-  };
-
-  const rightLegVariants = {
-    prepare: {
-      rotate: -8,
-    },
-
-    walking: {
-      rotate: [-20, 22, -20, 22, -8],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      rotate: -5,
-    },
-
-    ready: {
-      rotate: -4,
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * ARMS
-   * ---------------------------------------------------------
-   */
-
-  const leftArmVariants = {
-    prepare: {
-      rotate: -8,
-    },
-
-    walking: {
-      rotate: [-14, 14, -14, 14, -8],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      rotate: -35,
-
-      transition: {
-        duration: 0.5,
-      },
-    },
-
-    ready: {
-      rotate: -12,
-    },
-  };
-
-  const rightArmVariants = {
-    prepare: {
-      rotate: -18,
-    },
-
-    walking: {
-      rotate: [-8, 16, -8, 16, -18],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      rotate: -42,
-
-      transition: {
-        duration: 0.5,
-      },
-    },
-
-    ready: {
-      rotate: -15,
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * TRAY
-   * ---------------------------------------------------------
-   */
-
-  const trayVariants = {
-    prepare: {
-      rotate: -2,
-      y: 0,
-    },
-
-    walking: {
-      rotate: [-2, 2, -2, 2, -1],
-      y: [0, -2, 0, -2, 0],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      rotate: -3,
-      x: 35,
-      y: -4,
-
-      transition: {
-        duration: 0.8,
-        ease: "easeInOut",
-      },
-    },
-
-    ready: {
-      rotate: 0,
-      x: 15,
-      y: 0,
-
-      transition: {
-        duration: 0.5,
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * ROTI ENTERING TANDOOR
-   * ---------------------------------------------------------
-   */
-
-  const rotiVariants = {
-    prepare: {
-      opacity: 1,
-      x: 0,
-      y: 0,
-      rotate: 0,
-      scale: 1,
-    },
-
-    walking: {
-      opacity: 1,
-      x: 0,
-      y: [-1, 2, -1],
-      rotate: [-2, 2, -2],
-
-      transition: {
-        duration: 0.52,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    baking: {
-      opacity: [1, 1, 0],
-      x: [0, 42, 68],
-      y: [0, -8, -22],
-      rotate: [0, 18, 35],
-      scale: [1, 0.96, 0.82],
-
-      transition: {
-        duration: 0.95,
-        ease: [0.4, 0, 1, 1],
-      },
-    },
-
-    ready: {
-      opacity: 0,
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * COOKING ROTI
-   * ---------------------------------------------------------
-   */
-
-  const cookingRotiVariants = {
-    prepare: {
-      opacity: 0,
-      scale: 0.5,
-    },
-
-    walking: {
-      opacity: 0,
-      scale: 0.5,
-    },
-
-    baking: {
-      opacity: [0, 1, 1],
-      scale: [0.45, 0.9, 1],
-      rotate: [-20, 8, -4],
-
-      transition: {
-        duration: 1.1,
-        ease: "easeOut",
-      },
-    },
-
-    ready: {
-      opacity: [1, 1, 0],
-      scale: [1, 1.04, 0.95],
-      y: [0, -3, -10],
-
-      transition: {
-        duration: 1.2,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * FIRE
-   * ---------------------------------------------------------
-   */
-
-  const fireVariants = {
-    prepare: {
-      opacity: 0.65,
-      scale: 0.9,
-    },
-
-    walking: {
-      opacity: 0.8,
-      scale: 0.95,
-    },
-
-    baking: {
-      opacity: [0.7, 1, 0.75, 1, 0.8],
-      scale: [0.9, 1.18, 0.92, 1.15, 0.95],
-
-      transition: {
-        duration: 0.7,
-        repeat: 4,
-        ease: "easeInOut",
-      },
-    },
-
-    ready: {
-      opacity: [0.8, 1, 0.75],
-      scale: [0.95, 1.12, 0.9],
-
-      transition: {
-        duration: 0.8,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * TANDOOR GLOW
-   * ---------------------------------------------------------
-   */
-
-  const glowVariants = {
-    prepare: {
-      opacity: 0.22,
-      scale: 0.9,
-    },
-
-    walking: {
-      opacity: 0.32,
-      scale: 1,
-    },
-
-    baking: {
-      opacity: [0.35, 0.75, 0.45, 0.8],
-      scale: [1, 1.12, 1, 1.1],
-
-      transition: {
-        duration: 0.9,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-
-    ready: {
-      opacity: [0.4, 0.85, 0.5],
-      scale: [1, 1.13, 1],
-
-      transition: {
-        duration: 1.1,
-        repeat: Infinity,
-        ease: "easeInOut",
-      },
-    },
-  };
-
-  /*
-   * ---------------------------------------------------------
-   * SMOKE
-   * ---------------------------------------------------------
-   */
-
-  const smokeParticles = Array.from({ length: 6 }, (_, index) => ({
-    id: index,
-    delay: index * 0.28,
-  }));
-
-  /*
-   * ---------------------------------------------------------
-   * FLOUR PARTICLES
-   * ---------------------------------------------------------
-   */
-
-  const flourParticles = Array.from({ length: 18 }, (_, index) => ({
-    id: index,
-    left: 15 + ((index * 17) % 70),
-    delay: index * 0.12,
-    duration: 2.4 + (index % 3) * 0.5,
-  }));
+  const currentStage = STAGES[activeIdx];
 
   return (
-    <motion.div
-      className={[
-        "rw-loader",
-        fullScreen
-          ? "rw-loader--fullscreen"
-          : "rw-loader--inline",
-        `rw-loader--${size}`,
-      ].join(" ")}
-      initial="hidden"
-      animate="visible"
-      variants={sceneVariants}
+    <div
+      className={`rw-app-preloader ${
+        fullScreen ? "rw-app-preloader--fullscreen" : "rw-app-preloader--inline"
+      }`}
       role="status"
-      aria-live="polite"
     >
-      {/* =====================================================
-          BACKGROUND
-          ===================================================== */}
+      {/* BACKGROUND VIGNETTE & AMBIENT FIRE GLOW */}
+      <div className="rw-bg-vignette" />
+      <motion.div
+        className="rw-bg-glow"
+        animate={{
+          opacity: [0.35, 0.65, 0.35],
+          scale: [0.95, 1.05, 0.95],
+        }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-      <div className="rw-loader__background">
-        <div className="rw-loader__background-glow" />
-        <div className="rw-loader__background-glow rw-loader__background-glow--two" />
-
-        <div className="rw-loader__decor rw-loader__decor--left">
-          ✦
-        </div>
-
-        <div className="rw-loader__decor rw-loader__decor--right">
-          ✦
-        </div>
-      </div>
-
-      {/* =====================================================
-          FLOUR
-          ===================================================== */}
-
-      <div className="rw-loader__flour-field">
-        {flourParticles.map((particle) => (
+      {/* RISING EMBERS */}
+      <div className="rw-ember-particles">
+        {[...Array(16)].map((_, i) => (
           <motion.span
-            key={particle.id}
-            className="rw-loader__flour"
+            key={i}
+            className="rw-ember-spark"
             style={{
-              left: `${particle.left}%`,
+              left: `${10 + ((i * 17) % 80)}%`,
+              width: `${3 + (i % 3) * 2}px`,
+              height: `${3 + (i % 3) * 2}px`,
             }}
             animate={{
-              y: [10, -35, -65],
-              x: [0, particle.id % 2 ? 14 : -14, particle.id % 2 ? 22 : -20],
-              opacity: [0, 0.55, 0],
-              scale: [0.25, 0.8, 0],
+              y: [0, -180, -320],
+              x: [0, (i % 2 === 0 ? 1 : -1) * (12 + i * 2), (i % 2 === 0 ? -1 : 1) * 20],
+              opacity: [0, 0.85, 0],
+              scale: [0.2, 1.2, 0],
             }}
             transition={{
-              duration: particle.duration,
-              delay: particle.delay,
+              duration: 2.5 + (i % 3) * 0.6,
               repeat: Infinity,
+              delay: i * 0.18,
               ease: "easeOut",
             }}
           />
         ))}
       </div>
 
-      {/* =====================================================
-          MAIN SCENE
-          ===================================================== */}
-
-      <motion.div
-        className="rw-loader__scene"
-        style={{
-          "--scene-scale": scale,
-        }}
-      >
-        {/* Ground */}
-        <div className="rw-loader__ground">
-          <motion.div
-            className="rw-loader__ground-shadow"
-            animate={{
-              scaleX: [1, 0.9, 1],
-              opacity: [0.35, 0.22, 0.35],
-            }}
-            transition={{
-              duration: 1.8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
+      {/* TOP BRANDING HEADER */}
+      <header className="rw-header">
+        <div className="rw-badge-tag rw-badge-tag--left">
+          <span>Fresh Hot</span>
+          <strong>Tandoori</strong>
         </div>
 
-        {/* =================================================
-            TANDOOR
-            ================================================= */}
-
-        <div className="rw-tandoor">
-          {/* Heat glow */}
-          <motion.div
-            className="rw-tandoor__outer-glow"
-            variants={glowVariants}
-            animate={phase.key}
-          />
-
-          {/* Smoke */}
-          <div className="rw-tandoor__smoke">
-            {smokeParticles.map((particle) => (
-              <motion.span
-                key={particle.id}
-                animate={{
-                  y: [-2, -45, -78],
-                  x: [
-                    0,
-                    particle.id % 2 ? 14 : -12,
-                    particle.id % 2 ? 22 : -18,
-                  ],
-                  opacity: [0, 0.4, 0],
-                  scale: [0.3, 0.8, 1.2],
-                }}
-                transition={{
-                  duration: 2.5,
-                  delay: particle.delay,
-                  repeat: Infinity,
-                  ease: "easeOut",
-                }}
+        <div className="rw-brand-center">
+          <div className="rw-chef-hat-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M18 28C14.6863 28 12 25.3137 12 22C12 19.1 14.05 16.68 16.8 16.14C17.58 11.52 21.6 8 26.4 8C29.08 8 31.48 9.15 33.19 11.02C34.73 9.77 36.72 9 38.88 9C43.5 9 47.33 12.35 48.2 16.78C51.05 17.58 53.16 20.2 53.16 23.33C53.16 27.2 50.03 30.33 46.16 30.33"
+                stroke="#fbbf24"
+                strokeWidth="4"
+                strokeLinecap="round"
               />
-            ))}
+              <path
+                d="M18 30H46V44C46 47.3137 43.3137 50 40 50H24C20.6863 50 18 47.3137 18 44V30Z"
+                fill="#fbbf24"
+              />
+            </svg>
           </div>
-
-          {/* Chimney */}
-          <div className="rw-tandoor__chimney">
-            <div className="rw-tandoor__chimney-cap" />
-            <div className="rw-tandoor__chimney-body" />
-          </div>
-
-          {/* Main body */}
-          <div className="rw-tandoor__body">
-            {/* decorative texture */}
-            <div className="rw-tandoor__texture">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-
-            {/* top lip */}
-            <div className="rw-tandoor__lip">
-              <div className="rw-tandoor__mouth">
-                <div className="rw-tandoor__inside">
-                  {/* fire */}
-                  <motion.div
-                    className="rw-fire"
-                    variants={fireVariants}
-                    animate={phase.key}
-                  >
-                    <span className="rw-fire__flame rw-fire__flame--back" />
-                    <span className="rw-fire__flame rw-fire__flame--left" />
-                    <span className="rw-fire__flame rw-fire__flame--main" />
-                    <span className="rw-fire__flame rw-fire__flame--right" />
-                    <span className="rw-fire__core" />
-                  </motion.div>
-
-                  {/* cooking roti */}
-                  <motion.div
-                    className="rw-cooking-roti"
-                    variants={cookingRotiVariants}
-                    animate={phase.key}
-                  >
-                    <div className="rw-cooking-roti__bubble rw-cooking-roti__bubble--1" />
-                    <div className="rw-cooking-roti__bubble rw-cooking-roti__bubble--2" />
-                    <div className="rw-cooking-roti__bubble rw-cooking-roti__bubble--3" />
-                    <div className="rw-cooking-roti__bubble rw-cooking-roti__bubble--4" />
-                    <div className="rw-cooking-roti__bubble rw-cooking-roti__bubble--5" />
-
-                    <div className="rw-cooking-roti__spot rw-cooking-roti__spot--1" />
-                    <div className="rw-cooking-roti__spot rw-cooking-roti__spot--2" />
-                    <div className="rw-cooking-roti__spot rw-cooking-roti__spot--3" />
-                    <div className="rw-cooking-roti__spot rw-cooking-roti__spot--4" />
-                    <div className="rw-cooking-roti__spot rw-cooking-roti__spot--5" />
-                  </motion.div>
-                </div>
-              </div>
-            </div>
-
-            {/* Body rings */}
-            <div className="rw-tandoor__ring rw-tandoor__ring--1" />
-            <div className="rw-tandoor__ring rw-tandoor__ring--2" />
-            <div className="rw-tandoor__ring rw-tandoor__ring--3" />
-
-            {/* Highlight */}
-            <div className="rw-tandoor__highlight" />
-
-            {/* Base */}
-            <div className="rw-tandoor__base" />
-          </div>
+          <h1 className="rw-main-title">
+            ROTI <span>WAALE</span>
+          </h1>
+          <p className="rw-sub-tagline">TASTE • TRADITION • TANDOOR</p>
         </div>
 
-        {/* =================================================
-            ROTI WAALE CHARACTER
-            ================================================= */}
+        <div className="rw-badge-circle rw-badge-tag--right">
+          <span className="rw-percent">100%</span>
+          <span className="rw-label">Tandoor Magic</span>
+        </div>
+      </header>
 
-        <motion.div
-          className="rw-character"
-          variants={characterVariants}
-          animate={phase.key}
-        >
-          {/* shadow */}
-          <motion.div
-            className="rw-character__shadow"
-            animate={{
-              scaleX: [1, 0.88, 1],
-              opacity: [0.4, 0.25, 0.4],
-            }}
-            transition={{
-              duration: 0.52,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* head */}
-          <div className="rw-character__head">
-            <div className="rw-character__ear rw-character__ear--left" />
-            <div className="rw-character__ear rw-character__ear--right" />
-
-            <div className="rw-character__face">
-              <div className="rw-character__eye rw-character__eye--left" />
-              <div className="rw-character__eye rw-character__eye--right" />
-
-              <div className="rw-character__eyebrow rw-character__eyebrow--left" />
-              <div className="rw-character__eyebrow rw-character__eyebrow--right" />
-
-              <div className="rw-character__nose" />
-
-              <div className="rw-character__moustache">
-                <span />
-                <span />
-              </div>
-
-              <div className="rw-character__smile" />
-            </div>
-
-            {/* hair */}
-            <div className="rw-character__hair" />
-
-            {/* chef cap */}
-            <div className="rw-character__cap">
-              <div className="rw-character__cap-top">
-                <span />
-                <span />
-                <span />
-              </div>
-
-              <div className="rw-character__cap-band">
-                <span>ROTI</span>
-              </div>
-            </div>
-          </div>
-
-          {/* neck */}
-          <div className="rw-character__neck" />
-
-          {/* body */}
-          <div className="rw-character__body">
-            <div className="rw-character__collar rw-character__collar--left" />
-            <div className="rw-character__collar rw-character__collar--right" />
-
-            <div className="rw-character__buttons">
-              <span />
-              <span />
-              <span />
-            </div>
-
-            {/* apron */}
-            <div className="rw-character__apron">
-              <div className="rw-character__apron-logo">
-                <span>R</span>
-              </div>
-            </div>
-          </div>
-
-          {/* left arm */}
-          <motion.div
-            className="rw-character__arm rw-character__arm--left"
-            variants={leftArmVariants}
-            animate={phase.key}
-          >
-            <div className="rw-character__hand" />
-          </motion.div>
-
-          {/* right arm */}
-          <motion.div
-            className="rw-character__arm rw-character__arm--right"
-            variants={rightArmVariants}
-            animate={phase.key}
-          >
-            <div className="rw-character__hand" />
-          </motion.div>
-
-          {/* tray */}
-          <motion.div
-            className="rw-tray"
-            variants={trayVariants}
-            animate={phase.key}
-          >
-            <div className="rw-tray__surface">
-              <div className="rw-tray__roti rw-tray__roti--one" />
-              <div className="rw-tray__roti rw-tray__roti--two" />
-              <div className="rw-tray__roti rw-tray__roti--three" />
-            </div>
-
-            <div className="rw-tray__rim" />
-          </motion.div>
-
-          {/* legs */}
-          <motion.div
-            className="rw-character__leg rw-character__leg--left"
-            variants={leftLegVariants}
-            animate={phase.key}
-          >
-            <div className="rw-character__shoe" />
-          </motion.div>
-
-          <motion.div
-            className="rw-character__leg rw-character__leg--right"
-            variants={rightLegVariants}
-            animate={phase.key}
-          >
-            <div className="rw-character__shoe" />
-          </motion.div>
-
-          {/* carried roti */}
-          <motion.div
-            className="rw-carried-roti"
-            variants={rotiVariants}
-            animate={phase.key}
-          >
-            <span />
-            <span />
-            <span />
-            <span />
-          </motion.div>
-        </motion.div>
-
-        {/* Heat waves */}
-        <div className="rw-heat">
-          {[0, 1, 2].map((index) => (
-            <motion.span
-              key={index}
+      {/* CENTER STAGE: TANDOOR WITH ROTI BAKING */}
+      <div className="rw-stage-viewport">
+        <div className="rw-tandoor-center-stage">
+          {/* OUTER CLAY TANDOOR VESSEL */}
+          <div className="rw-tandoor-clay-body">
+            {/* INNER FIRE GLOW EFFECT */}
+            <motion.div
+              className="rw-tandoor-fire-glow"
               animate={{
-                opacity: [0, 0.5, 0],
-                scaleY: [0.75, 1.15, 0.75],
+                scale: [0.92, 1.08, 0.92],
+                opacity: [0.6, 0.9, 0.6],
               }}
-              transition={{
-                duration: 1.1 + index * 0.15,
-                delay: index * 0.2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
             />
-          ))}
+
+            {/* TANDOOR TOP PIT MOUTH */}
+            <div className="rw-tandoor-pit">
+              <div className="rw-pit-inner-flame" />
+
+              {/* ROTI BAKING IN THE CENTER */}
+              <motion.div
+                className="rw-roti-baking"
+                animate={
+                  activeIdx === 0
+                    ? { scale: [0, 0.8], opacity: [0, 0.8] }
+                    : activeIdx === 1
+                    ? { scale: [0.8, 1], opacity: 1, rotate: [-2, 2, -2] }
+                    : activeIdx === 2
+                    ? { scale: [1, 1.06, 1], opacity: 1 }
+                    : { scale: [1, 1.1, 1], opacity: 1 }
+                }
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                {/* ROTI CHARRED BLISTER SPOTS */}
+                <span className="rw-roti-spot rw-spot-1" />
+                <span className="rw-roti-spot rw-spot-2" />
+                <span className="rw-roti-spot rw-spot-3" />
+                <span className="rw-roti-spot rw-spot-4" />
+                <span className="rw-roti-spot rw-spot-5" />
+
+                {/* STEAM RISING FROM ROTI */}
+                <motion.div
+                  className="rw-roti-steam"
+                  animate={{ y: [-2, -22], opacity: [0, 0.8, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                />
+              </motion.div>
+            </div>
+          </div>
         </div>
-      </motion.div>
 
-      {/* =====================================================
-          BRAND
-          ===================================================== */}
-
-      <motion.div
-        className="rw-loader__brand"
-        initial={{
-          opacity: 0,
-          y: 12,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          delay: 0.35,
-          duration: 0.5,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-      >
-        <div className="rw-loader__brand-name">
-          <span className="rw-loader__brand-roti">
-            ROTI
-          </span>
-
-          <span className="rw-loader__brand-waale">
-            WAALE
-          </span>
+        {/* FLOATING ACTION BANNER */}
+        <div className="rw-action-banner">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStage.id}
+              className="rw-banner-text"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              <h2>{currentStage.label}</h2>
+              <p>{currentStage.subtitle}</p>
+            </motion.div>
+          </AnimatePresence>
         </div>
+      </div>
 
-        <div className="rw-loader__tagline">
-          Fresh From The Tandoor
-        </div>
-      </motion.div>
-
-      {/* =====================================================
-          MESSAGE
-          ===================================================== */}
-
-      <div className="rw-loader__message-container">
-        <AnimatePresence mode="wait">
+      {/* PROGRESS BAR */}
+      <div className="rw-progress-block">
+        <div className="rw-progress-track-outer">
           <motion.div
-            key={phase.key}
-            className="rw-loader__message"
-            initial={{
-              opacity: 0,
-              y: 8,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            exit={{
-              opacity: 0,
-              y: -8,
-            }}
-            transition={{
-              duration: 0.3,
-            }}
+            className="rw-progress-track-fill"
+            animate={{ width: `${currentStage.progress}%` }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span>
-              {message || phase.label}
-            </span>
-
-            <span className="rw-loader__dots">
-              <i />
-              <i />
-              <i />
-            </span>
+            <span className="rw-fill-head-light" />
           </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* =====================================================
-          PROGRESS
-          ===================================================== */}
-
-      <div className="rw-loader__progress-container">
-        <div className="rw-loader__progress">
-          <motion.div
-            className="rw-loader__progress-fill"
-            animate={{
-              width: `${clamp(progress, 0, 100)}%`,
-            }}
-            transition={{
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-          />
-
-          <motion.div
-            className="rw-loader__progress-shine"
-            animate={{
-              x: ["-100%", "250%"],
-            }}
-            transition={{
-              duration: 1.7,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
         </div>
-
-        <motion.span
-          className="rw-loader__percentage"
-          key={progress}
-          initial={{
-            opacity: 0,
-            scale: 0.8,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-          }}
-        >
-          {progress}%
-        </motion.span>
+        <span className="rw-progress-readout">{currentStage.progress}%</span>
       </div>
 
-      {/* =====================================================
-          STEPS
-          ===================================================== */}
-
-      <div className="rw-loader__steps">
-        {PHASES.map((item, index) => {
-          const active = index === phaseIndex;
-          const completed = index < phaseIndex;
+      {/* TIMELINE STEPS */}
+      <div className="rw-timeline">
+        {STAGES.map((stg, index) => {
+          const isActive = index === activeIdx;
+          const isDone = index < activeIdx;
 
           return (
-            <div
-              key={item.key}
-              className={[
-                "rw-loader__step",
-                active ? "is-active" : "",
-                completed ? "is-completed" : "",
-              ].join(" ")}
-            >
-              <motion.div
-                className="rw-loader__step-icon"
-                animate={
-                  active
-                    ? {
-                        scale: [1, 1.12, 1],
-                      }
-                    : {
-                        scale: 1,
-                      }
-                }
-                transition={{
-                  duration: 0.8,
-                  repeat: active ? Infinity : 0,
-                }}
+            <React.Fragment key={stg.id}>
+              <div
+                className={`rw-timeline-node ${isActive ? "is-active" : ""} ${
+                  isDone ? "is-done" : ""
+                }`}
               >
-                {index === 0 && "🫓"}
-                {index === 1 && "🏺"}
-                {index === 2 && "🔥"}
-                {index === 3 && "✨"}
-              </motion.div>
+                <div className="rw-node-circle">
+                  {index === 0 && <span className="rw-icon">🏺</span>}
+                  {index === 1 && <span className="rw-icon">🔥</span>}
+                  {index === 2 && <span className="rw-icon">🫓</span>}
+                  {index === 3 && <span className="rw-icon">✨</span>}
+                </div>
+                <span className="rw-node-label">{stg.badge}</span>
+              </div>
 
-              <span>{item.short}</span>
-
-              {index !== PHASES.length - 1 && (
-                <div className="rw-loader__step-line" />
+              {index !== STAGES.length - 1 && (
+                <div
+                  className={`rw-timeline-line ${
+                    index < activeIdx ? "is-filled" : ""
+                  }`}
+                />
               )}
-            </div>
+            </React.Fragment>
           );
         })}
       </div>
 
-      {/* Bottom accent */}
-      <div className="rw-loader__bottom-accent" />
-    </motion.div>
+      {/* FOOTER CAPTION */}
+      <div className="rw-footer-tag">🍃 Roti is on the way... 🍃</div>
+    </div>
   );
 };
 

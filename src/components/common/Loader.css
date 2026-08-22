@@ -1,2293 +1,398 @@
 /* ============================================================
-   ROTI WAALE
-   PREMIUM CARTOON TANDOOR LOADER
+   ROTI WAALE - CENTER TANDOOR PRELOADER (NO MAN / NO CHEF)
    ============================================================ */
 
 :root {
-  --rw-yellow: #f7c600;
-  --rw-yellow-light: #ffe16a;
-  --rw-yellow-dark: #dcae00;
-
-  --rw-brown: #5a1700;
-  --rw-brown-light: #7c2a0a;
-  --rw-brown-dark: #210700;
-
-  --rw-orange: #ff8a00;
-  --rw-fire: #ff5a00;
-
-  --rw-cream: #fffbe6;
-
-  --rw-shadow: rgba(0, 0, 0, 0.45);
+  --rw-gold: #fbbf24;
+  --rw-gold-bright: #f59e0b;
+  --rw-orange: #f97316;
+  --rw-red: #ef4444;
+  --rw-dark-bg: #0d0302;
 }
 
-/* ============================================================
-   ROOT
-   ============================================================ */
-
-.rw-loader {
-  position: fixed;
-
-  inset: 0;
-
-  width: 100%;
-  min-height: 100vh;
-
-  overflow: hidden;
-
+.rw-app-preloader {
   display: flex;
-
   flex-direction: column;
-
   align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  padding: 24px;
-
-  color: white;
-
-  background:
-    radial-gradient(
-      circle at 50% 42%,
-      rgba(247, 198, 0, 0.1),
-      transparent 25%
-    ),
-    radial-gradient(
-      circle at 50% 75%,
-      rgba(255, 95, 0, 0.08),
-      transparent 32%
-    ),
-    linear-gradient(
-      145deg,
-      #160500 0%,
-      #2c0c00 45%,
-      #130400 100%
-    );
-
-  isolation: isolate;
-
-  z-index: 99999;
-
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-.rw-loader--inline {
-  position: relative;
-
-  min-height: 390px;
-
-  border-radius: 24px;
-
-  background:
-    radial-gradient(
-      circle at 50% 40%,
-      rgba(247, 198, 0, 0.08),
-      transparent 28%
-    ),
-    linear-gradient(
-      145deg,
-      #1b0700,
-      #351000,
-      #160500
-    );
-}
-
-/* ============================================================
-   BACKGROUND
-   ============================================================ */
-
-.rw-loader__background {
-  position: absolute;
-
-  inset: 0;
-
+  justify-content: space-between;
+  padding: 32px 24px;
+  background: radial-gradient(circle at 50% 35%, #2a0b05 0%, #120302 60%, #050000 100%);
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
   overflow: hidden;
+  box-sizing: border-box;
+  isolation: isolate;
+}
 
+.rw-app-preloader--fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+}
+
+.rw-app-preloader--inline {
+  position: relative;
+  width: 100%;
+  min-height: 580px;
+  border-radius: 24px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+/* BACKGROUND LIGHTING */
+.rw-bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.85) 100%);
   pointer-events: none;
-
   z-index: -2;
 }
 
-.rw-loader__background-glow {
+.rw-bg-glow {
   position: absolute;
-
-  width: 520px;
-  height: 520px;
-
-  left: 50%;
-  top: 44%;
-
-  transform: translate(-50%, -50%);
-
+  width: 550px;
+  height: 550px;
   border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(247, 198, 0, 0.11),
-      rgba(255, 95, 0, 0.04) 40%,
-      transparent 70%
-    );
-
-  filter: blur(18px);
+  top: 20%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, rgba(239, 68, 68, 0.08) 55%, transparent 75%);
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(45px);
 }
 
-.rw-loader__background-glow--two {
-  width: 700px;
-  height: 700px;
-
-  top: 70%;
-
-  opacity: 0.4;
-}
-
-.rw-loader__decor {
+/* EMBERS */
+.rw-ember-particles {
   position: absolute;
-
-  color: rgba(247, 198, 0, 0.14);
-
-  font-size: 26px;
-}
-
-.rw-loader__decor--left {
-  left: 9%;
-  top: 28%;
-}
-
-.rw-loader__decor--right {
-  right: 9%;
-  top: 22%;
-}
-
-/* ============================================================
-   FLOUR
-   ============================================================ */
-
-.rw-loader__flour-field {
-  position: absolute;
-
   inset: 0;
-
   pointer-events: none;
-
-  overflow: hidden;
-
-  z-index: 2;
+  z-index: 1;
 }
 
-.rw-loader__flour {
+.rw-ember-spark {
   position: absolute;
-
-  top: 57%;
-
-  width: 4px;
-  height: 4px;
-
+  bottom: 15%;
   border-radius: 50%;
-
-  background: rgba(255, 250, 220, 0.72);
-
-  box-shadow:
-    0 0 6px rgba(255, 250, 220, 0.35);
+  background: var(--rw-gold);
+  box-shadow: 0 0 10px var(--rw-orange);
 }
 
-/* ============================================================
-   SCENE
-   ============================================================ */
-
-.rw-loader__scene {
-  position: relative;
-
-  width: 580px;
-  height: 320px;
-
-  transform:
-    scale(var(--scene-scale));
-
-  transform-origin: center;
-
-  flex-shrink: 0;
-}
-
-/* ============================================================
-   GROUND
-   ============================================================ */
-
-.rw-loader__ground {
-  position: absolute;
-
-  left: 25px;
-  right: 25px;
-
-  bottom: 25px;
-
-  height: 3px;
-
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(247, 198, 0, 0.2),
-      rgba(247, 198, 0, 0.55),
-      rgba(247, 198, 0, 0.2),
-      transparent
-    );
-}
-
-.rw-loader__ground-shadow {
-  position: absolute;
-
-  left: 15%;
-  right: 15%;
-
-  top: 12px;
-
-  height: 18px;
-
-  border-radius: 50%;
-
-  background: rgba(0, 0, 0, 0.6);
-
-  filter: blur(9px);
-}
-
-/* ============================================================
-   TANDOOR
-   ============================================================ */
-
-.rw-tandoor {
-  position: absolute;
-
-  right: 38px;
-  bottom: 28px;
-
-  width: 175px;
-  height: 235px;
-
-  z-index: 5;
-}
-
-.rw-tandoor__outer-glow {
-  position: absolute;
-
-  left: -50px;
-  top: 15px;
-
-  width: 275px;
-  height: 235px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      ellipse,
-      rgba(255, 100, 0, 0.35),
-      rgba(247, 198, 0, 0.1) 35%,
-      transparent 70%
-    );
-
-  filter: blur(20px);
-
-  pointer-events: none;
-}
-
-/* chimney */
-
-.rw-tandoor__chimney {
-  position: absolute;
-
-  left: 58px;
-  top: -57px;
-
-  width: 62px;
-  height: 80px;
-
-  z-index: 2;
-}
-
-.rw-tandoor__chimney-body {
-  position: absolute;
-
-  left: 6px;
-  top: 10px;
-
-  width: 50px;
-  height: 68px;
-
-  border-radius: 8px 8px 2px 2px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #481000,
-      #762400,
-      #4b1100
-    );
-
-  box-shadow:
-    inset 7px 0 8px rgba(255, 170, 70, 0.08),
-    inset -7px 0 8px rgba(0, 0, 0, 0.25);
-}
-
-.rw-tandoor__chimney-cap {
-  position: absolute;
-
-  left: 0;
-  top: 0;
-
-  width: 62px;
-  height: 13px;
-
-  border-radius: 7px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #8e3513,
-      #511200
-    );
-
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* smoke */
-
-.rw-tandoor__smoke {
-  position: absolute;
-
-  left: 72px;
-  top: -55px;
-
-  width: 45px;
-  height: 100px;
-
-  z-index: 10;
-
-  pointer-events: none;
-}
-
-.rw-tandoor__smoke span {
-  position: absolute;
-
-  left: 10px;
-  bottom: 0;
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(255, 247, 220, 0.18),
-      rgba(255, 255, 255, 0.05),
-      transparent 70%
-    );
-
-  filter: blur(4px);
-}
-
-/* body */
-
-.rw-tandoor__body {
-  position: absolute;
-
-  left: 0;
-  bottom: 0;
-
-  width: 175px;
-  height: 205px;
-
-  overflow: hidden;
-
-  border-radius:
-    43px
-    43px
-    28px
-    28px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #421000,
-      #692000 18%,
-      #87300f 45%,
-      #6b2000 72%,
-      #350b00
-    );
-
-  border: 2px solid rgba(255, 177, 82, 0.13);
-
-  box-shadow:
-    inset 12px 0 22px rgba(255, 145, 40, 0.08),
-    inset -15px 0 25px rgba(0, 0, 0, 0.28),
-    0 22px 40px rgba(0, 0, 0, 0.5);
-}
-
-/* clay texture */
-
-.rw-tandoor__texture {
-  position: absolute;
-
-  inset: 0;
-
-  opacity: 0.12;
-}
-
-.rw-tandoor__texture span {
-  position: absolute;
-
-  width: 9px;
-  height: 3px;
-
-  border-radius: 50%;
-
-  background: #2d0800;
-}
-
-.rw-tandoor__texture span:nth-child(1) {
-  left: 18px;
-  top: 95px;
-}
-
-.rw-tandoor__texture span:nth-child(2) {
-  left: 80px;
-  top: 118px;
-}
-
-.rw-tandoor__texture span:nth-child(3) {
-  left: 120px;
-  top: 78px;
-}
-
-.rw-tandoor__texture span:nth-child(4) {
-  left: 45px;
-  top: 154px;
-}
-
-.rw-tandoor__texture span:nth-child(5) {
-  right: 18px;
-  top: 145px;
-}
-
-.rw-tandoor__texture span:nth-child(6) {
-  left: 95px;
-  bottom: 24px;
-}
-
-/* lip */
-
-.rw-tandoor__lip {
-  position: absolute;
-
-  left: 13px;
-  top: 9px;
-
-  width: 149px;
-  height: 70px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      180deg,
-      #762500,
-      #3b0b00
-    );
-
-  box-shadow:
-    inset 0 5px 11px rgba(255, 184, 80, 0.09),
-    0 5px 10px rgba(0, 0, 0, 0.35);
-}
-
-/* mouth */
-
-.rw-tandoor__mouth {
-  position: absolute;
-
-  left: 18px;
-  top: 10px;
-
-  width: 113px;
-  height: 48px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      ellipse,
-      #060100 0%,
-      #0e0200 45%,
-      #260800 75%,
-      #471000 100%
-    );
-
-  border: 5px solid #360a00;
-
-  box-shadow:
-    inset 0 8px 15px rgba(0, 0, 0, 0.85);
-}
-
-.rw-tandoor__inside {
-  position: relative;
-
+/* HEADER BRANDING */
+.rw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-
-  border-radius: 50%;
-}
-
-/* ============================================================
-   FIRE
-   ============================================================ */
-
-.rw-fire {
-  position: absolute;
-
-  left: 28px;
-  bottom: -2px;
-
-  width: 57px;
-  height: 46px;
-
-  transform-origin: bottom center;
-}
-
-.rw-fire__flame {
-  position: absolute;
-
-  bottom: 0;
-
-  display: block;
-
-  transform-origin: bottom center;
-
-  border-radius:
-    55%
-    45%
-    45%
-    45%;
-}
-
-.rw-fire__flame--back {
-  left: 17px;
-
-  width: 24px;
-  height: 43px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #ffe879,
-      #ff9500 55%,
-      #ff4c00
-    );
-
-  transform: rotate(0deg);
-}
-
-.rw-fire__flame--left {
-  left: 2px;
-
-  width: 21px;
-  height: 33px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #ffe889,
-      #ff8a00 60%,
-      #ff4200
-    );
-
-  transform: rotate(-25deg);
-}
-
-.rw-fire__flame--main {
-  left: 19px;
-
-  width: 25px;
-  height: 48px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #fff4a3,
-      #ff9d00 48%,
-      #ff4c00
-    );
-}
-
-.rw-fire__flame--right {
-  right: 2px;
-
-  width: 20px;
-  height: 34px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #ffe681,
-      #ff8500 55%,
-      #ff3d00
-    );
-
-  transform: rotate(25deg);
-}
-
-.rw-fire__core {
-  position: absolute;
-
-  left: 21px;
-  bottom: 3px;
-
-  width: 18px;
-  height: 29px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      180deg,
-      #fffbd0,
-      #ffd54a 55%,
-      #ff8a00
-    );
-
-  filter: blur(1px);
-}
-
-/* ============================================================
-   COOKING ROTI
-   ============================================================ */
-
-.rw-cooking-roti {
-  position: absolute;
-
-  left: 34px;
-  top: 3px;
-
-  width: 45px;
-  height: 45px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle at 32% 28%,
-      #ffeab0,
-      #e5a043 58%,
-      #9d5110 100%
-    );
-
-  box-shadow:
-    0 0 12px rgba(255, 153, 0, 0.3);
-
+  max-width: 860px;
   z-index: 5;
 }
 
-.rw-cooking-roti__bubble {
-  position: absolute;
+.rw-badge-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 14px;
+  color: var(--rw-gold);
+}
 
+.rw-badge-tag strong {
+  font-size: 20px;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.rw-brand-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.rw-chef-hat-icon {
+  width: 38px;
+  height: 38px;
+  margin-bottom: -4px;
+}
+
+.rw-main-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--rw-gold);
+}
+
+.rw-main-title span {
+  color: #ffffff;
+}
+
+.rw-sub-tagline {
+  margin: 4px 0 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rw-badge-circle {
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(255, 230, 150, 0.55),
-      rgba(174, 91, 17, 0.2)
-    );
+  border: 2px solid var(--rw-gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4);
 }
 
-.rw-cooking-roti__bubble--1 {
-  left: 9px;
-  top: 9px;
-
-  width: 9px;
-  height: 9px;
+.rw-percent {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--rw-gold);
 }
 
-.rw-cooking-roti__bubble--2 {
-  right: 8px;
-  top: 12px;
-
-  width: 7px;
-  height: 7px;
+.rw-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  color: #ffffff;
+  padding: 0 4px;
 }
 
-.rw-cooking-roti__bubble--3 {
-  left: 18px;
-  bottom: 8px;
-
-  width: 10px;
-  height: 7px;
+/* VIEWPORT & CENTER STAGE */
+.rw-stage-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
 }
 
-.rw-cooking-roti__bubble--4 {
-  right: 11px;
-  bottom: 11px;
-
-  width: 8px;
-  height: 9px;
+.rw-tandoor-center-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.rw-cooking-roti__bubble--5 {
-  left: 10px;
-  bottom: 16px;
-
-  width: 5px;
-  height: 5px;
+/* CLAY TANDOOR VESSEL */
+.rw-tandoor-clay-body {
+  position: relative;
+  width: 210px;
+  height: 200px;
+  background: linear-gradient(180deg, #6b2d0c 0%, #3b1404 100%);
+  border-radius: 60px 60px 24px 24px;
+  border: 3px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), inset 0 4px 12px rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14px;
 }
 
-.rw-cooking-roti__spot {
+.rw-tandoor-fire-glow {
   position: absolute;
-
+  inset: -15px;
   border-radius: 50%;
-
-  background: rgba(103, 47, 7, 0.72);
-}
-
-.rw-cooking-roti__spot--1 {
-  left: 12px;
-  top: 17px;
-
-  width: 5px;
-  height: 5px;
-}
-
-.rw-cooking-roti__spot--2 {
-  right: 12px;
-  top: 9px;
-
-  width: 6px;
-  height: 6px;
-}
-
-.rw-cooking-roti__spot--3 {
-  left: 22px;
-  top: 7px;
-
-  width: 4px;
-  height: 4px;
-}
-
-.rw-cooking-roti__spot--4 {
-  left: 25px;
-  bottom: 8px;
-
-  width: 6px;
-  height: 5px;
-}
-
-.rw-cooking-roti__spot--5 {
-  right: 7px;
-  bottom: 19px;
-
-  width: 4px;
-  height: 4px;
-}
-
-/* ============================================================
-   TANDOOR RINGS
-   ============================================================ */
-
-.rw-tandoor__ring {
-  position: absolute;
-
-  left: 20px;
-
-  width: 135px;
-  height: 8px;
-
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 190, 100, 0.2),
-      rgba(50, 8, 0, 0.28)
-    );
-
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.rw-tandoor__ring--1 {
-  top: 92px;
-}
-
-.rw-tandoor__ring--2 {
-  top: 139px;
-}
-
-.rw-tandoor__ring--3 {
-  top: 177px;
-}
-
-.rw-tandoor__highlight {
-  position: absolute;
-
-  left: 23px;
-  top: 66px;
-
-  width: 17px;
-  height: 108px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 222, 160, 0.12),
-      transparent
-    );
-
-  filter: blur(5px);
-}
-
-.rw-tandoor__base {
-  position: absolute;
-
-  left: -8px;
-  bottom: -14px;
-
-  width: 191px;
-  height: 28px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      180deg,
-      #692000,
-      #2c0800
-    );
-
-  box-shadow:
-    0 10px 18px rgba(0, 0, 0, 0.4);
-}
-
-/* ============================================================
-   CHARACTER
-   ============================================================ */
-
-.rw-character {
-  position: absolute;
-
-  left: 70px;
-  bottom: 26px;
-
-  width: 135px;
-  height: 225px;
-
-  transform-origin: bottom center;
-
-  z-index: 15;
-}
-
-.rw-character__shadow {
-  position: absolute;
-
-  left: 12px;
-  bottom: -3px;
-
-  width: 110px;
-  height: 17px;
-
-  border-radius: 50%;
-
-  background: rgba(0, 0, 0, 0.6);
-
-  filter: blur(8px);
-
+  background: radial-gradient(circle, var(--rw-orange) 0%, rgba(239, 68, 68, 0.3) 50%, transparent 70%);
+  filter: blur(16px);
   z-index: -1;
 }
 
-/* ============================================================
-   HEAD
-   ============================================================ */
-
-.rw-character__head {
-  position: absolute;
-
-  left: 40px;
-  top: 7px;
-
-  width: 57px;
-  height: 64px;
-
-  z-index: 8;
-}
-
-.rw-character__face {
-  position: absolute;
-
-  left: 5px;
-  top: 7px;
-
-  width: 47px;
-  height: 55px;
-
-  border-radius:
-    46%
-    46%
-    48%
-    48%;
-
-  background:
-    linear-gradient(
-      135deg,
-      #e1a06c,
-      #b96a3a
-    );
-
-  box-shadow:
-    inset -5px -5px 9px rgba(90, 31, 8, 0.12),
-    inset 3px 3px 8px rgba(255, 215, 175, 0.16);
-}
-
-.rw-character__ear {
-  position: absolute;
-
-  top: 29px;
-
-  width: 9px;
-  height: 17px;
-
-  border-radius: 50%;
-
-  background: #b86b3a;
-}
-
-.rw-character__ear--left {
-  left: 0;
-}
-
-.rw-character__ear--right {
-  right: 0;
-}
-
-/* eyes */
-
-.rw-character__eye {
-  position: absolute;
-
-  top: 22px;
-
-  width: 5px;
-  height: 5px;
-
-  border-radius: 50%;
-
-  background: #251006;
-}
-
-.rw-character__eye--left {
-  left: 12px;
-}
-
-.rw-character__eye--right {
-  right: 12px;
-}
-
-/* eyebrows */
-
-.rw-character__eyebrow {
-  position: absolute;
-
-  top: 17px;
-
-  width: 10px;
-  height: 3px;
-
-  border-radius: 999px;
-
-  background: #4a1a0b;
-}
-
-.rw-character__eyebrow--left {
-  left: 9px;
-
-  transform: rotate(-8deg);
-}
-
-.rw-character__eyebrow--right {
-  right: 9px;
-
-  transform: rotate(8deg);
-}
-
-/* nose */
-
-.rw-character__nose {
-  position: absolute;
-
-  left: 22px;
-  top: 25px;
-
-  width: 6px;
-  height: 9px;
-
-  border-right:
-    2px solid rgba(91, 40, 17, 0.5);
-
-  border-radius: 50%;
-}
-
-/* moustache */
-
-.rw-character__moustache {
-  position: absolute;
-
-  left: 13px;
-  top: 34px;
-
-  width: 22px;
-  height: 9px;
-}
-
-.rw-character__moustache span {
-  position: absolute;
-
-  top: 0;
-
-  width: 12px;
-  height: 7px;
-
-  background: #321207;
-
-  border-radius:
-    100%
-    0
-    100%
-    20%;
-}
-
-.rw-character__moustache span:first-child {
-  left: 0;
-
-  transform: rotate(18deg);
-}
-
-.rw-character__moustache span:last-child {
-  right: 0;
-
-  transform: scaleX(-1) rotate(18deg);
-}
-
-/* smile */
-
-.rw-character__smile {
-  position: absolute;
-
-  left: 17px;
-  top: 42px;
-
-  width: 14px;
-  height: 6px;
-
-  border-bottom:
-    2px solid rgba(79, 29, 12, 0.65);
-
-  border-radius: 50%;
-}
-
-/* hair */
-
-.rw-character__hair {
-  position: absolute;
-
-  left: 8px;
-  top: 6px;
-
-  width: 43px;
-  height: 19px;
-
-  border-radius:
-    50%
-    50%
-    20%
-    20%;
-
-  background:
-    #251006;
-
-  z-index: 3;
-}
-
-/* ============================================================
-   CHEF CAP
-   ============================================================ */
-
-.rw-character__cap {
-  position: absolute;
-
-  left: 4px;
-  top: -6px;
-
-  width: 51px;
-  height: 30px;
-
-  z-index: 10;
-}
-
-.rw-character__cap-top {
-  position: absolute;
-
-  left: 2px;
-  top: 0;
-
-  width: 47px;
-  height: 23px;
-
-  border-radius:
-    55%
-    55%
-    30%
-    30%;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fffef4,
-      #e2dcc9
-    );
-
-  box-shadow:
-    inset 0 4px 8px rgba(255, 255, 255, 0.9),
-    0 3px 5px rgba(0, 0, 0, 0.12);
-}
-
-.rw-character__cap-top span {
-  position: absolute;
-
-  width: 8px;
-  height: 8px;
-
-  border-radius: 50%;
-
-  background: rgba(180, 169, 145, 0.35);
-}
-
-.rw-character__cap-top span:nth-child(1) {
-  left: 10px;
-  top: 7px;
-}
-
-.rw-character__cap-top span:nth-child(2) {
-  left: 22px;
-  top: 4px;
-}
-
-.rw-character__cap-top span:nth-child(3) {
-  right: 9px;
-  top: 8px;
-}
-
-.rw-character__cap-band {
-  position: absolute;
-
-  left: 0;
-  bottom: 1px;
-
-  width: 51px;
-  height: 8px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #dca900,
-      #f7c600,
-      #dca900
-    );
-
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.15);
-
-  color: #5a1700;
-
-  font-size: 5px;
-  font-weight: 900;
-
-  letter-spacing: 0.7px;
-}
-
-/* ============================================================
-   BODY
-   ============================================================ */
-
-.rw-character__neck {
-  position: absolute;
-
-  left: 57px;
-  top: 62px;
-
-  width: 22px;
-  height: 18px;
-
-  background: #b96938;
-
-  z-index: 4;
-}
-
-.rw-character__body {
-  position: absolute;
-
-  left: 29px;
-  top: 73px;
-
-  width: 80px;
-  height: 88px;
-
-  border-radius:
-    20px
-    20px
-    12px
-    12px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #762000,
-      #9a310a 48%,
-      #621900
-    );
-
-  box-shadow:
-    inset 7px 0 11px rgba(255, 150, 70, 0.08),
-    inset -9px 0 11px rgba(0, 0, 0, 0.18);
-}
-
-.rw-character__collar {
-  position: absolute;
-
-  top: 0;
-
-  width: 32px;
-  height: 24px;
-
-  background:
-    #fff5d9;
-}
-
-.rw-character__collar--left {
-  left: 9px;
-
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    60% 100%
-  );
-}
-
-.rw-character__collar--right {
-  right: 9px;
-
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    40% 100%
-  );
-}
-
-.rw-character__buttons {
-  position: absolute;
-
-  left: 37px;
-  top: 29px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 9px;
-}
-
-.rw-character__buttons span {
-  width: 5px;
-  height: 5px;
-
-  border-radius: 50%;
-
-  background: #f8d98b;
-
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* apron */
-
-.rw-character__apron {
-  position: absolute;
-
-  left: 15px;
-  bottom: -4px;
-
-  width: 50px;
-  height: 62px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #f2dfb5,
-      #fff3cf,
-      #d7c29a
-    );
-
-  clip-path: polygon(
-    10% 0,
-    90% 0,
-    100% 100%,
-    0 100%
-  );
-
-  box-shadow:
-    0 5px 8px rgba(0, 0, 0, 0.15);
-}
-
-.rw-character__apron-logo {
-  position: absolute;
-
-  left: 16px;
-  top: 18px;
-
-  width: 18px;
-  height: 18px;
-
-  display: grid;
-
-  place-items: center;
-
-  border-radius: 50%;
-
-  background: #f7c600;
-
-  color: #5a1700;
-
-  font-size: 10px;
-  font-weight: 900;
-}
-
-/* ============================================================
-   ARMS
-   ============================================================ */
-
-.rw-character__arm {
-  position: absolute;
-
-  top: 78px;
-
-  width: 18px;
-  height: 74px;
-
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #862807,
-      #641800
-    );
-
-  transform-origin: top center;
-
-  z-index: 7;
-}
-
-.rw-character__arm--left {
-  left: 22px;
-}
-
-.rw-character__arm--right {
-  right: 22px;
-}
-
-.rw-character__hand {
-  position: absolute;
-
-  bottom: -4px;
-  left: 2px;
-
-  width: 15px;
-  height: 16px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      135deg,
-      #dfa06a,
-      #b96b3a
-    );
-}
-
-/* ============================================================
-   TRAY
-   ============================================================ */
-
-.rw-tray {
-  position: absolute;
-
-  left: 17px;
-  top: 126px;
-
-  width: 101px;
-  height: 26px;
-
-  transform-origin: center;
-
-  z-index: 12;
-}
-
-.rw-tray__surface {
-  position: absolute;
-
-  left: 0;
-  top: 0;
-
-  width: 101px;
-  height: 17px;
-
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      180deg,
-      #e0bd78,
-      #98702f
-    );
-
-  border: 2px solid #704c18;
-
-  box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.3);
-}
-
-.rw-tray__rim {
-  position: absolute;
-
-  left: 7px;
-  bottom: 0;
-
-  width: 87px;
-  height: 10px;
-
-  border-radius:
-    0
-    0
-    50%
-    50%;
-
-  border-bottom:
-    3px solid #704c18;
-}
-
-.rw-tray__roti {
-  position: absolute;
-
-  width: 25px;
-  height: 25px;
-
-  top: -11px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle at 30% 28%,
-      #ffe9ac,
-      #e0a045 62%,
-      #9d5412
-    );
-
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.28);
-}
-
-.rw-tray__roti--one {
-  left: 15px;
-}
-
-.rw-tray__roti--two {
-  left: 38px;
-  top: -14px;
-}
-
-.rw-tray__roti--three {
-  right: 14px;
-  top: -10px;
-}
-
-/* ============================================================
-   LEGS
-   ============================================================ */
-
-.rw-character__leg {
-  position: absolute;
-
-  top: 151px;
-
-  width: 21px;
-  height: 54px;
-
-  border-radius: 11px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #efd0ad,
-      #d79969
-    );
-
-  transform-origin: top center;
-
-  z-index: 2;
-}
-
-.rw-character__leg--left {
-  left: 40px;
-}
-
-.rw-character__leg--right {
-  right: 40px;
-}
-
-.rw-character__shoe {
-  position: absolute;
-
-  bottom: -6px;
-
-  left: -5px;
-
-  width: 31px;
-  height: 14px;
-
-  border-radius:
-    50%
-    60%
-    35%
-    40%;
-
-  background:
-    linear-gradient(
-      180deg,
-      #211109,
-      #050302
-    );
-}
-
-/* ============================================================
-   CARRIED ROTI
-   ============================================================ */
-
-.rw-carried-roti {
-  position: absolute;
-
-  left: 68px;
-  top: 117px;
-
-  width: 32px;
-  height: 32px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle at 30% 28%,
-      #ffeab0,
-      #e3a147 64%,
-      #a85b15
-    );
-
-  box-shadow:
-    0 3px 8px rgba(255, 150, 0, 0.22);
-
-  z-index: 20;
-}
-
-.rw-carried-roti span {
-  position: absolute;
-
-  width: 4px;
-  height: 4px;
-
-  border-radius: 50%;
-
-  background: rgba(116, 54, 8, 0.7);
-}
-
-.rw-carried-roti span:nth-child(1) {
-  left: 8px;
-  top: 9px;
-}
-
-.rw-carried-roti span:nth-child(2) {
-  right: 7px;
-  top: 8px;
-}
-
-.rw-carried-roti span:nth-child(3) {
-  left: 13px;
-  bottom: 7px;
-}
-
-.rw-carried-roti span:nth-child(4) {
-  right: 9px;
-  bottom: 12px;
-}
-
-/* ============================================================
-   HEAT WAVES
-   ============================================================ */
-
-.rw-heat {
-  position: absolute;
-
-  right: 62px;
-  bottom: 205px;
-
-  width: 100px;
-  height: 75px;
-
-  pointer-events: none;
-
-  z-index: 7;
-}
-
-.rw-heat span {
-  position: absolute;
-
-  bottom: 0;
-
-  width: 9px;
-  height: 50px;
-
-  border-left:
-    2px solid rgba(255, 190, 100, 0.3);
-
-  border-radius: 50%;
-
-  filter: blur(1px);
-}
-
-.rw-heat span:nth-child(1) {
-  left: 22px;
-}
-
-.rw-heat span:nth-child(2) {
-  left: 45px;
-}
-
-.rw-heat span:nth-child(3) {
-  left: 68px;
-}
-
-/* ============================================================
-   BRAND
-   ============================================================ */
-
-.rw-loader__brand {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  z-index: 30;
-}
-
-.rw-loader__brand-name {
-  display: flex;
-
-  gap: 7px;
-
-  font-size: 1.55rem;
-
-  font-weight: 950;
-
-  line-height: 1;
-
-  letter-spacing: 3px;
-}
-
-.rw-loader__brand-roti {
-  color: var(--rw-yellow);
-
-  text-shadow:
-    0 3px 15px rgba(247, 198, 0, 0.25);
-}
-
-.rw-loader__brand-waale {
-  color: #fff8df;
-}
-
-.rw-loader__tagline {
-  margin-top: 8px;
-
-  color:
-    rgba(255, 245, 210, 0.6);
-
-  font-size: 0.66rem;
-
-  font-weight: 700;
-
-  letter-spacing: 1.8px;
-
-  text-transform: uppercase;
-}
-
-/* ============================================================
-   MESSAGE
-   ============================================================ */
-
-.rw-loader__message-container {
-  min-height: 36px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  z-index: 30;
-}
-
-.rw-loader__message {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  padding:
-    8px
-    17px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(0, 0, 0, 0.28);
-
-  border:
-    1px solid rgba(247, 198, 0, 0.15);
-
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  color:
-    rgba(255, 250, 230, 0.9);
-
-  font-size: 0.82rem;
-
-  font-weight: 600;
-
-  white-space: nowrap;
-}
-
-.rw-loader__dots {
-  display: flex;
-
-  gap: 3px;
-}
-
-.rw-loader__dots i {
-  width: 4px;
-  height: 4px;
-
-  border-radius: 50%;
-
-  background: var(--rw-yellow);
-}
-
-/* ============================================================
-   PROGRESS
-   ============================================================ */
-
-.rw-loader__progress-container {
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  width: min(370px, 75vw);
-
-  z-index: 30;
-}
-
-.rw-loader__progress {
+/* TANDOOR MOUTH / PIT */
+.rw-tandoor-pit {
   position: relative;
-
-  flex: 1;
-
-  height: 6px;
-
+  width: 170px;
+  height: 100px;
+  background: #090201;
+  border-radius: 50%;
+  border: 4px solid #4a1d07;
   overflow: hidden;
-
-  border-radius: 999px;
-
-  background:
-    rgba(255, 255, 255, 0.08);
-
-  border:
-    1px solid rgba(247, 198, 0, 0.1);
-}
-
-.rw-loader__progress-fill {
-  position: absolute;
-
-  left: 0;
-  top: 0;
-
-  height: 100%;
-
-  border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      #dcae00,
-      #f7c600,
-      #ff9c00
-    );
-
-  box-shadow:
-    0 0 12px rgba(247, 198, 0, 0.4);
-}
-
-.rw-loader__progress-shine {
-  position: absolute;
-
-  left: 0;
-  top: 0;
-
-  width: 40%;
-
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.65),
-      transparent
-    );
-
-  transform: skewX(-20deg);
-}
-
-.rw-loader__percentage {
-  width: 35px;
-
-  color: var(--rw-yellow);
-
-  font-size: 0.72rem;
-
-  font-weight: 800;
-
-  text-align: right;
-}
-
-/* ============================================================
-   STEPS
-   ============================================================ */
-
-.rw-loader__steps {
+  box-shadow: inset 0 0 25px rgba(249, 115, 22, 0.9);
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
-  width: min(550px, 90vw);
-
-  z-index: 30;
 }
 
-.rw-loader__step {
-  position: relative;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 5px;
-
-  color:
-    rgba(255, 247, 220, 0.35);
-
-  font-size: 0.62rem;
-
-  font-weight: 600;
-
-  transition:
-    color 250ms ease;
-}
-
-.rw-loader__step.is-active {
-  color: var(--rw-yellow);
-}
-
-.rw-loader__step.is-completed {
-  color:
-    rgba(255, 247, 220, 0.65);
-}
-
-.rw-loader__step-icon {
-  display: grid;
-
-  place-items: center;
-
-  width: 25px;
-  height: 25px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255, 255, 255, 0.04);
-
-  border:
-    1px solid rgba(255, 255, 255, 0.06);
-
-  font-size: 12px;
-}
-
-.rw-loader__step.is-active
-  .rw-loader__step-icon {
-  background:
-    rgba(247, 198, 0, 0.1);
-
-  border-color:
-    rgba(247, 198, 0, 0.25);
-
-  box-shadow:
-    0 0 12px rgba(247, 198, 0, 0.12);
-}
-
-.rw-loader__step-line {
-  width: 35px;
-
-  height: 1px;
-
-  margin:
-    0
-    9px;
-
-  background:
-    rgba(255, 255, 255, 0.1);
-}
-
-/* ============================================================
-   BOTTOM ACCENT
-   ============================================================ */
-
-.rw-loader__bottom-accent {
+.rw-pit-inner-flame {
   position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 60%, #fef08a 0%, #f97316 45%, #7f1d1d 85%);
+  opacity: 0.85;
+}
 
-  left: 0;
-  right: 0;
+/* ROTI BAKING INSIDE PIT */
+.rw-roti-baking {
+  position: relative;
+  width: 105px;
+  height: 65px;
+  background: radial-gradient(ellipse at center, #fef08a 0%, #d97706 75%, #92400e 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.6), inset 0 0 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  transform: rotate(-4deg);
+}
+
+.rw-roti-spot {
+  position: absolute;
+  background: #451a03;
+  border-radius: 50%;
+  opacity: 0.85;
+}
+
+.rw-spot-1 { width: 14px; height: 9px; top: 12px; left: 22px; }
+.rw-spot-2 { width: 18px; height: 11px; bottom: 14px; right: 24px; }
+.rw-spot-3 { width: 9px; height: 7px; top: 22px; right: 28px; }
+.rw-spot-4 { width: 11px; height: 8px; bottom: 12px; left: 32px; }
+.rw-spot-5 { width: 7px; height: 6px; top: 32px; left: 48px; }
+
+.rw-roti-steam {
+  position: absolute;
+  top: -10px;
+  left: 40%;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  filter: blur(4px);
+  border-radius: 50%;
+}
+
+/* ACTION BANNER */
+.rw-action-banner {
+  position: absolute;
   bottom: 0;
-
-  height: 3px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #dcae00,
-      #f7c600,
-      #ff8a00,
-      #f7c600,
-      #dcae00,
-      transparent
-    );
-
-  box-shadow:
-    0 0 18px rgba(247, 198, 0, 0.3);
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--rw-gold);
+  border-radius: 30px;
+  padding: 8px 32px;
+  text-align: center;
 }
 
-/* ============================================================
-   SMALL
-   ============================================================ */
-
-.rw-loader--sm .rw-loader__scene {
-  transform:
-    scale(calc(var(--scene-scale) * 0.72));
+.rw-banner-text h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
 }
 
-.rw-loader--sm .rw-loader__brand-name {
-  font-size: 1.05rem;
+.rw-banner-text p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.rw-loader--sm .rw-loader__tagline {
-  font-size: 0.55rem;
+/* PROGRESS BAR */
+.rw-progress-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 580px;
+  z-index: 5;
 }
 
-.rw-loader--sm .rw-loader__message {
-  font-size: 0.7rem;
-
-  padding:
-    6px
-    12px;
+.rw-progress-track-outer {
+  flex: 1;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 2px;
 }
 
-.rw-loader--sm .rw-loader__steps {
-  transform: scale(0.85);
+.rw-progress-track-fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+  border-radius: 20px;
 }
 
-/* ============================================================
-   LARGE
-   ============================================================ */
-
-.rw-loader--lg .rw-loader__scene {
-  transform:
-    scale(calc(var(--scene-scale) * 1.08));
+.rw-fill-head-light {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ffffff;
 }
 
-.rw-loader--lg .rw-loader__brand-name {
-  font-size: 1.8rem;
+.rw-progress-readout {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--rw-gold);
+  min-width: 48px;
 }
 
-.rw-loader--lg .rw-loader__message {
-  font-size: 0.95rem;
+/* TIMELINE NODES */
+.rw-timeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 5;
 }
 
-/* ============================================================
-   TABLET
-   ============================================================ */
-
-@media (max-width: 768px) {
-  .rw-loader {
-    padding: 15px;
-  }
-
-  .rw-loader__scene {
-    transform:
-      scale(calc(var(--scene-scale) * 0.82));
-  }
-
-  .rw-loader__brand-name {
-    font-size: 1.3rem;
-  }
-
-  .rw-loader__message {
-    font-size: 0.76rem;
-  }
-
-  .rw-loader__step-line {
-    width: 22px;
-
-    margin:
-      0
-      5px;
-  }
+.rw-timeline-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.4;
+  transition: opacity 0.3s;
 }
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
-
-@media (max-width: 576px) {
-  .rw-loader {
-    gap: 8px;
-
-    padding: 10px;
-  }
-
-  .rw-loader__scene {
-    width: 580px;
-    height: 285px;
-
-    transform:
-      scale(calc(var(--scene-scale) * 0.68));
-  }
-
-  .rw-loader__brand-name {
-    font-size: 1.1rem;
-
-    letter-spacing: 2px;
-  }
-
-  .rw-loader__tagline {
-    margin-top: 5px;
-
-    font-size: 0.55rem;
-
-    letter-spacing: 1.2px;
-  }
-
-  .rw-loader__message {
-    max-width: 90vw;
-
-    padding:
-      6px
-      12px;
-
-    font-size: 0.68rem;
-  }
-
-  .rw-loader__progress-container {
-    width: min(310px, 80vw);
-  }
-
-  .rw-loader__steps {
-    width: 96vw;
-  }
-
-  .rw-loader__step {
-    font-size: 0;
-
-    gap: 0;
-  }
-
-  .rw-loader__step-icon {
-    width: 25px;
-    height: 25px;
-  }
-
-  .rw-loader__step-line {
-    width: 25px;
-
-    margin:
-      0
-      5px;
-  }
+.rw-timeline-node.is-active,
+.rw-timeline-node.is-done {
+  opacity: 1;
 }
 
-/* ============================================================
-   VERY SMALL
-   ============================================================ */
-
-@media (max-width: 380px) {
-  .rw-loader__scene {
-    transform:
-      scale(calc(var(--scene-scale) * 0.57));
-  }
-
-  .rw-loader__brand-name {
-    font-size: 0.95rem;
-
-    letter-spacing: 1.5px;
-  }
-
-  .rw-loader__tagline {
-    font-size: 0.48rem;
-  }
-
-  .rw-loader__message {
-    font-size: 0.62rem;
-  }
-
-  .rw-loader__progress-container {
-    width: 78vw;
-  }
-
-  .rw-loader__step-line {
-    width: 17px;
-
-    margin:
-      0
-      3px;
-  }
+.rw-node-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
 }
 
-/* ============================================================
-   LANDSCAPE PHONE
-   ============================================================ */
-
-@media (
-  max-height: 520px
-) and (
-  orientation: landscape
-) {
-  .rw-loader {
-    flex-direction: row;
-
-    gap: 18px;
-  }
-
-  .rw-loader__scene {
-    transform:
-      scale(calc(var(--scene-scale) * 0.55));
-  }
-
-  .rw-loader__brand {
-    align-items: flex-start;
-  }
-
-  .rw-loader__message-container {
-    position: absolute;
-
-    bottom: 17px;
-
-    left: 50%;
-
-    transform:
-      translateX(-50%);
-  }
-
-  .rw-loader__progress-container {
-    position: absolute;
-
-    bottom: 6px;
-
-    left: 50%;
-
-    transform:
-      translateX(-50%);
-  }
-
-  .rw-loader__steps {
-    display: none;
-  }
+.rw-timeline-node.is-active .rw-node-circle {
+  border-color: var(--rw-gold);
+  background: rgba(251, 191, 36, 0.2);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
 }
 
-/* ============================================================
-   REDUCED MOTION
-   ============================================================ */
-
-@media (prefers-reduced-motion: reduce) {
-  .rw-loader *,
-  .rw-loader *::before,
-  .rw-loader *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-
-    transition-duration: 0.01ms !important;
-  }
+.rw-node-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-/* ============================================================
-   PRINT
-   ============================================================ */
+.rw-timeline-line {
+  width: 32px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-bottom: 18px;
+}
 
-@media print {
-  .rw-loader {
-    display: none !important;
-  }
+.rw-timeline-line.is-filled {
+  background: var(--rw-gold);
+}
+
+/* FOOTER TAG */
+.rw-footer-tag {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--rw-gold);
+  letter-spacing: 1px;
+  z-index: 5;
 }

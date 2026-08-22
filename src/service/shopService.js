@@ -118,3 +118,20 @@ export const getMenuItemPublic =
 
     return response.data;
   };
+
+
+export const getShopById = async (id) => {
+  const response = await api.get(`/shops/${id}/`);
+  return response.data;
+};
+/**
+ * Update delivery assignment mode for a shop
+ * @param {number} shopId
+ * @param {string} mode - 'manual' or 'auto'
+ */
+export const updateDeliveryAssignmentMode = async (shopId, mode) => {
+  const response = await api.patch(`/shops/${shopId}/`, {
+    delivery_assignment_mode: mode,
+  });
+  return response.data;
+};

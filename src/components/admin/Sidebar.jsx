@@ -128,11 +128,11 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
 
           {expandedSections.menuManagement && (
             <>
-              <NavLink to="/admin/categories" onClick={closeSidebar}>
+              <NavLink to="/manager/categories" onClick={closeSidebar}>
                 <i className="bi bi-tags"></i>
                 Categories
               </NavLink>
-              <NavLink to="/admin/menu-items" onClick={closeSidebar}>
+              <NavLink to="/manager/menu-items" onClick={closeSidebar}>
                 <i className="bi bi-box"></i>
                 Menu Items
               </NavLink>

@@ -18,7 +18,7 @@ import {
 } from '../../service/deliveryService';
 import './CSS/DeliveryBoy.css';
 
-const DeliveryAssignment = () => {
+const DeliveryAssignment = ({ autoAssignEnabled }) => {
   const [readyOrders, setReadyOrders] = useState([]);
   const [deliveryBoys, setDeliveryBoys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ const DeliveryAssignment = () => {
         getDeliveryBoys(),
       ]);
       setReadyOrders(orders || []);
-      // Filter only online and available boys
+      // Filter only online AND available boys
       setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
     } catch (error) {
       console.error(error);
@@ -59,17 +59,12 @@ const DeliveryAssignment = () => {
     try {
       await assignDeliveryBoy(orderId, boyId);
       Swal.fire('Success', 'Delivery assigned successfully!', 'success');
-      // Remove assigned order from list
       setReadyOrders((prev) => prev.filter((o) => o.id !== orderId));
-      // Refresh boys list
+      // Refresh boys list after assignment
       const boys = await getDeliveryBoys();
       setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
     } catch (error) {
-      Swal.fire(
-        'Error',
-        error.response?.data?.error || 'Assignment failed',
-        'error'
-      );
+      Swal.fire('Error', error.response?.data?.error || 'Assignment failed', 'error');
     } finally {
       setAssigning((prev) => ({ ...prev, [orderId]: false }));
     }
@@ -79,20 +74,12 @@ const DeliveryAssignment = () => {
     setAssigning((prev) => ({ ...prev, [orderId]: true }));
     try {
       const result = await autoAssignDelivery(orderId);
-      Swal.fire(
-        'Success',
-        `Auto-assigned to ${result.delivery_boy_name || 'delivery boy'}`,
-        'success'
-      );
+      Swal.fire('Success', `Auto-assigned to ${result.delivery_boy_name || 'delivery boy'}`, 'success');
       setReadyOrders((prev) => prev.filter((o) => o.id !== orderId));
       const boys = await getDeliveryBoys();
       setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
     } catch (error) {
-      Swal.fire(
-        'Error',
-        error.response?.data?.error || 'Auto-assignment failed',
-        'error'
-      );
+      Swal.fire('Error', error.response?.data?.error || 'Auto-assignment failed', 'error');
     } finally {
       setAssigning((prev) => ({ ...prev, [orderId]: false }));
     }
@@ -129,7 +116,10 @@ const DeliveryAssignment = () => {
         <h5 className="mb-0">
           <FaTruck className="me-2" /> Ready for Delivery ({readyOrders.length})
         </h5>
-        <small className="text-muted">Orders that are ready and need delivery</small>
+        <small className="text-muted">
+          Orders that are ready and need delivery
+          {autoAssignEnabled && <span className="text-success ms-2">(Auto-assign ON)</span>}
+        </small>
       </div>
 
       {readyOrders.length === 0 ? (
@@ -197,6 +187,7 @@ const DeliveryAssignment = () => {
                             [order.id]: e.target.value,
                           }))
                         }
+                        disabled={autoAssignEnabled}
                       >
                         <option value="">Select boy</option>
                         {deliveryBoys.map((b) => (
@@ -210,7 +201,7 @@ const DeliveryAssignment = () => {
                       <div className="d-flex gap-2 flex-wrap">
                         <button
                           className="btn btn-warning btn-sm"
-                          disabled={assigning[order.id]}
+                          disabled={assigning[order.id] || autoAssignEnabled}
                           onClick={() =>
                             handleAssign(
                               order.id,
@@ -218,13 +209,7 @@ const DeliveryAssignment = () => {
                             )
                           }
                         >
-                          {assigning[order.id] ? (
-                            'Assigning...'
-                          ) : (
-                            <>
-                              <FaCheck className="me-1" /> Assign
-                            </>
-                          )}
+                          {assigning[order.id] ? 'Assigning...' : <><FaCheck className="me-1" /> Assign</>}
                         </button>
                         <button
                           className="btn btn-outline-primary btn-sm"
@@ -246,7 +231,11 @@ const DeliveryAssignment = () => {
       {deliveryBoys.length === 0 && readyOrders.length > 0 && (
         <div className="alert alert-warning mt-3">
           <FaTimes className="me-2" />
-          No delivery boys are online and available. Please activate a delivery boy first.
+          No delivery boys are online and available. 
+          <span className="d-block mt-1">
+            <strong>How to fix:</strong> Go to the <strong>Delivery Boys</strong> tab, 
+            toggle a boy <strong>Online</strong> (🟢), then click the <strong>Available</strong> button (✅).
+          </span>
         </div>
       )}
     </div>

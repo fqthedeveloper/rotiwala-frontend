@@ -16,17 +16,20 @@ export const getDeliveryBoys = async () => {
 
 /**
  * Create a new delivery boy profile
- * @param {Object} data - { user: userId, full_name, phone, shop? }
+ * @param {Object} data - { phone, full_name } (no user ID needed)
  */
 export const createDeliveryBoy = async (data) => {
-  const response = await api.post('/delivery/boys/', data);
+  const response = await api.post('/delivery/boys/', {
+    phone: data.phone,
+    full_name: data.full_name,
+  });
   return response.data;
 };
 
 /**
  * Update a delivery boy profile
  * @param {number} id
- * @param {Object} data
+ * @param {Object} data - { full_name, phone } (optional)
  */
 export const updateDeliveryBoy = async (id, data) => {
   const response = await api.patch(`/delivery/boys/${id}/`, data);
@@ -67,8 +70,6 @@ export const getAssignments = async () => {
  * Get ready orders for delivery (not yet assigned)
  */
 export const getReadyOrders = async () => {
-  // We'll use the existing orders endpoint with filters
-  // Or you can add a dedicated ready-orders endpoint
   const response = await api.get('/delivery/orders/ready/');
   return response.data;
 };
