@@ -144,10 +144,6 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-person-badge"></i>
                 Staff Management
               </NavLink>
-              <NavLink to="/manager/staff/salary/add" onClick={closeSidebar}>
-                <i className="bi bi-cash"></i>
-                Add Salary
-              </NavLink>
             </>
           )}
 

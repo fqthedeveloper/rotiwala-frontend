@@ -168,7 +168,7 @@ import VideoManagement from './pages/admin/VideoManagement';
 import MarqueeManagement from './pages/admin/MarqueeManagement';
 import FeedbackManagement from './pages/admin/FeedbackManagement';
 // In your main App.js or routes file
-import DeliveryManagement from './pages/manager/DeliveryManagement';
+import DeliveryManagement from './pages/manager/Delivery/DeliveryManagement';
 
 
 

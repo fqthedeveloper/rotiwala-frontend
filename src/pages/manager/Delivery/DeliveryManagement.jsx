@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { FaTruck, FaUserCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Swal from 'sweetalert2';
-import DeliveryBoyList from '../../pages/manager/DeliveryBoyList';
-import DeliveryAssignment from '../../pages/manager/DeliveryAssignment';
-import { updateDeliveryAssignmentMode, getShopById } from '../../service/shopService';
-import './CSS/DeliveryBoy.css';
+import DeliveryBoyList from './DeliveryBoyList';
+import DeliveryAssignment from './DeliveryAssignment';
+import { updateDeliveryAssignmentMode, getShopById } from '../../../service/shopService';
+import '../CSS/DeliveryBoy.css';
 
 const DeliveryManagement = () => {
   const [activeTab, setActiveTab] = useState('boys');
@@ -30,8 +30,6 @@ const DeliveryManagement = () => {
           shop = await getShopById(user.shop_id);
           setShopId(user.shop_id);
         } else if (user.role === 'super_admin') {
-          // Super admin can select a shop or just default
-          // You can add a shop selector here if needed
           setLoading(false);
           return;
         }
@@ -80,30 +78,31 @@ const DeliveryManagement = () => {
 
   return (
     <div className="delivery-management">
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <div className="bg-warning bg-opacity-10 p-2 rounded-circle">
+      {/* Header Section */}
+      <div className="dm-header d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <div className="bg-warning bg-opacity-10 p-2 rounded-circle icon-wrapper">
           <FaTruck size={24} className="text-warning" />
         </div>
-        <div>
-          <h2 className="fw-bold mb-0">Delivery Management</h2>
-          <p className="text-muted mb-0">Manage delivery boys and assign orders</p>
+        <div className="flex-grow-1">
+          <h2 className="fw-bold mb-0 dm-title">Delivery Management</h2>
+          <p className="text-muted mb-0 dm-subtitle">Manage delivery boys and assign orders</p>
         </div>
       </div>
 
-      {/* 🔥 Auto-Assignment Toggle */}
-      <div className="card p-3 mb-4 shadow-sm">
-        <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <div>
-            <h6 className="mb-0">
-              <FaTruck className="me-2" />
+      {/* Auto-Assignment Toggle */}
+      <div className="card dm-card p-3 mb-4 shadow-sm">
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div className="dm-auto-info">
+            <h6 className="mb-1">
+              <FaTruck className="me-2 text-warning" />
               Automatic Assignment
             </h6>
-            <small className="text-muted">
+            <small className="text-muted d-block">
               When enabled, ready orders will be automatically assigned to the best available delivery boy.
             </small>
           </div>
           <button
-            className={`btn ${autoAssign ? 'btn-success' : 'btn-secondary'} d-flex align-items-center gap-2`}
+            className={`btn dm-toggle-btn ${autoAssign ? 'btn-success' : 'btn-secondary'} d-flex align-items-center gap-2 flex-shrink-0`}
             onClick={handleToggleAutoAssign}
           >
             {autoAssign ? <FaToggleOn size={24} /> : <FaToggleOff size={24} />}
@@ -112,26 +111,29 @@ const DeliveryManagement = () => {
         </div>
       </div>
 
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'boys' ? 'active' : ''}`}
-            onClick={() => setActiveTab('boys')}
-          >
-            <FaUserCog className="me-2" /> Delivery Boys
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'assign' ? 'active' : ''}`}
-            onClick={() => setActiveTab('assign')}
-          >
-            <FaTruck className="me-2" /> Assign Orders
-          </button>
-        </li>
-      </ul>
+      {/* Navigation Tabs */}
+      <div className="dm-tabs-wrapper">
+        <ul className="nav nav-tabs dm-tabs">
+          <li className="nav-item">
+            <button
+              className={`nav-link dm-tab-link ${activeTab === 'boys' ? 'active' : ''}`}
+              onClick={() => setActiveTab('boys')}
+            >
+              <FaUserCog className="me-2" /> Delivery Boys
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link dm-tab-link ${activeTab === 'assign' ? 'active' : ''}`}
+              onClick={() => setActiveTab('assign')}
+            >
+              <FaTruck className="me-2" /> Assign Orders
+            </button>
+          </li>
+        </ul>
+      </div>
 
-      <div className="tab-content">
+      <div className="tab-content dm-tab-content">
         {activeTab === 'boys' && <DeliveryBoyList />}
         {activeTab === 'assign' && <DeliveryAssignment autoAssignEnabled={autoAssign} />}
       </div>

@@ -179,3 +179,12 @@ export const updateDeliveryLocation = async (data) => {
   const response = await api.post('/delivery/location/', data);
   return response.data;
 };
+
+// ============================================================
+// TRACKING
+// ============================================================
+
+export const getOrderTracking = async (orderId) => {
+  const response = await api.get(`/delivery/tracking/${orderId}/`);
+  return response.data;
+};
