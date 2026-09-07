@@ -80,6 +80,11 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 Menu Items
           </NavLink>
 
+          <NavLink to="/manager/settings/order-capacity" onClick={closeSidebar}>
+            <i className="bi bi-speedometer2"></i>
+            Order Capacity
+          </NavLink>
+
           {/* ===== Orders ===== */}
           <div
             className="sidebar-section clickable"

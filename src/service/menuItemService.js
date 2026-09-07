@@ -126,7 +126,11 @@ export const getItemsPublic = async () => {
   return response.data;
 };
 
-// src/service/menuItemService.js
+export const getPublicCategories = async () => {
+  const response = await api.get("/menu/public/categories/");
+  return response.data;
+};
+
 export const getPublicMenuItems = async (params = {}) => {
   const normalized = { ...params };
   if (params.shop) normalized.shop_id = params.shop;

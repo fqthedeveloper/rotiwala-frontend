@@ -1,62 +1,43 @@
 import { useState, useEffect } from "react";
-
 import { Link, NavLink, useNavigate } from "react-router-dom";
-
 import MobileMenu from "./MobileMenu";
-
 import "./Header.css";
-
 import Logo from "../../assets/react.svg";
-
 import { getCartCount } from "../../service/cartService";
+import { FaMapMarkerAlt, FaShoppingCart } from "react-icons/fa";
 
-const Header = () => {
+const Header = ({ onOpenCart }) => {
   const navigate = useNavigate();
-
   const [mobileOpen, setMobileOpen] = useState(false);
-
   const [cartCount, setCartCount] = useState(0);
-
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [selectedShop, setSelectedShop] = useState(null);
 
   const syncUser = () => {
     const currentUser = JSON.parse(localStorage.getItem("user"));
-
     setUser(currentUser);
   };
 
   const loadCartCount = async () => {
     const token = localStorage.getItem("access");
-
     if (!token) {
       setCartCount(0);
-
       return;
     }
-
     try {
       const data = await getCartCount();
-
       setCartCount(data.count || 0);
     } catch (error) {
       console.log(error);
-
       setCartCount(0);
     }
   };
 
   useEffect(() => {
     syncUser();
-
-    const handleAuthChanged = () => {
-      syncUser();
-    };
-
+    const handleAuthChanged = () => syncUser();
     window.addEventListener("authChanged", handleAuthChanged);
-
-    return () => {
-      window.removeEventListener("authChanged", handleAuthChanged);
-    };
+    return () => window.removeEventListener("authChanged", handleAuthChanged);
   }, []);
 
   useEffect(() => {
@@ -71,24 +52,23 @@ const Header = () => {
         loadCartCount();
       }
     };
-
     window.addEventListener("cartUpdated", handleCartUpdate);
-
-    return () => {
-      window.removeEventListener("cartUpdated", handleCartUpdate);
-    };
+    return () => window.removeEventListener("cartUpdated", handleCartUpdate);
   }, [user]);
 
   const logout = () => {
     localStorage.clear();
-
     setUser(null);
-
     setCartCount(0);
-
     window.dispatchEvent(new Event("authChanged"));
-
     navigate("/");
+  };
+
+  const handleCartClick = (e) => {
+    if (onOpenCart) {
+      e.preventDefault();
+      onOpenCart();
+    }
   };
 
   return (
@@ -97,62 +77,52 @@ const Header = () => {
         <div className="container-fluid px-3 px-lg-5">
           <div className="header-wrapper">
             <Link to="/" className="logo-section">
-              <img src={Logo} alt="Logo" className="logo-img" />
-
-              <span className="logo-text">Roti Waale</span>
+              <img src={Logo} alt="Roti Waale Logo" className="logo-img" />
+              <div className="logo-text-group">
+                <span className="logo-text">ROTI WAALE</span>
+                <span className="logo-subtext">Fresh Roti. Hot Meal.</span>
+              </div>
             </Link>
 
             <nav className="desktop-nav">
               <NavLink to="/">Home</NavLink>
-
               <NavLink to="/menu">Menu</NavLink>
-
               <NavLink to="/about">About</NavLink>
-
               <NavLink to="/contact">Contact</NavLink>
             </nav>
 
             <div className="header-actions">
-              <Link to="/cart" className="cart-btn position-relative">
-                <i className="bi bi-cart3"></i>
-
-                {user && cartCount > 0 && (
-                  <span
-                    className="
-                    position-absolute
-                    top-0
-                    start-100
-                    translate-middle
-                    badge
-                    rounded-pill
-                    bg-danger
-                  "
-                  >
+              <button
+                className="cart-btn position-relative"
+                onClick={handleCartClick}
+                aria-label="View Cart"
+              >
+                <FaShoppingCart size={20} />
+                {cartCount > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                     {cartCount}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {!user ? (
-                <>
+                <div className="auth-btns">
                   <Link to="/login" className="login-btn">
                     Login
                   </Link>
-
-                  <Link to="/register" className="login-btn">
+                  <Link to="/register" className="register-btn">
                     Register
                   </Link>
-                </>
+                </div>
               ) : (
                 <div className="profile-dropdown">
                   <button className="profile-btn">
                     <div className="avatar">
-                      {user.first_name?.charAt(0) || user.phone?.charAt(1)}
+                      {user.first_name?.charAt(0) || user.phone?.charAt(1) || "U"}
                     </div>
-
                     <span>
                       {user.first_name
-                        ? `${user.first_name} ${user.last_name}`
+                        ? `${user.first_name} ${user.last_name || ""}`
                         : user.phone}
                     </span>
                   </button>
@@ -160,9 +130,9 @@ const Header = () => {
                   <div className="dropdown-menu">
                     <div className="dropdown-user">
                       {user.phone}
-                      <br />({user.role})
+                      <br />
+                      <small className="text-muted">({user.role})</small>
                     </div>
-
                     {user.role === "super_admin" && (
                       <Link to="/admin/dashboard">Dashboard</Link>
                     )}
@@ -173,7 +143,6 @@ const Header = () => {
                       <Link to="/my-orders">My Orders</Link>
                     )}
                     <Link to="/profile">Profile</Link>
-
                     <button onClick={logout}>Logout</button>
                   </div>
                 </div>
@@ -182,6 +151,7 @@ const Header = () => {
               <button
                 className="mobile-toggle"
                 onClick={() => setMobileOpen(true)}
+                aria-label="Open Mobile Menu"
               >
                 ☰
               </button>

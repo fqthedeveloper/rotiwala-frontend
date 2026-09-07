@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import { getCategories, deleteCategory } from "../../../service/categoryService";
+import { getCategories, deleteCategory } from "../../../service/categoryService"; // fixed import
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
@@ -19,6 +19,7 @@ const Categories = () => {
     } catch (error) {
       console.error(error);
       setCategories([]);
+      Swal.fire("Error", "Failed to load categories", "error");
     } finally {
       setLoading(false);
     }
@@ -118,10 +119,9 @@ const Categories = () => {
                     <div className="col-12 col-sm-6" key={category.id}>
                       <div className="card border-0 shadow-sm h-100 rounded-4">
                         <div className="card-body">
-                          
                           <h5 className="fw-bold text-center">{category.name}</h5>
                           <div className="text-center mb-3">
-                            {category.is_active === true ? (
+                            {category.is_active ? (
                               <span className="badge bg-success">Active</span>
                             ) : (
                               <span className="badge bg-danger">Inactive</span>

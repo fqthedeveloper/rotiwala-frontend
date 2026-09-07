@@ -1,9 +1,7 @@
-// frontend/src/pages/manager/MenuItems.jsx
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import { getMenuItems, deleteMenuItem } from "../../../service/menuItemService";
+import { getMenuItems, deleteMenuItem } from "../../../service/menuItemService"; // fixed import
 import "./CSS/MenuItems.css"; // optional
 
 const MenuItems = () => {
@@ -17,6 +15,7 @@ const MenuItems = () => {
 
   const loadItems = async () => {
     try {
+      // getMenuItems should automatically use the manager's shop from the token
       const data = await getMenuItems();
       setItems(data);
     } catch (error) {
@@ -68,7 +67,7 @@ const MenuItems = () => {
       <div className="card shadow-sm border-0 rounded-4">
         <div className="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5 className="mb-0 fw-bold">Menu Items</h5>
-          <Link to="/manager/menu-items/add" className="btn btn-warning">
+          <Link to="/admin/menu-items/add" className="btn btn-warning">
             <i className="fas fa-plus me-2"></i>Add Item
           </Link>
         </div>
@@ -110,10 +109,8 @@ const MenuItems = () => {
                       </td>
                       <td>
                         <strong>{item.name}</strong>
-                        &nbsp; &nbsp;
                         {item.description && (
-                         
-                          <small className="text-muted">{item.description.substring(0, 40)}</small>
+                          <small className="text-muted d-block">{item.description.substring(0, 40)}</small>
                         )}
                       </td>
                       <td>₹{item.base_price}</td>
@@ -128,7 +125,7 @@ const MenuItems = () => {
                       <td>
                         <div className="d-flex gap-2">
                           <Link
-                            to={`/manager/menu-items/edit/${item.id}`}
+                            to={`/admin/menu-items/edit/${item.id}`}
                             className="btn btn-sm btn-warning"
                           >
                             Edit

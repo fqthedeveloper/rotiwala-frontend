@@ -14,9 +14,14 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-import { getPublicMenuItems } from "../service/menuItemService";
+import {
+  getPublicMenuItems,
+  getCategoriesByShopPublic,
+  getPublicCategories,
+} from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
 import { getNearestShop } from "../service/shopService";
+import OnlineOrderStatus from "../components/order-capacity/OnlineOrderStatus";
 
 import "./CSS/Menu.css";
 
@@ -92,8 +97,8 @@ const Menu = () => {
       setLoading(true);
       const data = await getPublicMenuItems({ shop_id: shopIdToLoad });
 
-      if (!Array.isArray(data)) {
-        setItems([]);
+      if (!Array.isArray(data) || data.length === 0) {
+        setItems(FALLBACK_ROTI_MENU);
         return;
       }
 
@@ -106,13 +111,28 @@ const Menu = () => {
           uniqueItems.push(item);
         }
       });
-      setItems(uniqueItems);
+      setItems(uniqueItems.length > 0 ? uniqueItems : FALLBACK_ROTI_MENU);
     } catch (error) {
       console.log(error);
+      setItems(FALLBACK_ROTI_MENU);
     } finally {
       setLoading(false);
     }
   };
+
+  const FALLBACK_ROTI_MENU = [
+    { id: 101, name: "Afghani Naan", base_price: 12, category: "Afghani Special", description: "Authentic fluffy Afghani naan baked in clay tandoor.", available: true },
+    { id: 102, name: "Butter Afghani Naan", base_price: 14, category: "Afghani Special", description: "Signature Afghani naan generously brushed with amul butter.", available: true },
+    { id: 103, name: "Kotmiri Naan", base_price: 13, category: "Regular Naans", description: "Fresh coriander infused crisp tandoori naan.", available: true },
+    { id: 104, name: "Butter Naan", base_price: 15, category: "Regular Naans", description: "Classic soft tandoori naan with butter topping.", available: true },
+    { id: 105, name: "Kamachi Naan", base_price: 15, category: "Regular Naans", description: "Traditional spiced Kamachi tandoori bread.", available: true },
+    { id: 106, name: "Garlic Naan", base_price: 25, category: "Regular Naans", description: "Aromatic garlic and herb topped tandoori naan.", available: true },
+    { id: 107, name: "Chapati", base_price: 10, category: "Chapatis", description: "100% whole wheat handmade fresh chapati.", available: true },
+    { id: 108, name: "Bahubali Naan", base_price: 70, category: "Special Naans", description: "Giant Bahubali size stuffed naan loaded with rich spices.", available: true },
+    { id: 109, name: "Dubai Cheese Naan", base_price: 80, category: "Special Naans", description: "Melted cheese stuffed premium naan inspired by Middle East recipes.", available: true },
+    { id: 110, name: "Shahi Naan", base_price: 80, category: "Special Naans", description: "Royal saffron & dry fruit infused sweet rich naan.", available: true },
+    { id: 111, name: "Chur Chur Naan", base_price: 30, category: "Special Naans", description: "Ultra crisp flaky layered naan crushed with butter and paneer.", available: true },
+  ];
 
   const categories = useMemo(() => {
     return [...new Set(items.map((i) => i.category))];
@@ -202,6 +222,7 @@ const Menu = () => {
 
   return (
     <div className="menu-page">
+      <OnlineOrderStatus />
       {/* ============ HERO ============ */}
       <motion.section
         className="menu-hero"

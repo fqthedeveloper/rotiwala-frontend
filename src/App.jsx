@@ -24,6 +24,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Menu from "./pages/Menu";
+import OrderCapacitySettings from "./pages/manager/OrderCapacitySettings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const getPageTitle = (pathname) => {
   const titles = {
     "/": "Home - Roti Wala",
     "/menu": "Menu - Roti Wala",
+    "/menu/:category": "Menu - Roti Wala",
     "/about": "About Us - Roti Wala",
     "/contact": "Contact Us - Roti Wala",
     "/login": "Login - Roti Wala",
@@ -78,6 +80,7 @@ const getPageTitle = (pathname) => {
 
 
     "/manager/dashboard": "Manager Dashboard - Roti Wala",
+    "/manager/settings/order-capacity": "Order Capacity - Roti Wala",
     "/manager/orders": "Manager Orders - Roti Wala",
     "/manager/walkin": "Walk-in Orders - Roti Wala",
     "/manager/discounts/usage": "Discount Usage - Roti Wala",
@@ -105,6 +108,7 @@ const getPageTitle = (pathname) => {
 
   if (titles[pathname]) return titles[pathname];
   if (pathname.startsWith("/my-orders/")) return "Order Detail - Roti Wala";
+  if (pathname.startsWith("/menu/")) return "Menu - Roti Wala";
   if (pathname.startsWith("/admin/shops/edit")) return "Edit Shop - Roti Wala";
   if (pathname.startsWith("/admin/managers/edit")) return "Edit Manager - Roti Wala";
   if (pathname.startsWith("/admin/categories/edit")) return "Edit Category - Roti Wala";
@@ -223,6 +227,7 @@ function App() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Menu />} />
+        <Route path="/menu/:category" element={<Menu />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />
@@ -368,6 +373,7 @@ function App() {
         }
       >
         <Route path="dashboard" element={<ManagerDashboard />} />
+        <Route path="settings/order-capacity" element={<OrderCapacitySettings />} />
         <Route path="menu-items" element={<MenuItems />} />
         <Route path="menu-items/add" element={<AddMenuItem />} />
         <Route path="menu-items/edit/:id" element={<EditMenuItem />} />        

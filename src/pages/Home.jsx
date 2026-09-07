@@ -35,9 +35,12 @@ import TestimonialSection from "../components/Home/TestimonialSection";
 import { getNearestShop, getShopsPublic } from "../service/shopService";
 import {
   getCategoriesByShopPublic,
+  getPublicCategories,
   getPublicMenuItems,
+  getItemsByCategoryPublic,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
+
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext";
 import { getPublicStats } from "../service/reportServices";
@@ -82,6 +85,9 @@ export default function Home() {
   const [shops, setShops] = useState([]);
   const [showShops, setShowShops] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("all");
   const [locationDenied, setLocationDenied] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [stats, setStats] = useState([
@@ -90,6 +96,21 @@ export default function Home() {
     { num: "100+", label: "Menu Items" },
     { num: "5K+", label: "Happy Customers" },
   ]);
+
+  // Use only backend data — no fallback mock data
+  const displayItems = menuItems.filter((item) => {
+    if (activeCategory === "all") return true;
+    const catName = String(item.category_name || item.category || "").toLowerCase();
+    const catId = String(item.category_id || item.category?.id || item.category || "");
+    const targetCat = String(activeCategory).toLowerCase();
+
+    if (catId === targetCat || catName === targetCat) return true;
+    if (targetCat === "afghani") return catName.includes("afghani") || item.name.toLowerCase().includes("afghani");
+    if (targetCat === "special") return catName.includes("special") || item.is_special;
+    if (targetCat === "regular") return catName.includes("regular") || item.name.toLowerCase().includes("naan");
+    if (targetCat === "chapati") return catName.includes("chapati") || catName.includes("kulcha") || item.name.toLowerCase().includes("chapati");
+    return catName.includes(targetCat);
+  });
 
   /* ---------- LENIS ---------- */
   useEffect(() => {
@@ -123,15 +144,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---------- Load menu when shop changes ---------- */
-  useEffect(() => {
-    if (nearestShop) {
-      setMenuItems([]); // clear old items
-      loadMenu(nearestShop.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nearestShop]);
-
   /* ---------- Shops & Menu ---------- */
   const fetchAllShops = async () => {
     try {
@@ -160,6 +172,10 @@ export default function Home() {
           );
           setNearestShop(nearest);
           localStorage.setItem("selected_shop", nearest.id);
+          // Load menu for the nearest shop
+          if (nearest && nearest.id) {
+            await loadMenu(nearest.id);
+          }
         } catch (e) {
           console.log(e);
           setLocationDenied(true);
@@ -178,12 +194,16 @@ export default function Home() {
 
   const loadMenu = async (shopId) => {
     try {
-      // ✅ Use 'shop' as the query parameter (backend expects 'shop')
-      const allItems = await getPublicMenuItems({ shop: shopId });
-      setMenuItems(allItems);
+      const [allItems, shopCats] = await Promise.all([
+        getPublicMenuItems({ shop: shopId }),
+        getCategoriesByShopPublic(shopId).catch(() => getPublicCategories().catch(() => [])),
+      ]);
+      setMenuItems(Array.isArray(allItems) ? allItems : []);
+      setCategories(Array.isArray(shopCats) ? shopCats : []);
     } catch (e) {
       console.log(e);
       setMenuItems([]);
+      setCategories([]);
     }
   };
 
@@ -202,6 +222,10 @@ export default function Home() {
     setNearestShop(shop);
     localStorage.setItem("selected_shop", shop.id);
     setShowShops(false);
+    // Load menu for the selected shop
+    if (shop && shop.id) {
+      loadMenu(shop.id);
+    }
   };
 
   const handleAddCart = async (item) => {
@@ -413,6 +437,35 @@ export default function Home() {
       {/* ============ MARQUEE ============ */}
       <Marquee />
 
+      {/* ============ DOMINO'S STYLE ACTIVE OFFERS BAR (ONLY SHOWN IF OFFERS AVAILABLE FROM BACKEND) ============ */}
+      {offers.length > 0 && (
+        <section className="rw-offers-section" data-testid="offers-section">
+          <div className="rw-offers-scroll">
+            {offers.map((off, idx) => (
+              <div
+                key={off.id || idx}
+                className="rw-offer-card"
+                style={{
+                  background:
+                    idx % 3 === 1
+                      ? "linear-gradient(135deg, #1b3d2b 0%, #0d2618 100%)"
+                      : idx % 3 === 2
+                      ? "linear-gradient(135deg, #4a2700 0%, #291500 100%)"
+                      : "linear-gradient(135deg, #430a15 0%, #6d1322 100%)",
+                }}
+              >
+                <span className="rw-offer-badge">
+                  {off.discount_type || off.coupon_type || "OFFER"}
+                </span>
+                <h4>{off.title || off.name || off.code || "Special Offer"}</h4>
+                <p>{off.description || "Get special discount on your order!"}</p>
+                {off.code && <div className="rw-offer-code">CODE: {off.code}</div>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ============ LOCATION BANNER ============ */}
       <AnimatePresence>
         {locationDenied && !nearestShop && !showShops && (
@@ -529,22 +582,63 @@ export default function Home() {
 
       <VideoSlideshow />
 
+      {/* ============ STICKY CATEGORY NAV TABS (DOMINO'S STYLE) ============ */}
+      <div className="rw-category-sticky-bar">
+        <div className="rw-category-tabs">
+          <button
+            className={`rw-cat-tab ${activeCategory === "all" ? "active" : ""}`}
+            onClick={() => setActiveCategory("all")}
+          >
+            All Items
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id || cat.name}
+              className={`rw-cat-tab ${activeCategory === (cat.id || cat.name) ? "active" : ""}`}
+              onClick={() => setActiveCategory(cat.id || cat.name)}
+            >
+              🫓 {cat.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
       <Chapter
         no="02"
-        kicker="Today's Picks"
-        title="Popular"
+        kicker="Fresh Tandoori Breads"
+        title="Our Roti & Naan"
         accent="Menu"
-        sub={`Freshly prepared dishes from ${nearestShop?.name || "your shop"}`}
+        sub={`Piping hot rotis & Afghani naans freshly baked at ${nearestShop?.name || "Roti Waale"}`}
       />
 
-      <motion.div className="rw-foods" data-testid="popular-menu-grid">
-        {menuItems.length === 0 ? (
-          <div className="rw-empty" data-testid="empty-menu">
-            <p>No menu items available for this shop.</p>
-          </div>
-        ) : (
-          menuItems.map((item, index) => (
+      {displayItems.length === 0 ? (
+        <motion.div
+          className="rw-empty-state"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: EASE }}
+        >
+          <div className="rw-empty-state-icon">🫓</div>
+          <h3>No menu items available</h3>
+          <p>
+            {nearestShop
+              ? `No items found for ${nearestShop.name}. Please try another shop.`
+              : "Please select a shop to view menu items."}
+          </p>
+          {!nearestShop && (
+            <button
+              className="rw-btn rw-btn-gold"
+              onClick={handleChangeShop}
+            >
+              Browse Shops <FaLocationArrow />
+            </button>
+          )}
+        </motion.div>
+      ) : (
+        <motion.div className="rw-foods" data-testid="popular-menu-grid">
+          {displayItems.map((item, index) => (
             <motion.article
               key={item.id}
               className="rw-food"
@@ -560,28 +654,30 @@ export default function Home() {
             >
               <div className="rw-food-frame">
                 <img
-                  src={item.image_url || "/food-placeholder.jpg"}
+                  src={item.image_url || item.image}
                   alt={item.name}
                   className="rw-food-img"
                   loading="lazy"
                   onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                 />
                 <span className="rw-food-badge">
-                  <FaFire /> Hot
+                  <FaFire /> {item.is_special ? "Special" : "Hot"}
                 </span>
                 <div className="rw-food-overlay" />
               </div>
               <div className="rw-food-body">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span className="rw-badge-veg">100% VEG</span>
+                  {item.category && <span style={{ fontSize: "0.75rem", color: "#8a766b", fontWeight: 700 }}>{item.category}</span>}
+                </div>
                 <h4>{item.name}</h4>
                 <p>
-                  {item.description
-                    ? item.description.slice(0, 90)
-                    : "Delicious freshly prepared food."}
+                  {item.description || "Freshly baked in traditional clay tandoor on order."}
                 </p>
                 <div className="rw-food-meta">
                   <h3>₹ {item.base_price || item.price}</h3>
                   <div className="rw-food-stars">
-                    <FaStar /> 4.{5 + (index % 4)}
+                    <FaStar /> 4.{8 + (index % 2)}
                   </div>
                 </div>
                 <motion.button
@@ -595,9 +691,9 @@ export default function Home() {
                 </motion.button>
               </div>
             </motion.article>
-          ))
-        )}
-      </motion.div>
+          ))}
+        </motion.div>
+      )}
 
       {/* ============ STATS BAND (now from backend) ============ */}
       <motion.section
@@ -727,6 +823,24 @@ export default function Home() {
         <span className="rw-wa-ring" />
         <FaWhatsapp size={24} />
       </a>
+
+      {/* ============ MOBILE STICKY CART BAR (DOMINO'S PATTERN) ============ */}
+      <div className="rw-mobile-cart-bar">
+        <div className="rw-mobile-cart-info">
+          <span className="rw-mobile-cart-count">Fresh Roti Delivery</span>
+          <span className="rw-mobile-cart-price">Hot from Tandoor</span>
+        </div>
+        <button
+          className="rw-mobile-cart-btn"
+          onClick={() => {
+            window.dispatchEvent(new Event("cartUpdated"));
+            const cartBtn = document.querySelector(".cart-btn");
+            if (cartBtn) cartBtn.click();
+          }}
+        >
+          View Cart <FaShoppingCart />
+        </button>
+      </div>
     </div>
   );
 }

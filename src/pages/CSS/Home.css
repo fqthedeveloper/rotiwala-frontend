@@ -1136,6 +1136,179 @@ same marque use same everting
   .rw-scroll-cue { display: none; }
 }
 
+/* ===================================================
+   DOMINO'S STYLE ACTIVE OFFERS BAR
+   =================================================== */
+.rw-offers-section {
+  margin: 34px 0 44px;
+}
+.rw-offers-scroll {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.rw-offers-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.rw-offers-scroll::-webkit-scrollbar-thumb {
+  background: var(--rw-line);
+  border-radius: 999px;
+}
+.rw-offer-card {
+  flex: 0 0 310px;
+  scroll-snap-align: start;
+  background: linear-gradient(135deg, #430a15 0%, #6d1322 100%);
+  color: var(--rw-cream);
+  border-radius: var(--rw-r-md);
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(67, 10, 21, 0.2);
+  border: 1px solid rgba(212, 164, 55, 0.3);
+}
+.rw-offer-badge {
+  display: inline-block;
+  background: var(--rw-gold);
+  color: #211510;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+.rw-offer-card h4 {
+  font-family: var(--rw-serif);
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  color: var(--rw-gold-soft);
+}
+.rw-offer-card p {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: rgba(250, 243, 230, 0.8);
+}
+.rw-offer-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(250, 243, 230, 0.12);
+  border: 1px dashed rgba(212, 164, 55, 0.5);
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--rw-gold-soft);
+}
+
+/* ===================================================
+   STICKY CATEGORY TAB BAR (DOMINO'S PATTERN)
+   =================================================== */
+.rw-category-sticky-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 900;
+  background: rgba(250, 243, 230, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 14px 0;
+  margin: 20px 0 34px;
+  border-bottom: 1px solid var(--rw-line);
+}
+.rw-category-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 4px 4px;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+.rw-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+.rw-cat-tab {
+  background: #ffffff;
+  border: 1.5px solid var(--rw-line);
+  color: var(--rw-text);
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s var(--rw-ease);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.rw-cat-tab:hover {
+  border-color: var(--rw-maroon);
+  color: var(--rw-maroon);
+}
+.rw-cat-tab.active {
+  background: var(--rw-grad-maroon);
+  color: var(--rw-cream);
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(109, 19, 34, 0.3);
+}
+
+/* ===================================================
+   MOBILE STICKY CART BOTTOM BAR
+   =================================================== */
+.rw-mobile-cart-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9990;
+  background: #430a15;
+  color: #faf3e6;
+  padding: 14px 20px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  border-top: 2px solid var(--rw-gold);
+  align-items: center;
+  justify-content: space-between;
+}
+.rw-mobile-cart-info {
+  display: flex;
+  flex-direction: column;
+}
+.rw-mobile-cart-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--rw-gold-soft);
+}
+.rw-mobile-cart-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+.rw-mobile-cart-btn {
+  background: var(--rw-grad-gold);
+  color: #211510;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .rw-mobile-cart-bar {
+    display: flex;
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

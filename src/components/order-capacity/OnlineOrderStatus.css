@@ -1,0 +1,17 @@
+.online-order-status {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border: 1px solid var(--border, #e5d08a);
+  border-radius: 10px;
+  background: var(--white, #fff);
+  color: var(--text-dark, #2b0c00);
+  font-weight: 700;
+}
+.online-order-status p { margin: .35rem 0 0; font-weight: 400; }
+.online-order-status button { margin-left: auto; border: 0; background: transparent; color: var(--secondary, #5a1700); text-decoration: underline; cursor: pointer; }
+.status-open span { color: var(--success, #198754); }
+.status-closed { border-color: rgba(220, 53, 69, .35); }
+.status-loading, .status-error { font-weight: 500; }
+.compact { padding: .5rem .75rem; font-size: .9rem; }

@@ -1,0 +1,231 @@
+/* ===================================================
+   CART DRAWER — DOMINO'S STYLE SLIDE-OVER
+   =================================================== */
+
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 16, 9, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.cart-drawer-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 420px;
+  max-width: 100vw;
+  height: 100vh;
+  background: #fffaf1;
+  z-index: 10001;
+  box-shadow: -10px 0 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cart-drawer-overlay.active .cart-drawer {
+  transform: translateX(-420px);
+}
+
+@media (max-width: 480px) {
+  .cart-drawer {
+    width: 100vw;
+    right: -100vw;
+  }
+  .cart-drawer-overlay.active .cart-drawer {
+    transform: translateX(-100vw);
+  }
+}
+
+.cart-drawer-header {
+  padding: 20px 24px;
+  background: #430a15;
+  color: #faf3e6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #d4a437;
+}
+
+.cart-drawer-header h3 {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f0dc9f;
+}
+
+.cart-drawer-close {
+  background: rgba(250, 243, 230, 0.12);
+  border: none;
+  color: #faf3e6;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.cart-drawer-close:hover {
+  background: rgba(250, 243, 230, 0.25);
+}
+
+.cart-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.cart-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8a766b;
+}
+
+.cart-empty-icon {
+  font-size: 3.5rem;
+  color: #d4a437;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.cart-empty-state h4 {
+  margin: 0 0 8px;
+  font-family: "Fraunces", Georgia, serif;
+  color: #2b1a12;
+  font-size: 1.3rem;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(109, 19, 34, 0.12);
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(43, 26, 18, 0.05);
+}
+
+.cart-item-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f2e6d0;
+}
+
+.cart-item-details {
+  flex: 1;
+}
+
+.cart-item-details h5 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2b1a12;
+}
+
+.cart-item-price {
+  font-weight: 800;
+  color: #6d1322;
+  font-size: 0.95rem;
+}
+
+.cart-item-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f2e6d0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.cart-item-stepper button {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #6d1322;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-item-stepper span {
+  font-weight: 800;
+  font-size: 0.88rem;
+  min-width: 16px;
+  text-align: center;
+}
+
+.cart-drawer-footer {
+  padding: 20px;
+  background: #ffffff;
+  border-top: 1px solid rgba(109, 19, 34, 0.12);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.cart-bill-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #8a766b;
+}
+
+.cart-bill-total {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0 16px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(109, 19, 34, 0.2);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #2b1a12;
+}
+
+.cart-checkout-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #6d1322 0%, #430a15 100%);
+  color: #f0dc9f;
+  border: none;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 24px rgba(109, 19, 34, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cart-checkout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(109, 19, 34, 0.45);
+}

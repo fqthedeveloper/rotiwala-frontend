@@ -5,6 +5,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getCart } from "../../service/cartService";
 import { placeOrder } from "../../service/orderService";
+import { getOnlineOrderStatus } from "../../service/orderCapacityService";
 import { fetchAvailablePromotions, applyPromotionPreview } from "../../service/couponService";
 import api, { getAddresses, createAddress } from "../../service/api";
 import {
@@ -46,6 +47,7 @@ export default function Checkout() {
   const [shopId, setShopId] = useState("");
   const [selectedShop, setSelectedShop] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [onlineOrderingClosed, setOnlineOrderingClosed] = useState(false);
 
   // ----- Delivery Option -----
   const [deliveryOption, setDeliveryOption] = useState("pickup");
@@ -261,6 +263,11 @@ export default function Checkout() {
         return;
       }
       setCart(cartData);
+
+      try {
+        const orderStatus = await getOnlineOrderStatus();
+        setOnlineOrderingClosed(!orderStatus?.accepting_online_orders);
+      } catch {}
 
       const res = await api.get("/shops/public/");
       const shopsData = res.data || [];
@@ -620,6 +627,13 @@ const handlePlaceOrder = async () => {
 
   setPlacingOrder(true);
   try {
+    const orderStatus = await getOnlineOrderStatus();
+    if (!orderStatus?.accepting_online_orders) {
+      setOnlineOrderingClosed(true);
+      Swal.fire("Online ordering unavailable", "Sorry, we're currently at full order capacity. Your cart is still saved. Please try again shortly.", "warning");
+      return;
+    }
+
     const payload = {
       shop_id: shopId,
       payment_method: paymentMethod,
@@ -674,6 +688,14 @@ const handlePlaceOrder = async () => {
 
     navigate("/my-orders");
   } catch (error) {
+    const errorCode = error?.response?.data?.code;
+    if (errorCode === "ONLINE_ORDER_CAPACITY_REACHED" || errorCode === "ONLINE_ORDERING_PAUSED") {
+      setOnlineOrderingClosed(true);
+      Swal.fire("Online ordering unavailable", errorCode === "ONLINE_ORDER_CAPACITY_REACHED"
+        ? "Sorry, we're currently at full order capacity. Your cart is still saved. Please try again shortly."
+        : "Online ordering is temporarily paused. Your cart is still saved. Please check again shortly.", "warning");
+      return;
+    }
     Swal.fire(
       "Error",
       error?.response?.data?.error || "Failed to place order",
@@ -709,6 +731,9 @@ const handlePlaceOrder = async () => {
 
   return (
     <div className="checkout-page">
+      {onlineOrderingClosed && (
+        <div className="container pt-3"><div className="alert alert-warning" role="alert">Online ordering is currently unavailable. Your cart is still saved. Please try again shortly.</div></div>
+      )}
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-12 col-lg-10 col-xl-9">
@@ -1227,6 +1252,7 @@ const handlePlaceOrder = async () => {
                   onClick={handlePlaceOrder}
                   disabled={
                     placingOrder ||
+                    onlineOrderingClosed ||
                     (deliveryOption === "delivery" && (!isWithinRadius || !deliveryLat || !deliveryLng))
                   }
                 >
