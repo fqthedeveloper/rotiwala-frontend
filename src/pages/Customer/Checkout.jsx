@@ -1,7 +1,7 @@
 // frontend/src/pages/Checkout.jsx
 
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { getCart } from "../../service/cartService";
 import { placeOrder } from "../../service/orderService";
@@ -10,7 +10,6 @@ import { fetchAvailablePromotions, applyPromotionPreview } from "../../service/c
 import api, { getAddresses, createAddress } from "../../service/api";
 import {
   GoogleMap,
-  LoadScript,
   Marker,
   Autocomplete,
   useLoadScript,
@@ -32,9 +31,28 @@ const mapOptions = {
   fullscreenControl: false,
 };
 
+const getDeliveryRadius = (shop) =>
+  Number(shop?.delivery_radius_km ?? shop?.delivery_radius ?? 2);
+
+const normalizeShop = (shop) => ({
+  ...shop,
+  delivery_radius_km: shop?.delivery_radius_km ?? shop?.delivery_radius ?? 2,
+  delivery_fee: shop?.delivery_fee ?? shop?.delivery_settings?.delivery_fee ?? 0,
+  free_delivery_min_order:
+    shop?.free_delivery_min_order ??
+    shop?.free_delivery_threshold ??
+    shop?.delivery_settings?.free_delivery_min_order ??
+    0,
+  minimum_delivery_order:
+    shop?.minimum_delivery_order ??
+    shop?.minimum_order_for_delivery ??
+    shop?.delivery_settings?.minimum_delivery_order ??
+    0,
+});
+
 export default function Checkout() {
   const navigate = useNavigate();
-  const { isLoaded, loadError } = useLoadScript({
+  const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries,
   });
@@ -48,6 +66,8 @@ export default function Checkout() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [onlineOrderingClosed, setOnlineOrderingClosed] = useState(false);
+  const [orderStatusMessage, setOrderStatusMessage] = useState("");
+  const [checkingOrderStatus, setCheckingOrderStatus] = useState(true);
 
   // ----- Delivery Option -----
   const [deliveryOption, setDeliveryOption] = useState("pickup");
@@ -112,6 +132,37 @@ export default function Checkout() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (!shopId) return undefined;
+
+    const refreshOrderStatus = async () => {
+      try {
+        const orderStatus = await getOnlineOrderStatus(shopId);
+        const closed =
+          !orderStatus?.accepting_online_orders ||
+          Number(orderStatus?.available_capacity) <= 0 ||
+          Boolean(orderStatus?.manually_paused);
+        setOnlineOrderingClosed(closed);
+        setOrderStatusMessage(
+          Number(orderStatus?.available_capacity) <= 0
+            ? "This shop has reached its current online order capacity."
+            : "Online ordering has been temporarily paused by the manager.",
+        );
+      } catch (statusError) {
+        console.error("Unable to refresh online ordering status:", statusError);
+        setOnlineOrderingClosed(true);
+        setOrderStatusMessage("We could not verify online ordering availability. Please try again shortly.");
+      } finally {
+        setCheckingOrderStatus(false);
+      }
+    };
+
+    setCheckingOrderStatus(true);
+    refreshOrderStatus();
+    const statusTimer = window.setInterval(refreshOrderStatus, 15000);
+    return () => window.clearInterval(statusTimer);
+  }, [shopId]);
+
   // ============================================
   // 2. Load Promotions when Shop Changes
   // ============================================
@@ -161,7 +212,7 @@ export default function Checkout() {
         deliveryLng
       );
       setDeliveryDistance(dist);
-      const maxDist = parseFloat(selectedShop.delivery_radius_km || 2.0);
+      const maxDist = getDeliveryRadius(selectedShop);
       setIsWithinRadius(dist <= maxDist);
       if (!isWithinRadius) {
         setAddressError(`📍 Delivery distance is ${dist.toFixed(2)} km. Maximum allowed is ${maxDist} km.`);
@@ -225,6 +276,9 @@ export default function Checkout() {
 
   const autoSelectShop = (shopsData) => {
     if (!shopsData || shopsData.length === 0) return;
+    const fallbackShop = shopsData[0];
+    setShopId(String(fallbackShop.id));
+    setSelectedShop(fallbackShop);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -237,16 +291,14 @@ export default function Checkout() {
           }
         },
         () => {
-          const first = shopsData[0];
-          setShopId(String(first.id));
-          setSelectedShop(first);
+          setShopId(String(fallbackShop.id));
+          setSelectedShop(fallbackShop);
         },
         { timeout: 10000, enableHighAccuracy: false }
       );
     } else {
-      const first = shopsData[0];
-      setShopId(String(first.id));
-      setSelectedShop(first);
+      setShopId(String(fallbackShop.id));
+      setSelectedShop(fallbackShop);
     }
   };
 
@@ -264,13 +316,8 @@ export default function Checkout() {
       }
       setCart(cartData);
 
-      try {
-        const orderStatus = await getOnlineOrderStatus();
-        setOnlineOrderingClosed(!orderStatus?.accepting_online_orders);
-      } catch {}
-
       const res = await api.get("/shops/public/");
-      const shopsData = res.data || [];
+      const shopsData = (res.data || []).map(normalizeShop);
       setShops(shopsData);
       autoSelectShop(shopsData);
     } catch (err) {
@@ -554,7 +601,7 @@ export default function Checkout() {
         deliveryLat,
         deliveryLng
       );
-      const maxDist = parseFloat(selectedShop.delivery_radius_km || 2.0);
+      const maxDist = getDeliveryRadius(selectedShop);
       if (dist > maxDist) {
         Swal.fire(
           "Location Too Far",
@@ -618,7 +665,7 @@ const handlePlaceOrder = async () => {
     if (!isWithinRadius) {
       Swal.fire(
         "Delivery Not Available",
-        `Your location is ${deliveryDistance?.toFixed(2)} km away. Maximum allowed is ${selectedShop?.delivery_radius_km || 2} km.`,
+        `Your location is ${deliveryDistance?.toFixed(2)} km away. Maximum allowed is ${getDeliveryRadius(selectedShop)} km.`,
         "error"
       );
       return;
@@ -627,10 +674,18 @@ const handlePlaceOrder = async () => {
 
   setPlacingOrder(true);
   try {
-    const orderStatus = await getOnlineOrderStatus();
-    if (!orderStatus?.accepting_online_orders) {
+    const orderStatus = await getOnlineOrderStatus(shopId);
+    if (
+      !orderStatus?.accepting_online_orders ||
+      Number(orderStatus?.available_capacity) <= 0 ||
+      Boolean(orderStatus?.manually_paused)
+    ) {
       setOnlineOrderingClosed(true);
-      Swal.fire("Online ordering unavailable", "Sorry, we're currently at full order capacity. Your cart is still saved. Please try again shortly.", "warning");
+      const statusMessage = Number(orderStatus?.available_capacity) <= 0
+        ? "This shop has reached its current online order capacity."
+        : "Online ordering has been temporarily paused by the manager.";
+      setOrderStatusMessage(statusMessage);
+      Swal.fire("Online ordering unavailable", `${statusMessage} Your cart is still saved.`, "warning");
       return;
     }
 
@@ -639,6 +694,7 @@ const handlePlaceOrder = async () => {
       payment_method: paymentMethod,
       notes: notes,
       delivery_option: deliveryOption,
+      delivery_fee: deliveryOption === "delivery" ? deliveryFee : 0,
       pickup_type: deliveryOption === "pickup" ? pickupType : "instant",
       pickup_time: deliveryOption === "pickup" && pickupType === "scheduled"
         ? `${pickupDate}T${pickupTime}:00`
@@ -711,7 +767,7 @@ const handlePlaceOrder = async () => {
     return <Navigate to="/cart" replace />;
   }
 
-  if (loading) {
+  if (loading || checkingOrderStatus) {
     return (
       <div className="checkout-page">
         <div className="container py-5 text-center">
@@ -724,10 +780,48 @@ const handlePlaceOrder = async () => {
     );
   }
 
+  if (onlineOrderingClosed) {
+    return (
+      <div className="checkout-page">
+        <div className="container py-5">
+          <div className="checkout-card checkout-blocked-card">
+            <div className="checkout-blocked-icon" aria-hidden="true">!</div>
+            <h2>Checkout is temporarily unavailable</h2>
+            <p>{orderStatusMessage || "Online orders are not being accepted right now."}</p>
+            <p className="text-muted">Your cart is still saved. Please try again when online ordering resumes.</p>
+            <button type="button" className="btn btn-warning fw-bold px-4" onClick={() => navigate("/cart")}>
+              Return to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const originalTotal = appliedDiscount.originalTotal || cart?.total_amount || 0;
   const discountAmount = appliedDiscount.amount || 0;
   const finalTotal = appliedDiscount.finalTotal || originalTotal - discountAmount;
   const itemsBreakdown = appliedDiscount.items || [];
+  const deliveryRadius = getDeliveryRadius(selectedShop);
+  const deliveryFeeSetting = Number(selectedShop?.delivery_fee ?? 0);
+  const freeDeliveryMinimum = Number(
+    selectedShop?.free_delivery_min_order ?? selectedShop?.free_delivery_threshold ?? 0,
+  );
+  const minimumDeliveryOrder = Number(
+    selectedShop?.minimum_delivery_order ?? selectedShop?.minimum_order_for_delivery ?? 0,
+  );
+  const deliveryRuleSubtotal = originalTotal;
+  const deliveryOrderMinimumMet = deliveryRuleSubtotal >= minimumDeliveryOrder;
+  const deliveryFee =
+    deliveryOption === "delivery" && deliveryRuleSubtotal < freeDeliveryMinimum
+      ? deliveryFeeSetting
+      : 0;
+  const orderTotal = finalTotal + deliveryFee;
+  const freeDeliveryUnlocked =
+    deliveryOption === "delivery" &&
+    freeDeliveryMinimum > 0 &&
+    deliveryRuleSubtotal >= freeDeliveryMinimum;
+  const amountToFreeDelivery = Math.max(0, freeDeliveryMinimum - deliveryRuleSubtotal);
 
   return (
     <div className="checkout-page">
@@ -759,7 +853,7 @@ const handlePlaceOrder = async () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     setShopId(val);
-                    const shop = shops.find((s) => s.id === Number(val));
+                    const shop = shops.find((s) => String(s.id) === String(val));
                     setSelectedShop(shop);
                   }}
                 >
@@ -787,10 +881,7 @@ const handlePlaceOrder = async () => {
                         <strong>Address</strong>
                         <span>{selectedShop.address}</span>
                       </div>
-                      <div>
-                        <strong>Max Delivery Distance</strong>
-                        <span>{selectedShop.delivery_radius_km || 2} km</span>
-                      </div>
+
                     </div>
                   </div>
                 )}
@@ -815,7 +906,16 @@ const handlePlaceOrder = async () => {
                     <input type="radio" checked={deliveryOption === "delivery"} readOnly />
                     <div>
                       <h6>Home Delivery</h6>
-                      <small>We'll deliver to your address (within {selectedShop?.delivery_radius_km || 2} km)</small>
+                      <small>We'll deliver to your address (within {deliveryRadius} km)</small>
+                      {selectedShop && (
+                        <small className="delivery-rule-note">
+                          {deliveryFeeSetting > 0
+                            ? deliveryRuleSubtotal >= freeDeliveryMinimum && freeDeliveryMinimum > 0
+                              ? "FREE delivery unlocked"
+                              : `₹${deliveryFeeSetting} delivery fee${freeDeliveryMinimum > 0 ? ` • Free above ₹${freeDeliveryMinimum}` : ""}`
+                            : "FREE delivery"}
+                        </small>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -951,7 +1051,7 @@ const handlePlaceOrder = async () => {
                         </span>
                         {!isWithinRadius && (
                           <div className="text-danger mt-1">
-                            ⚠️ Delivery not available – exceeds {selectedShop.delivery_radius_km || 2} km limit.
+                            ⚠️ Delivery not available – exceeds {deliveryRadius} km limit.
                           </div>
                         )}
                         {isWithinRadius && deliveryDistance > 0 && (
@@ -1226,6 +1326,17 @@ const handlePlaceOrder = async () => {
 
                 {/* ----- Total Breakdown ----- */}
                 <div className="checkout-summary">
+                  {deliveryOption === "delivery" && (
+                    freeDeliveryUnlocked ? (
+                      <div className="free-delivery-unlocked checkout-free-delivery" role="status">
+                        <span aria-hidden="true">✓</span> Free delivery unlocked!
+                      </div>
+                    ) : freeDeliveryMinimum > 0 && deliveryFeeSetting > 0 ? (
+                      <div className="free-delivery-progress checkout-free-delivery" role="status">
+                        Add ₹{amountToFreeDelivery.toFixed(0)} more for free delivery
+                      </div>
+                    ) : null
+                  )}
                   <div className="checkout-summary-row">
                     <span>Subtotal</span>
                     <span>₹{originalTotal}</span>
@@ -1240,9 +1351,15 @@ const handlePlaceOrder = async () => {
                     <span>Taxes</span>
                     <span>₹0</span>
                   </div>
+                  {deliveryOption === "delivery" && (
+                    <div className="checkout-summary-row">
+                      <span>Delivery Fee</span>
+                      <span>{deliveryFee > 0 ? `₹${deliveryFee}` : "FREE"}</span>
+                    </div>
+                  )}
                   <div className="checkout-total">
                     <h4>Total Amount</h4>
-                    <h3>₹{finalTotal}</h3>
+                    <h3>₹{orderTotal}</h3>
                   </div>
                 </div>
 
@@ -1253,18 +1370,21 @@ const handlePlaceOrder = async () => {
                   disabled={
                     placingOrder ||
                     onlineOrderingClosed ||
+                    (deliveryOption === "delivery" && !deliveryOrderMinimumMet) ||
                     (deliveryOption === "delivery" && (!isWithinRadius || !deliveryLat || !deliveryLng))
                   }
                 >
                   {placingOrder
                     ? "Placing Order..."
+                    : deliveryOption === "delivery" && !deliveryOrderMinimumMet
+                    ? `Minimum delivery order ₹${minimumDeliveryOrder}`
                     : deliveryOption === "delivery" && !isWithinRadius
                     ? "Location Not Servicable"
                     : "Place Order"}
                 </button>
                 {deliveryOption === "delivery" && !isWithinRadius && deliveryDistance !== null && (
                   <div className="text-danger text-center mt-2">
-                    ⚠️ Delivery not available for this address. Please choose a location within {selectedShop?.delivery_radius_km || 2} km.
+                    ⚠️ Delivery not available for this address. Please choose a location within {deliveryRadius} km.
                   </div>
                 )}
               </div>
@@ -1357,9 +1477,9 @@ const handlePlaceOrder = async () => {
                         parseFloat(selectedShop.longitude),
                         deliveryLat,
                         deliveryLng
-                      ) > parseFloat(selectedShop.delivery_radius_km || 2.0) && (
+                      ) > deliveryRadius && (
                         <div className="text-danger mt-1">
-                          ⚠️ Exceeds maximum distance ({selectedShop.delivery_radius_km || 2} km)
+                          ⚠️ Exceeds maximum distance ({deliveryRadius} km)
                         </div>
                       )}
                     </div>

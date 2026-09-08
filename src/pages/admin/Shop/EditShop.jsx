@@ -19,6 +19,10 @@ const EditShop = () => {
     closing_time: '',
     latitude: '',
     longitude: '',
+    delivery_radius_km: '2',
+    delivery_fee: '0',
+    free_delivery_min_order: '0',
+    minimum_delivery_order: '0',
     logo: null,        // will hold new File if user uploads
     banner: null,      // will hold new File if user uploads
     is_active: true,
@@ -40,6 +44,10 @@ const EditShop = () => {
           closing_time: data.closing_time || '',
           latitude: data.latitude || '',
           longitude: data.longitude || '',
+          delivery_radius_km: data.delivery_radius_km ?? '2',
+          delivery_fee: data.delivery_fee ?? '0',
+          free_delivery_min_order: data.free_delivery_min_order ?? '0',
+          minimum_delivery_order: data.minimum_delivery_order ?? '0',
           logo: null,   // reset; we'll only append if a new file is chosen
           banner: null, // reset
           is_active: data.is_active ?? true,
@@ -101,7 +109,7 @@ const EditShop = () => {
       const submitData = new FormData();
 
       // Append scalar fields only if they have a value
-      const scalarFields = ['name', 'address', 'phone', 'email', 'opening_time', 'closing_time', 'latitude', 'longitude'];
+      const scalarFields = ['name', 'address', 'phone', 'email', 'opening_time', 'closing_time', 'latitude', 'longitude', 'delivery_radius_km', 'delivery_fee', 'free_delivery_min_order', 'minimum_delivery_order'];
       scalarFields.forEach((key) => {
         if (formData[key] !== undefined && formData[key] !== '') {
           submitData.append(key, formData[key]);
@@ -173,6 +181,26 @@ const EditShop = () => {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+
+                  <div className="col-12 mb-3">
+                    <h6 className="fw-bold">Delivery Rules</h6>
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="delivery-radius" className="form-label">Delivery radius (km)</label>
+                    <input type="number" min="0.1" max="100" step="0.1" id="delivery-radius" name="delivery_radius_km" className="form-control" value={formData.delivery_radius_km} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="delivery-fee" className="form-label">Delivery fee (₹)</label>
+                    <input type="number" min="0" step="0.01" id="delivery-fee" name="delivery_fee" className="form-control" value={formData.delivery_fee} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="free-delivery-min" className="form-label">Free delivery above (₹)</label>
+                    <input type="number" min="0" step="0.01" id="free-delivery-min" name="free_delivery_min_order" className="form-control" value={formData.free_delivery_min_order} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="minimum-delivery-order" className="form-label">Minimum delivery order (₹)</label>
+                    <input type="number" min="0" step="0.01" id="minimum-delivery-order" name="minimum_delivery_order" className="form-control" value={formData.minimum_delivery_order} onChange={handleChange} required />
                   </div>
 
                   <div className="col-md-6 mb-3">

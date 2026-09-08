@@ -99,6 +99,35 @@
   color: #8a766b;
 }
 
+.cart-loading-state {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  color: #8a766b;
+}
+
+.cart-loading-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.cart-loading-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(109, 19, 34, 0.16);
+  border-top-color: #6d1322;
+  border-radius: 50%;
+  animation: cart-spin 0.8s linear infinite;
+}
+
+@keyframes cart-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .cart-empty-icon {
   font-size: 3.5rem;
   color: #d4a437;
@@ -150,6 +179,13 @@
   font-size: 0.95rem;
 }
 
+.cart-item-unit-price {
+  display: block;
+  margin-bottom: 3px;
+  color: #8a766b;
+  font-size: 0.76rem;
+}
+
 .cart-item-stepper {
   display: inline-flex;
   align-items: center;
@@ -173,6 +209,14 @@
   justify-content: center;
 }
 
+.cart-item-stepper.is-updating {
+  opacity: 0.55;
+}
+
+.cart-item-stepper button:disabled {
+  cursor: wait;
+}
+
 .cart-item-stepper span {
   font-weight: 800;
   font-size: 0.88rem;
@@ -193,6 +237,64 @@
   margin-bottom: 8px;
   font-size: 0.9rem;
   color: #8a766b;
+}
+
+.delivery-free-value {
+  color: #2e7d32;
+  font-weight: 800;
+}
+
+.delivery-charge-value {
+  color: #6d1322;
+  font-weight: 800;
+}
+
+.free-delivery-progress,
+.free-delivery-unlocked {
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.free-delivery-progress {
+  background: #fff5d6;
+  color: #8a5b00;
+}
+
+.free-delivery-unlocked {
+  background: #dff5e5;
+  color: #217a35;
+  animation: free-delivery-pop 0.5s ease both;
+}
+
+.free-delivery-unlocked span {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  place-items: center;
+  border-radius: 50%;
+  background: #2e9b49;
+  color: #fff;
+}
+
+.free-delivery-cart-icon {
+  margin-right: 5px;
+  animation: free-delivery-cart-bounce 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes free-delivery-cart-bounce {
+  from { transform: translateX(-3px) rotate(-5deg); }
+  to { transform: translateX(3px) rotate(5deg); }
+}
+
+@keyframes free-delivery-pop {
+  0% { opacity: 0; transform: scale(0.92); }
+  70% { transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .cart-bill-total {

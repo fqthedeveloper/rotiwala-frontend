@@ -1,7 +1,9 @@
 import api from "./api";
 
-export const getOnlineOrderStatus = async () => {
-  const response = await api.get("/shop/online-order-status/");
+export const getOnlineOrderStatus = async (shopId) => {
+  const response = await api.get("/shop/online-order-status/", {
+    params: shopId ? { shop_id: shopId } : undefined,
+  });
   return response.data;
 };
 
@@ -10,9 +12,12 @@ export const getManagerOrderCapacity = async () => {
   return response.data;
 };
 
-export const updateOrderCapacity = async (maxOnlineOrders) => {
+export const updateOrderCapacity = async (settings) => {
+  const payload = typeof settings === "object"
+    ? settings
+    : { max_online_orders: settings };
   const response = await api.patch("/manager/settings/order-capacity/", {
-    max_online_orders: maxOnlineOrders,
+    ...payload,
   });
   return response.data;
 };

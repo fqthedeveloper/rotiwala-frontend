@@ -7,13 +7,11 @@ import "./CSS/MenuItems.css"; // optional
 const MenuItems = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+  const userRole = localStorage.getItem("role") || storedUser?.role;
+  const menuBasePath = userRole === "manager" ? "/manager" : "/admin";
 
-  useEffect(() => {
-    document.title = "Menu Items | Roti Wala";
-    loadItems();
-  }, []);
-
-  const loadItems = async () => {
+  async function loadItems() {
     try {
       // getMenuItems should automatically use the manager's shop from the token
       const data = await getMenuItems();
@@ -24,7 +22,13 @@ const MenuItems = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    document.title = "Menu Items | Roti Wala";
+    const refreshTimer = window.setTimeout(loadItems, 0);
+    return () => window.clearTimeout(refreshTimer);
+  }, []);
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -48,6 +52,7 @@ const MenuItems = () => {
       });
       loadItems();
     } catch (error) {
+      console.error(error);
       Swal.fire("Error", "Failed to delete item", "error");
     }
   };
@@ -67,7 +72,7 @@ const MenuItems = () => {
       <div className="card shadow-sm border-0 rounded-4">
         <div className="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5 className="mb-0 fw-bold">Menu Items</h5>
-          <Link to="/admin/menu-items/add" className="btn btn-warning">
+          <Link to={`${menuBasePath}/menu-items/add`} className="btn btn-warning">
             <i className="fas fa-plus me-2"></i>Add Item
           </Link>
         </div>
@@ -125,7 +130,7 @@ const MenuItems = () => {
                       <td>
                         <div className="d-flex gap-2">
                           <Link
-                            to={`/admin/menu-items/edit/${item.id}`}
+                            to={`${menuBasePath}/menu-items/edit/${item.id}`}
                             className="btn btn-sm btn-warning"
                           >
                             Edit

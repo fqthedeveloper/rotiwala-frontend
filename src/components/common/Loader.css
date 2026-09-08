@@ -1,398 +1,75 @@
-/* ============================================================
-   ROTI WAALE - CENTER TANDOOR PRELOADER (NO MAN / NO CHEF)
-   ============================================================ */
-
 :root {
-  --rw-gold: #fbbf24;
-  --rw-gold-bright: #f59e0b;
-  --rw-orange: #f97316;
-  --rw-red: #ef4444;
-  --rw-dark-bg: #0d0302;
+  --loader-ink: #32130b;
+  --loader-maroon: #71152a;
+  --loader-gold: #efb62d;
 }
 
 .rw-app-preloader {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 32px 24px;
-  background: radial-gradient(circle at 50% 35%, #2a0b05 0%, #120302 60%, #050000 100%);
-  color: #ffffff;
-  font-family: system-ui, -apple-system, sans-serif;
+  justify-content: center;
+  gap: 22px;
   overflow: hidden;
-  box-sizing: border-box;
   isolation: isolate;
+  box-sizing: border-box;
+  padding: 32px 20px;
+  color: var(--loader-ink);
+  background: radial-gradient(circle at 50% 35%, #fffdf4 0%, #fff4d7 48%, #f5dfb2 100%);
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 }
 
-.rw-app-preloader--fullscreen {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 999999;
-}
-
-.rw-app-preloader--inline {
-  position: relative;
-  width: 100%;
-  min-height: 580px;
-  border-radius: 24px;
-  border: 1px solid rgba(251, 191, 36, 0.2);
-}
-
-/* BACKGROUND LIGHTING */
-.rw-bg-vignette {
+.rw-app-preloader::before,
+.rw-app-preloader::after {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.85) 100%);
-  pointer-events: none;
-  z-index: -2;
-}
-
-.rw-bg-glow {
-  position: absolute;
-  width: 550px;
-  height: 550px;
+  content: "";
+  width: 38vw;
+  height: 38vw;
+  max-width: 420px;
+  max-height: 420px;
   border-radius: 50%;
-  top: 20%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, rgba(239, 68, 68, 0.08) 55%, transparent 75%);
-  pointer-events: none;
+  background: rgba(239, 182, 45, 0.16);
+  filter: blur(24px);
   z-index: -1;
-  filter: blur(45px);
+  animation: loader-breathe 4s ease-in-out infinite;
 }
 
-/* EMBERS */
-.rw-ember-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
+.rw-app-preloader::before { top: -18%; left: -10%; }
+.rw-app-preloader::after { right: -12%; bottom: -20%; animation-delay: -2s; background: rgba(113, 21, 42, 0.1); }
+.rw-app-preloader--fullscreen { position: fixed; inset: 0; z-index: 999999; min-height: 100vh; }
+.rw-app-preloader--inline { width: 100%; min-height: 360px; border-radius: 20px; }
+
+.rw-loader-brand { display: flex; align-items: center; gap: 10px; color: var(--loader-maroon); font-size: .82rem; font-weight: 900; letter-spacing: .18em; }
+.rw-loader-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: var(--loader-maroon); color: var(--loader-gold); font-family: Georgia, serif; font-size: 1.35rem; letter-spacing: 0; box-shadow: 0 6px 16px rgba(113, 21, 42, .2); }
+.rw-loader-food { position: relative; width: 190px; height: 150px; display: grid; place-items: center; }
+.rw-loader-roti { position: relative; z-index: 2; width: 118px; height: 82px; border: 5px solid #d08a1b; border-radius: 54% 46% 50% 48%; background: radial-gradient(circle at 35% 25%, #ffe9a8, #e8a62d 70%, #bd6916); box-shadow: 0 12px 0 rgba(113, 21, 42, .08), 0 10px 24px rgba(113, 21, 42, .18), inset 5px -6px 10px rgba(119, 52, 5, .2); }
+.rw-loader-roti i { position: absolute; display: block; border-radius: 50%; background: #8e4d0b; opacity: .75; }
+.rw-loader-roti i:nth-child(1) { width: 14px; height: 8px; top: 18px; left: 26px; }
+.rw-loader-roti i:nth-child(2) { width: 10px; height: 7px; top: 35px; right: 28px; }
+.rw-loader-roti i:nth-child(3) { width: 16px; height: 9px; bottom: 15px; left: 45px; }
+.rw-loader-roti i:nth-child(4) { width: 8px; height: 6px; bottom: 24px; right: 20px; }
+.rw-loader-flame { position: absolute; bottom: 18px; width: 74px; height: 62px; border-radius: 60% 40% 55% 45%; background: linear-gradient(135deg, #ffcd45 20%, #ed7d17 55%, #a82f24); filter: blur(.3px); transform-origin: bottom center; box-shadow: 0 0 28px rgba(236, 106, 22, .35); }
+.rw-loader-flame span { position: absolute; inset: 18px 22px 0; border-radius: 50% 50% 45% 45%; background: #fff3b0; }
+.rw-loader-orbit { position: absolute; width: 220px; height: 92px; border: 1px solid rgba(113, 21, 42, .22); border-radius: 50%; pointer-events: none; }
+.rw-loader-orbit-one { transform: rotate(22deg); }
+.rw-loader-orbit-two { width: 250px; height: 112px; border-color: rgba(239, 182, 45, .48); transform: rotate(-34deg); }
+.rw-loader-copy { text-align: center; }
+.rw-loader-copy h1 { margin: 0; color: var(--loader-ink); font-family: Georgia, serif; font-size: clamp(1.35rem, 3vw, 1.8rem); }
+.rw-loader-copy p { margin: 6px 0 0; color: #80685e; font-size: .85rem; }
+.rw-loader-progress { width: min(260px, 80vw); height: 6px; overflow: hidden; border-radius: 99px; background: rgba(113, 21, 42, .12); }
+.rw-loader-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--loader-maroon), var(--loader-gold)); }
+.rw-loader-dots { display: flex; gap: 7px; }
+.rw-loader-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(113, 21, 42, .2); transition: transform .3s ease, background .3s ease; }
+.rw-loader-dots span.is-active { background: var(--loader-maroon); transform: scale(1.45); }
+
+@keyframes loader-breathe { 0%, 100% { transform: scale(.95); opacity: .7; } 50% { transform: scale(1.08); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rw-app-preloader::before, .rw-app-preloader::after { animation: none; }
 }
 
-.rw-ember-spark {
-  position: absolute;
-  bottom: 15%;
-  border-radius: 50%;
-  background: var(--rw-gold);
-  box-shadow: 0 0 10px var(--rw-orange);
-}
-
-/* HEADER BRANDING */
-.rw-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 860px;
-  z-index: 5;
-}
-
-.rw-badge-tag {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  font-size: 14px;
-  color: var(--rw-gold);
-}
-
-.rw-badge-tag strong {
-  font-size: 20px;
-  color: #ffffff;
-  font-weight: 800;
-}
-
-.rw-brand-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.rw-chef-hat-icon {
-  width: 38px;
-  height: 38px;
-  margin-bottom: -4px;
-}
-
-.rw-main-title {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: var(--rw-gold);
-}
-
-.rw-main-title span {
-  color: #ffffff;
-}
-
-.rw-sub-tagline {
-  margin: 4px 0 0 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.rw-badge-circle {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 2px solid var(--rw-gold);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.rw-percent {
-  font-size: 12px;
-  font-weight: 900;
-  color: var(--rw-gold);
-}
-
-.rw-label {
-  font-size: 8px;
-  text-transform: uppercase;
-  color: #ffffff;
-  padding: 0 4px;
-}
-
-/* VIEWPORT & CENTER STAGE */
-.rw-stage-viewport {
-  position: relative;
-  width: 100%;
-  max-width: 680px;
-  height: 280px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-}
-
-.rw-tandoor-center-stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-/* CLAY TANDOOR VESSEL */
-.rw-tandoor-clay-body {
-  position: relative;
-  width: 210px;
-  height: 200px;
-  background: linear-gradient(180deg, #6b2d0c 0%, #3b1404 100%);
-  border-radius: 60px 60px 24px 24px;
-  border: 3px solid rgba(251, 191, 36, 0.35);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), inset 0 4px 12px rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 14px;
-}
-
-.rw-tandoor-fire-glow {
-  position: absolute;
-  inset: -15px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--rw-orange) 0%, rgba(239, 68, 68, 0.3) 50%, transparent 70%);
-  filter: blur(16px);
-  z-index: -1;
-}
-
-/* TANDOOR MOUTH / PIT */
-.rw-tandoor-pit {
-  position: relative;
-  width: 170px;
-  height: 100px;
-  background: #090201;
-  border-radius: 50%;
-  border: 4px solid #4a1d07;
-  overflow: hidden;
-  box-shadow: inset 0 0 25px rgba(249, 115, 22, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rw-pit-inner-flame {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 60%, #fef08a 0%, #f97316 45%, #7f1d1d 85%);
-  opacity: 0.85;
-}
-
-/* ROTI BAKING INSIDE PIT */
-.rw-roti-baking {
-  position: relative;
-  width: 105px;
-  height: 65px;
-  background: radial-gradient(ellipse at center, #fef08a 0%, #d97706 75%, #92400e 100%);
-  border-radius: 50%;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.6), inset 0 0 8px rgba(0, 0, 0, 0.2);
-  z-index: 2;
-  transform: rotate(-4deg);
-}
-
-.rw-roti-spot {
-  position: absolute;
-  background: #451a03;
-  border-radius: 50%;
-  opacity: 0.85;
-}
-
-.rw-spot-1 { width: 14px; height: 9px; top: 12px; left: 22px; }
-.rw-spot-2 { width: 18px; height: 11px; bottom: 14px; right: 24px; }
-.rw-spot-3 { width: 9px; height: 7px; top: 22px; right: 28px; }
-.rw-spot-4 { width: 11px; height: 8px; bottom: 12px; left: 32px; }
-.rw-spot-5 { width: 7px; height: 6px; top: 32px; left: 48px; }
-
-.rw-roti-steam {
-  position: absolute;
-  top: -10px;
-  left: 40%;
-  width: 20px;
-  height: 20px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
-  filter: blur(4px);
-  border-radius: 50%;
-}
-
-/* ACTION BANNER */
-.rw-action-banner {
-  position: absolute;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
-  border: 1px solid var(--rw-gold);
-  border-radius: 30px;
-  padding: 8px 32px;
-  text-align: center;
-}
-
-.rw-banner-text h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.rw-banner-text p {
-  margin: 2px 0 0 0;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* PROGRESS BAR */
-.rw-progress-block {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 580px;
-  z-index: 5;
-}
-
-.rw-progress-track-outer {
-  flex: 1;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  padding: 2px;
-}
-
-.rw-progress-track-fill {
-  position: relative;
-  height: 100%;
-  background: linear-gradient(90deg, #d97706, #fbbf24);
-  border-radius: 20px;
-}
-
-.rw-fill-head-light {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 12px;
-  background: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #ffffff;
-}
-
-.rw-progress-readout {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--rw-gold);
-  min-width: 48px;
-}
-
-/* TIMELINE NODES */
-.rw-timeline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 5;
-}
-
-.rw-timeline-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.4;
-  transition: opacity 0.3s;
-}
-
-.rw-timeline-node.is-active,
-.rw-timeline-node.is-done {
-  opacity: 1;
-}
-
-.rw-node-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-.rw-timeline-node.is-active .rw-node-circle {
-  border-color: var(--rw-gold);
-  background: rgba(251, 191, 36, 0.2);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
-}
-
-.rw-node-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.rw-timeline-line {
-  width: 32px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.2);
-  margin-bottom: 18px;
-}
-
-.rw-timeline-line.is-filled {
-  background: var(--rw-gold);
-}
-
-/* FOOTER TAG */
-.rw-footer-tag {
-  font-size: 13px;
-  font-style: italic;
-  color: var(--rw-gold);
-  letter-spacing: 1px;
-  z-index: 5;
+@media (max-width: 480px) {
+  .rw-app-preloader { gap: 18px; padding: 24px 16px; }
+  .rw-loader-food { transform: scale(.86); margin: -8px 0; }
 }

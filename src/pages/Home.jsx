@@ -100,15 +100,32 @@ export default function Home() {
   // Use only backend data — no fallback mock data
   const displayItems = menuItems.filter((item) => {
     if (activeCategory === "all") return true;
-    const catName = String(item.category_name || item.category || "").toLowerCase();
-    const catId = String(item.category_id || item.category?.id || item.category || "");
+    const catName = String(
+      item.category_name || item.category || "",
+    ).toLowerCase();
+    const catId = String(
+      item.category_id || item.category?.id || item.category || "",
+    );
     const targetCat = String(activeCategory).toLowerCase();
 
     if (catId === targetCat || catName === targetCat) return true;
-    if (targetCat === "afghani") return catName.includes("afghani") || item.name.toLowerCase().includes("afghani");
-    if (targetCat === "special") return catName.includes("special") || item.is_special;
-    if (targetCat === "regular") return catName.includes("regular") || item.name.toLowerCase().includes("naan");
-    if (targetCat === "chapati") return catName.includes("chapati") || catName.includes("kulcha") || item.name.toLowerCase().includes("chapati");
+    if (targetCat === "afghani")
+      return (
+        catName.includes("afghani") ||
+        item.name.toLowerCase().includes("afghani")
+      );
+    if (targetCat === "special")
+      return catName.includes("special") || item.is_special;
+    if (targetCat === "regular")
+      return (
+        catName.includes("regular") || item.name.toLowerCase().includes("naan")
+      );
+    if (targetCat === "chapati")
+      return (
+        catName.includes("chapati") ||
+        catName.includes("kulcha") ||
+        item.name.toLowerCase().includes("chapati")
+      );
     return catName.includes(targetCat);
   });
 
@@ -168,7 +185,7 @@ export default function Home() {
         try {
           const nearest = await getNearestShop(
             pos.coords.latitude,
-            pos.coords.longitude
+            pos.coords.longitude,
           );
           setNearestShop(nearest);
           localStorage.setItem("selected_shop", nearest.id);
@@ -188,7 +205,7 @@ export default function Home() {
         setLocationDenied(true);
         await fetchAllShops();
         setLoading(false);
-      }
+      },
     );
   };
 
@@ -196,7 +213,9 @@ export default function Home() {
     try {
       const [allItems, shopCats] = await Promise.all([
         getPublicMenuItems({ shop: shopId }),
-        getCategoriesByShopPublic(shopId).catch(() => getPublicCategories().catch(() => [])),
+        getCategoriesByShopPublic(shopId).catch(() =>
+          getPublicCategories().catch(() => []),
+        ),
       ]);
       setMenuItems(Array.isArray(allItems) ? allItems : []);
       setCategories(Array.isArray(shopCats) ? shopCats : []);
@@ -450,16 +469,20 @@ export default function Home() {
                     idx % 3 === 1
                       ? "linear-gradient(135deg, #1b3d2b 0%, #0d2618 100%)"
                       : idx % 3 === 2
-                      ? "linear-gradient(135deg, #4a2700 0%, #291500 100%)"
-                      : "linear-gradient(135deg, #430a15 0%, #6d1322 100%)",
+                        ? "linear-gradient(135deg, #4a2700 0%, #291500 100%)"
+                        : "linear-gradient(135deg, #430a15 0%, #6d1322 100%)",
                 }}
               >
                 <span className="rw-offer-badge">
                   {off.discount_type || off.coupon_type || "OFFER"}
                 </span>
                 <h4>{off.title || off.name || off.code || "Special Offer"}</h4>
-                <p>{off.description || "Get special discount on your order!"}</p>
-                {off.code && <div className="rw-offer-code">CODE: {off.code}</div>}
+                <p>
+                  {off.description || "Get special discount on your order!"}
+                </p>
+                {off.code && (
+                  <div className="rw-offer-code">CODE: {off.code}</div>
+                )}
               </div>
             ))}
           </div>
@@ -582,6 +605,15 @@ export default function Home() {
 
       <VideoSlideshow />
 
+      {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
+      <Chapter
+        no="02"
+        kicker="Fresh Tandoori Breads"
+        title="Our Roti & Naan"
+        accent="Menu"
+        sub={`Piping hot rotis & Afghani naans freshly baked at ${nearestShop?.name || "Roti Waale"}`}
+      />
+
       {/* ============ STICKY CATEGORY NAV TABS (DOMINO'S STYLE) ============ */}
       <div className="rw-category-sticky-bar">
         <div className="rw-category-tabs">
@@ -603,15 +635,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ============ CHAPTER 02 — POPULAR MENU ============ */}
-      <Chapter
-        no="02"
-        kicker="Fresh Tandoori Breads"
-        title="Our Roti & Naan"
-        accent="Menu"
-        sub={`Piping hot rotis & Afghani naans freshly baked at ${nearestShop?.name || "Roti Waale"}`}
-      />
-
       {displayItems.length === 0 ? (
         <motion.div
           className="rw-empty-state"
@@ -628,10 +651,7 @@ export default function Home() {
               : "Please select a shop to view menu items."}
           </p>
           {!nearestShop && (
-            <button
-              className="rw-btn rw-btn-gold"
-              onClick={handleChangeShop}
-            >
+            <button className="rw-btn rw-btn-gold" onClick={handleChangeShop}>
               Browse Shops <FaLocationArrow />
             </button>
           )}
@@ -666,13 +686,31 @@ export default function Home() {
                 <div className="rw-food-overlay" />
               </div>
               <div className="rw-food-body">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
                   <span className="rw-badge-veg">100% VEG</span>
-                  {item.category && <span style={{ fontSize: "0.75rem", color: "#8a766b", fontWeight: 700 }}>{item.category}</span>}
+                  {item.category && (
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "#8a766b",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {item.category}
+                    </span>
+                  )}
                 </div>
                 <h4>{item.name}</h4>
                 <p>
-                  {item.description || "Freshly baked in traditional clay tandoor on order."}
+                  {item.description ||
+                    "Freshly baked in traditional clay tandoor on order."}
                 </p>
                 <div className="rw-food-meta">
                   <h3>₹ {item.base_price || item.price}</h3>
@@ -805,7 +843,11 @@ export default function Home() {
           <p>Order now &amp; get your favorite dishes hot at your door.</p>
         </div>
         <motion.div whileHover={{ y: -3 }} whileTap={{ scale: 0.97 }}>
-          <Link to="/menu" data-testid="cta-order-btn" className="rw-btn rw-btn-gold">
+          <Link
+            to="/menu"
+            data-testid="cta-order-btn"
+            className="rw-btn rw-btn-gold"
+          >
             Order Now <FaShoppingCart />
           </Link>
         </motion.div>

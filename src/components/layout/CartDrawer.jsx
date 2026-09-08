@@ -1,13 +1,45 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaTimes, FaPlus, FaMinus, FaArrowRight } from "react-icons/fa";
 import { getCart, updateCartItem, removeCartItem } from "../../service/cartService";
+import { getShopsPublic } from "../../service/shopService";
 import "./CartDrawer.css";
+import logo from "/logo.png"; 
+
+const toAmount = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const getCartItemDetails = (item) => {
+  const product =
+    item.menu_item || item.menu_item_details || item.product || {};
+  const quantity = Math.max(1, toAmount(item.quantity));
+  const unitPrice = toAmount(
+    item.item_price ?? item.price ?? product.base_price ?? product.price,
+  );
+
+  return {
+    id: item.id,
+    name: item.item_name || product.name || item.name || "Menu item",
+    image:
+      item.image_url ||
+      item.item_image ||
+      product.image_url ||
+      product.image ||
+      logo,
+    quantity,
+    unitPrice,
+    total: toAmount(item.total_price ?? item.item_total) || unitPrice * quantity,
+  };
+};
 
 export default function CartDrawer({ isOpen, onClose }) {
   const navigate = useNavigate();
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
+  const [shopRules, setShopRules] = useState(null);
 
   const fetchCart = async () => {
     const token = localStorage.getItem("access");
@@ -17,8 +49,16 @@ export default function CartDrawer({ isOpen, onClose }) {
     }
     try {
       setLoading(true);
-      const data = await getCart();
+      const [data, shops] = await Promise.all([
+        getCart(),
+        getShopsPublic().catch(() => []),
+      ]);
       setCartData(data);
+      const selectedShopId = localStorage.getItem("selected_shop");
+      const selectedShop = shops.find(
+        (shop) => String(shop.id) === String(selectedShopId),
+      ) || shops[0] || null;
+      setShopRules(selectedShop);
     } catch (err) {
       console.error("Cart fetch error:", err);
       setCartData(null);
@@ -28,9 +68,10 @@ export default function CartDrawer({ isOpen, onClose }) {
   };
 
   useEffect(() => {
-    if (isOpen) {
-      fetchCart();
-    }
+    if (!isOpen) return undefined;
+
+    const refreshTimer = window.setTimeout(fetchCart, 0);
+    return () => window.clearTimeout(refreshTimer);
   }, [isOpen]);
 
   useEffect(() => {
@@ -42,6 +83,9 @@ export default function CartDrawer({ isOpen, onClose }) {
   }, [isOpen]);
 
   const handleQuantity = async (itemId, newQty) => {
+    if (updatingItemId === itemId) return;
+
+    setUpdatingItemId(itemId);
     try {
       if (newQty <= 0) {
         await removeCartItem(itemId);
@@ -52,11 +96,28 @@ export default function CartDrawer({ isOpen, onClose }) {
       fetchCart();
     } catch (err) {
       console.error("Failed to update cart:", err);
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
-  const items = cartData?.items || cartData?.cart_items || [];
-  const grandTotal = cartData?.total_price || cartData?.grand_total || items.reduce((acc, it) => acc + (it.price || it.menu_item?.price || 0) * it.quantity, 0);
+  const rawItems = cartData?.items || cartData?.cart_items || [];
+  const items = Array.isArray(rawItems) ? rawItems.map(getCartItemDetails) : [];
+  const grandTotal = toAmount(
+    cartData?.total_amount ??
+      cartData?.total_price ??
+      cartData?.grand_total ??
+      items.reduce((acc, item) => acc + item.total, 0),
+  );
+  const deliveryFeeSetting = toAmount(shopRules?.delivery_fee);
+  const freeDeliveryMinimum = toAmount(
+    shopRules?.free_delivery_min_order ?? shopRules?.free_delivery_threshold,
+  );
+  const deliveryFee = freeDeliveryMinimum > 0 && grandTotal < freeDeliveryMinimum
+    ? deliveryFeeSetting
+    : 0;
+  const freeDeliveryUnlocked = freeDeliveryMinimum > 0 && grandTotal >= freeDeliveryMinimum;
+  const amountToFreeDelivery = Math.max(0, freeDeliveryMinimum - grandTotal);
 
   return (
     <div className={`cart-drawer-overlay ${isOpen ? "active" : ""}`} onClick={onClose}>
@@ -71,62 +132,84 @@ export default function CartDrawer({ isOpen, onClose }) {
         </div>
 
         <div className="cart-drawer-body">
-          {items.length === 0 ? (
+          {loading ? (
+            <div className="cart-loading-state" aria-live="polite">
+              <span className="cart-loading-spinner" aria-hidden="true" />
+              <p>Loading your cart...</p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="cart-empty-state">
               <div className="cart-empty-icon">🫓</div>
               <h4>Your Cart is Empty</h4>
               <p>Add fresh Afghani Rotis &amp; Tandoori Naans to satisfy your craving!</p>
             </div>
           ) : (
-            items.map((item) => {
-              const itemObj = item.menu_item || item;
-              const price = item.price || itemObj.price || itemObj.base_price || 0;
-              return (
+            items.map((item) => (
                 <div className="cart-item" key={item.id}>
                   <img
-                    src={itemObj.image_url || "/food-placeholder.jpg"}
-                    alt={itemObj.name}
+                    src={item.image}
+                    alt={item.name}
                     className="cart-item-img"
                     onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                   />
                   <div className="cart-item-details">
-                    <h5>{itemObj.name}</h5>
-                    <div className="cart-item-price">₹ {price * item.quantity}</div>
+                    <h5>{item.name}</h5>
+                    <span className="cart-item-unit-price">₹ {item.unitPrice} each</span>
+                    <div className="cart-item-price">₹ {item.total}</div>
                   </div>
-                  <div className="cart-item-stepper">
-                    <button onClick={() => handleQuantity(item.id, item.quantity - 1)}>
+                  <div className={`cart-item-stepper ${updatingItemId === item.id ? "is-updating" : ""}`}>
+                    <button
+                      onClick={() => handleQuantity(item.id, item.quantity - 1)}
+                      disabled={updatingItemId === item.id}
+                      aria-label={`Remove one ${item.name}`}
+                    >
                       <FaMinus />
                     </button>
                     <span>{item.quantity}</span>
-                    <button onClick={() => handleQuantity(item.id, item.quantity + 1)}>
+                    <button
+                      onClick={() => handleQuantity(item.id, item.quantity + 1)}
+                      disabled={updatingItemId === item.id}
+                      aria-label={`Add one ${item.name}`}
+                    >
                       <FaPlus />
                     </button>
                   </div>
                 </div>
-              );
-            })
+              ))
           )}
         </div>
 
         {items.length > 0 && (
           <div className="cart-drawer-footer">
+            {freeDeliveryUnlocked ? (
+              <div className="free-delivery-unlocked" role="status">
+                <FaShoppingCart className="free-delivery-cart-icon" aria-hidden="true" />
+                Free delivery unlocked!
+              </div>
+            ) : freeDeliveryMinimum > 0 && deliveryFeeSetting > 0 ? (
+              <div className="free-delivery-progress" role="status">
+                Add ₹{amountToFreeDelivery.toFixed(0)} more for free delivery
+              </div>
+            ) : null}
             <div className="cart-bill-row">
               <span>Item Subtotal</span>
               <span>₹ {grandTotal}</span>
             </div>
             <div className="cart-bill-row">
               <span>Delivery Fee</span>
-              <span style={{ color: "#2e7d32", fontWeight: 700 }}>FREE</span>
+              <span className={deliveryFee === 0 ? "delivery-free-value" : "delivery-charge-value"}>
+                {deliveryFee > 0 ? `₹ ${deliveryFee}` : "FREE"}
+              </span>
             </div>
             <div className="cart-bill-total">
               <span>To Pay</span>
-              <span style={{ color: "#6d1322" }}>₹ {grandTotal}</span>
+              <span style={{ color: "#6d1322" }}>₹ {grandTotal + deliveryFee}</span>
             </div>
             <button
               className="cart-checkout-btn"
               onClick={() => {
                 onClose();
-                navigate("/cart");
+                navigate("/checkout");
               }}
             >
               Proceed to Checkout <FaArrowRight />

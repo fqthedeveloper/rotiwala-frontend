@@ -19,6 +19,10 @@ const AddShop = () => {
     closing_time: '',
     latitude: '',
     longitude: '',
+    delivery_radius_km: '2',
+    delivery_fee: '0',
+    free_delivery_min_order: '0',
+    minimum_delivery_order: '0',
     logo: null,
     banner: null,
     is_active: true,
@@ -78,6 +82,10 @@ const AddShop = () => {
       submitData.append('closing_time', formData.closing_time);
       submitData.append('latitude', formData.latitude);
       submitData.append('longitude', formData.longitude);
+      submitData.append('delivery_radius_km', formData.delivery_radius_km);
+      submitData.append('delivery_fee', formData.delivery_fee);
+      submitData.append('free_delivery_min_order', formData.free_delivery_min_order);
+      submitData.append('minimum_delivery_order', formData.minimum_delivery_order);
       submitData.append('is_active', formData.is_active ? 'true' : 'false');
       if (formData.logo) submitData.append('logo', formData.logo);
       if (formData.banner) submitData.append('banner', formData.banner);
@@ -142,6 +150,26 @@ const AddShop = () => {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+
+                  <div className="col-12 mb-3">
+                    <h6 className="fw-bold">Delivery Rules</h6>
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="delivery-radius" className="form-label">Delivery radius (km)</label>
+                    <input type="number" min="0.1" max="100" step="0.1" id="delivery-radius" name="delivery_radius_km" className="form-control" value={formData.delivery_radius_km} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="delivery-fee" className="form-label">Delivery fee (₹)</label>
+                    <input type="number" min="0" step="0.01" id="delivery-fee" name="delivery_fee" className="form-control" value={formData.delivery_fee} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="free-delivery-min" className="form-label">Free delivery above (₹)</label>
+                    <input type="number" min="0" step="0.01" id="free-delivery-min" name="free_delivery_min_order" className="form-control" value={formData.free_delivery_min_order} onChange={handleChange} required />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <label htmlFor="minimum-delivery-order" className="form-label">Minimum delivery order (₹)</label>
+                    <input type="number" min="0" step="0.01" id="minimum-delivery-order" name="minimum_delivery_order" className="form-control" value={formData.minimum_delivery_order} onChange={handleChange} required />
                   </div>
 
                   <div className="col-md-6 mb-3">

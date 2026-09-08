@@ -14,6 +14,7 @@ const AddMenuItem = () => {
   const [shops, setShops] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(false);
+  const menuBasePath = userRole === "manager" ? "/manager" : "/admin";
 
   const [formData, setFormData] = useState({
     shop: "",
@@ -73,7 +74,7 @@ const AddMenuItem = () => {
         icon: "success",
         title: "Menu Item Created",
       });
-      navigate("/manager/menu-items");
+      navigate(`${menuBasePath}/menu-items`);
     } catch (error) {
       Swal.fire({
         icon: "error",

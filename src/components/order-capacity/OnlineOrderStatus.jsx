@@ -3,12 +3,18 @@ import { getOnlineOrderStatus } from "../../service/orderCapacityService";
 import "./OnlineOrderStatus.css";
 
 const OnlineOrderStatus = ({ compact = false }) => {
+  const shopId = localStorage.getItem("selected_shop");
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["online-order-status"],
-    queryFn: getOnlineOrderStatus,
+    queryKey: ["online-order-status", shopId],
+    queryFn: () => getOnlineOrderStatus(shopId),
+    enabled: Boolean(shopId),
     refetchInterval: 30000,
     retry: 1,
   });
+
+  if (!shopId) {
+    return <div className="online-order-status status-loading" aria-live="polite">Select a shop to check online ordering...</div>;
+  }
 
   if (isLoading) {
     return <div className="online-order-status status-loading" aria-live="polite">Checking online ordering...</div>;
@@ -23,8 +29,11 @@ const OnlineOrderStatus = ({ compact = false }) => {
     );
   }
 
-  const accepting = Boolean(data?.accepting_online_orders);
-  const capacityReached = data?.available_capacity <= 0;
+  const capacityReached = Number(data?.available_capacity) <= 0;
+  const accepting =
+    Boolean(data?.accepting_online_orders) &&
+    !capacityReached &&
+    !data?.manually_paused;
 
   if (accepting) {
     return (

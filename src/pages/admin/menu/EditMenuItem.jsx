@@ -15,6 +15,7 @@ const EditMenuItem = () => {
   const [shops, setShops] = useState([]);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(false);
+  const menuBasePath = userRole === "manager" ? "/manager" : "/admin";
 
   const [formData, setFormData] = useState({
     shop: "",
@@ -26,12 +27,7 @@ const EditMenuItem = () => {
     is_available: true,
   });
 
-  useEffect(() => {
-    document.title = "Edit Menu Item | Roti Wala";
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  async function loadData() {
     try {
       const [item, cats] = await Promise.all([
         getMenuItemById(id),
@@ -62,9 +58,15 @@ const EditMenuItem = () => {
     } catch (error) {
       console.error(error);
       Swal.fire("Error", "Failed to load item data", "error");
-      navigate("/manager/menu-items");
+      navigate(`${menuBasePath}/menu-items`);
     }
-  };
+  }
+
+  useEffect(() => {
+    document.title = "Edit Menu Item | Roti Wala";
+    const loadTimer = window.setTimeout(loadData, 0);
+    return () => window.clearTimeout(loadTimer);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, checked, files, type } = e.target;
@@ -91,7 +93,8 @@ const EditMenuItem = () => {
         icon: "success",
         title: "Menu Item Updated",
       });
-      navigate("/manager/menu-items");
+      const role = localStorage.getItem("role");
+      navigate(role === "manager" ? "/manager/menu-items" : "/admin/menu-items");
     } catch (error) {
       Swal.fire({
         icon: "error",

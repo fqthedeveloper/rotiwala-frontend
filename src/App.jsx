@@ -178,7 +178,7 @@ import DeliveryManagement from './pages/manager/Delivery/DeliveryManagement';
 
 
 // Customer Pages
-import Cart from "./pages/Customer/Cart";
+import Cart from "./components/layout/CartDrawer";
 import Checkout from "./pages/Customer/Checkout";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetail from "./pages/Customer/OrderDetail";
