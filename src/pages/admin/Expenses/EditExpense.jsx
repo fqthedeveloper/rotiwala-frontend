@@ -14,7 +14,7 @@ import {
   getExpenseDetail,
   updateExpense,
 } from "../../../service/expenseServices";
-import { getShops } from "../../../service/shopService";
+import { getShopsForUser } from "../../../service/shopService";
 import { useAuth } from "../../../context/AuthContext";
 
 const EditExpense = () => {
@@ -35,6 +35,8 @@ const EditExpense = () => {
     shop_id: "",
     category_id: "",
     expense_date: new Date().toISOString().split("T")[0],
+    payment_method: "CASH",
+    utr_number: "",
     // ❌ notes removed
     items: [
       {
@@ -79,7 +81,7 @@ const EditExpense = () => {
       try {
         const [categoriesData, shopsData, expenseData] = await Promise.all([
           getExpenseCategories(),
-          getShops(),
+          getShopsForUser(user),
           getExpenseDetail(id),
         ]);
 
@@ -99,6 +101,8 @@ const EditExpense = () => {
           expense_date: expenseData.expense_date
             ? expenseData.expense_date.split("T")[0]
             : new Date().toISOString().split("T")[0],
+          payment_method: expenseData.payment_method || "CASH",
+          utr_number: expenseData.utr_number || "",
           // ❌ notes removed
           items:
             items.length > 0
@@ -222,6 +226,8 @@ const EditExpense = () => {
         shop_id: formData.shop_id,
         category_id: formData.category_id,
         expense_date: formData.expense_date,
+        payment_method: formData.payment_method,
+        utr_number: formData.payment_method === "UPI" ? (formData.utr_number || "") : "",
         // ❌ notes removed – no header notes
         items: formData.items.map((item) => ({
           master_item: item.master_item || null,
@@ -436,7 +442,7 @@ const EditExpense = () => {
             value={formData.shop_id}
             onChange={handleInputChange}
             required
-            disabled={user?.role !== "super_admin"}
+            disabled={user?.role === "manager"}
           >
             <option value="">Select Shop</option>
             {shops.map((shop) => (
@@ -482,6 +488,31 @@ const EditExpense = () => {
             onChange={handleInputChange}
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label>Payment Method</label>
+          <select
+            name="payment_method"
+            value={formData.payment_method}
+            onChange={handleInputChange}
+            required
+          >
+            <option value="CASH">Cash</option>
+            <option value="UPI">UPI</option>
+          </select>
+          {formData.payment_method === "UPI" && (
+            <div style={{ marginTop: "12px" }}>
+              <label>UTR Number (Optional)</label>
+              <input
+                type="text"
+                name="utr_number"
+                value={formData.utr_number}
+                onChange={handleInputChange}
+                placeholder="Enter UTR number if available"
+              />
+            </div>
+          )}
         </div>
 
         {/* ❌ Header notes removed */}

@@ -5,7 +5,7 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { createMaintenance } from "../../../service/expenseServices";
-import { getShops } from "../../../service/shopService";
+import { getShopsForUser } from "../../../service/shopService";
 import { useAuth } from "../../../context/AuthContext";
 
 const AddMaintenance = () => {
@@ -23,6 +23,8 @@ const AddMaintenance = () => {
     description: "",
     amount: "",
     maintenance_date: new Date().toISOString().split("T")[0],
+    payment_method: "CASH",
+    utr_number: "",
   });
 
   useEffect(() => {
@@ -31,7 +33,7 @@ const AddMaintenance = () => {
 
     const fetchShops = async () => {
       try {
-        const shopsData = await getShops();
+        const shopsData = await getShopsForUser(user);
         setShops(shopsData);
         if (user?.role !== "super_admin" && managerShopId) {
           setFormData((prev) => ({
@@ -256,7 +258,7 @@ const AddMaintenance = () => {
             value={formData.shop_id}
             onChange={handleChange}
             required
-            disabled={user?.role !== "super_admin"}
+            disabled={user?.role === "manager"}
           >
             <option value="">Select Shop</option>
             {shops.map((shop) => (
@@ -321,6 +323,31 @@ const AddMaintenance = () => {
             onChange={handleChange}
             required
           />
+        </div>
+
+        <div className="form-group">
+          <label>Payment Method</label>
+          <select
+            name="payment_method"
+            value={formData.payment_method}
+            onChange={handleChange}
+            required
+          >
+            <option value="CASH">Cash</option>
+            <option value="UPI">UPI</option>
+          </select>
+          {formData.payment_method === "UPI" && (
+            <div style={{ marginTop: "12px" }}>
+              <label>UTR Number (Optional)</label>
+              <input
+                type="text"
+                name="utr_number"
+                value={formData.utr_number}
+                onChange={handleChange}
+                placeholder="Enter UTR number if available"
+              />
+            </div>
+          )}
         </div>
 
         <div className="form-actions">

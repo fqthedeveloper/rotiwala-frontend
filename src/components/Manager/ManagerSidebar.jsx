@@ -167,10 +167,7 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-boxes"></i>
                 All Raw Materials
               </NavLink>
-              <NavLink to="/manager/expenses/raw-materials/add" onClick={closeSidebar}>
-                <i className="bi bi-plus-circle"></i>
-                Add Raw Material
-              </NavLink>
+              
             </>
           )}
 

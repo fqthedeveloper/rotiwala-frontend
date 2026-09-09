@@ -6,6 +6,75 @@ export const getShops = async () => {
   return response.data;
 };
 
+export const getAssignedShopIds = (user) => {
+  if (!user) return [];
+
+  const ids = new Set();
+  const pushValue = (value) => {
+    if (!value && value !== 0) return;
+
+    if (typeof value === "object") {
+      if (value.id) ids.add(String(value.id));
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (typeof entry === "object") {
+          if (entry.id) ids.add(String(entry.id));
+        } else {
+          ids.add(String(entry));
+        }
+      });
+      return;
+    }
+
+    ids.add(String(value));
+  };
+
+  pushValue(user.shop_id);
+  pushValue(user.shop);
+  pushValue(user.shop?.id);
+  pushValue(user.shops);
+  pushValue(user.assigned_shops);
+
+  return Array.from(ids);
+};
+
+export const getShopsForUser = async (user) => {
+  const role = user?.role;
+  const isAdmin = role === "super_admin" || role === "admin" || role === "staff_admin";
+
+  if (isAdmin) {
+    try {
+      return await getShops();
+    } catch (error) {
+      console.warn("Admin shop list unavailable:", error);
+      return [];
+    }
+  }
+
+  try {
+    const publicShops = await getShopsPublic();
+    const assignedShopIds = getAssignedShopIds(user);
+
+    if (!assignedShopIds.length) {
+      const fallbackShopId = user?.shop_id || user?.shop?.id || user?.shop;
+      if (fallbackShopId) {
+        return publicShops.filter((shop) => String(shop.id) === String(fallbackShopId));
+      }
+      return publicShops;
+    }
+
+    return publicShops.filter((shop) =>
+      assignedShopIds.includes(String(shop.id))
+    );
+  } catch (error) {
+    console.warn("Public shop list fallback failed:", error);
+    return [];
+  }
+};
+
 export const getShop = async (id) => {
   const res = await api.get(`/shops/${id}/`);
 

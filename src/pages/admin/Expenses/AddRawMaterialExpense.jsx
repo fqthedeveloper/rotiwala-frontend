@@ -19,7 +19,7 @@ import {
   getRawMaterialExpense,
   updateRawMaterialExpense,
 } from "../../../service/expenseServices";
-import { getShops } from "../../../service/shopService";
+import { getShopsForUser } from "../../../service/shopService";
 import Swal from "sweetalert2";
 
 const AddRawMaterialExpense = () => {
@@ -42,6 +42,8 @@ const AddRawMaterialExpense = () => {
     shop_id: isManager ? (user?.shop_id || user?.shop?.id || "") : "",
     expense_date: new Date().toISOString().split("T")[0],
     vendor_id: "",
+    payment_method: "CASH",
+    utr_number: "",
     items: [
       {
         item_id: "",
@@ -59,10 +61,14 @@ const AddRawMaterialExpense = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Shops (if admin)
-        if (!isManager) {
-          const shopsData = await getShops();
-          setShops(shopsData);
+        // 1. Shops: manager sees own assigned shop, admin sees all shops
+        const shopsData = await getShopsForUser(user);
+        setShops(shopsData);
+
+        if (isManager && shopsData.length > 0) {
+          const managerShopId =
+            user?.shop_id || user?.shop?.id || user?.shop || shopsData[0]?.id || "";
+          setFormData((prev) => ({ ...prev, shop_id: managerShopId }));
         }
 
         // 2. Vendors
@@ -92,6 +98,8 @@ const AddRawMaterialExpense = () => {
             shop_id: expense.shop,
             expense_date: expense.expense_date,
             vendor_id: expense.vendor || "",
+            payment_method: expense.payment_method || "CASH",
+            utr_number: expense.utr_number || "",
             items: [
               {
                 item_id: expense.item || "",
@@ -258,6 +266,8 @@ const AddRawMaterialExpense = () => {
           amount: parseFloat(item.amount),
           note: item.note || "",
           expense_date: formData.expense_date,
+          payment_method: formData.payment_method,
+          utr_number: formData.payment_method === "UPI" ? (formData.utr_number || "") : "",
         };
         if (isEdit) {
           await updateRawMaterialExpense(id, payload);
@@ -496,7 +506,7 @@ const AddRawMaterialExpense = () => {
             value={formData.shop_id}
             onChange={handleInputChange}
             required
-            disabled={isManager || isEdit}
+            disabled={isManager}
           >
             <option value="">Select Shop</option>
             {shops.map((shop) => (
@@ -524,6 +534,31 @@ const AddRawMaterialExpense = () => {
         </div>
 
         <div className="form-group">
+          <label>Payment Method</label>
+          <select
+            name="payment_method"
+            value={formData.payment_method}
+            onChange={handleInputChange}
+            required
+          >
+            <option value="CASH">Cash</option>
+            <option value="UPI">UPI</option>
+          </select>
+          {formData.payment_method === "UPI" && (
+            <div style={{ marginTop: "12px" }}>
+              <label>UTR Number (Optional)</label>
+              <input
+                type="text"
+                name="utr_number"
+                value={formData.utr_number}
+                onChange={handleInputChange}
+                placeholder="Enter UTR number if available"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
           <label>Vendor</label>
           <div className="inline-add">
             <select
@@ -534,7 +569,11 @@ const AddRawMaterialExpense = () => {
             >
               <option value="">Select Vendor</option>
               {vendors.map((v) => (
-                <option key={v.id} value={v.id}>{v.name}</option>
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                  {v.shop_name ? ` — ${v.shop_name}` : ""}
+                  {v.phone ? ` — ${v.phone}` : ""}
+                </option>
               ))}
             </select>
             <button type="button" onClick={handleAddVendor}>
