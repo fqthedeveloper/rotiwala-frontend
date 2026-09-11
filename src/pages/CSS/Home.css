@@ -44,9 +44,9 @@
   overflow-x: hidden;
 }
 
-.rw-home h1,
-.rw-home h2,
-.rw-home h3,
+.rw-home h1:not(.rw-hero-title),
+.rw-home h2:not(.rw-stat h2),
+.rw-home h3:not(.rw-cta-text h3),
 .rw-home h4,
 .rw-home h5,
 .rw-home h6 {
@@ -194,14 +194,15 @@
 }
 .rw-hero-kicker svg { color: var(--rw-gold); }
 
-.rw-hero-title {
+.rw-hero-title,
+.rw-home h1.rw-hero-title {
   font-family: var(--rw-serif);
   font-size: clamp(2.9rem, 6.2vw, 5.4rem);
   line-height: 1.02;
   font-weight: 600;
   margin: 0 0 26px;
   letter-spacing: -0.02em;
-  color: var(--rw-cream);
+  color: var(--rw-cream) !important;
 }
 .rw-hero-title em {
   font-style: italic;
