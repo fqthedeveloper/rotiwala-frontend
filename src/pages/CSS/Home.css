@@ -44,6 +44,15 @@
   overflow-x: hidden;
 }
 
+.rw-home h1,
+.rw-home h2,
+.rw-home h3,
+.rw-home h4,
+.rw-home h5,
+.rw-home h6 {
+  color: var(--rw-ink);
+}
+
 /* ===================================================
    SHARED BUTTONS
 =================================================== */
@@ -394,6 +403,7 @@ same marque use same everting
   margin: 0 0 6px;
   font-size: 1.55rem;
   font-weight: 600;
+  color: var(--rw-ink);
 }
 .rw-shop-info p { color: var(--rw-muted); margin: 0 0 6px; line-height: 1.5; }
 .rw-shop-phone {
@@ -483,6 +493,7 @@ same marque use same everting
   letter-spacing: -0.02em;
   margin: 0 0 10px;
   line-height: 1.05;
+  color: var(--rw-ink);
 }
 
 .rw-video-showcase {
@@ -662,6 +673,7 @@ same marque use same everting
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
+  color: var(--rw-ink);
 }
 
 /* ===================================================
@@ -748,6 +760,7 @@ same marque use same everting
   margin: 0 0 8px;
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--rw-ink);
 }
 .rw-food-body > p {
   color: var(--rw-muted);
@@ -872,6 +885,7 @@ same marque use same everting
   margin: 0 0 10px;
   font-size: 1.3rem;
   font-weight: 600;
+  color: var(--rw-ink);
 }
 .rw-why-card p {
   color: var(--rw-muted);
