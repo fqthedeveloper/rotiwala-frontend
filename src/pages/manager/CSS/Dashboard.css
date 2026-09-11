@@ -1,5 +1,5 @@
-/* ==========================================================
-   Manager Dashboard — responsive, animated, warm cream/gold
+﻿/* ==========================================================
+   Manager Dashboard â€” responsive, animated, warm cream/gold
    ========================================================== */
 
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap");
@@ -451,3 +451,133 @@
   .bg-orb, .store-halo, .alert-urgent { animation: none !important; }
   .stat-shine { display: none; }
 }
+
+/* =================== TOKEN FAST ACTION BAR =================== */
+.token-fast-bar {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #334155;
+  border-radius: 16px;
+  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 2vw, 20px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+  margin-bottom: clamp(16px, 2.5vw, 24px);
+}
+
+.token-bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.token-bar-badge {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.token-bar-hint {
+  color: #94a3b8;
+  font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+}
+
+.token-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.token-num-input {
+  width: clamp(120px, 20vw, 170px);
+  background: #0b0f19;
+  border: 1px solid #475569;
+  color: #ffffff;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.token-num-input::placeholder { color: #64748b; }
+
+.token-num-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.token-btn {
+  padding: 10px clamp(12px, 2vw, 18px);
+  border-radius: 10px;
+  font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.token-btn.ready {
+  background: #22c55e;
+  color: #ffffff;
+}
+.token-btn.ready:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.token-btn.complete {
+  background: #3b82f6;
+  color: #ffffff;
+}
+.token-btn.complete:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.token-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Mobile stacking for token bar */
+@media (max-width: 640px) {
+  .token-fast-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .token-bar-right {
+    justify-content: stretch;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .token-num-input {
+    width: 100%;
+    font-size: 1.1rem;
+  }
+  .token-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .token-bar-badge { font-size: 0.8rem; }
+  .token-bar-hint  { font-size: 0.7rem; }
+}
+

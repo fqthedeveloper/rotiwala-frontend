@@ -12,6 +12,7 @@ import {
   FaSpinner,
   FaMoneyBillWave,
   FaEye,
+  FaUtensils,
 } from "react-icons/fa";
 import {
   getStaffList,
@@ -35,6 +36,7 @@ const StaffManagement = () => {
     name: "",
     phone: "",
     monthly_salary: "",
+    password: "",
     shop: "",
     is_active: true,
   });
@@ -79,6 +81,7 @@ const StaffManagement = () => {
       name: "",
       phone: "",
       monthly_salary: "",
+      password: "",
       shop: "",
       is_active: true,
     });
@@ -96,6 +99,9 @@ const StaffManagement = () => {
       monthly_salary: formData.monthly_salary || 0,
       is_active: formData.is_active,
     };
+    if (formData.password) {
+      payload.password = formData.password;
+    }
     if (!isManager) {
       if (!formData.shop) {
         setError("Please select a shop.");
@@ -139,6 +145,7 @@ const StaffManagement = () => {
       name: item.name,
       phone: item.phone || "",
       monthly_salary: item.monthly_salary,
+      password: "",
       shop: item.shop,
       is_active: item.is_active,
     });
@@ -371,12 +378,27 @@ const StaffManagement = () => {
           </button>
           <h1>👨‍🍳 Staff Management</h1>
         </div>
-        <button
-          className="btn btn-warning"
-          onClick={() => navigate(`${basePath}/staff/salary/add`)}
-        >
-          <FaMoneyBillWave /> Add Payment
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn"
+            style={{
+              background: "#fef3c7",
+              color: "#92400e",
+              border: "1px solid #fde68a",
+              fontWeight: 600,
+            }}
+            onClick={() => navigate("/manager/preparing-staff")}
+          >
+            <FaUtensils /> Kitchen Staff Panel
+          </button>
+          <button
+            className="btn btn-warning"
+            onClick={() => navigate(`${basePath}/staff/salary/add`)}
+          >
+            <FaMoneyBillWave /> Add Payment
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -413,6 +435,19 @@ const StaffManagement = () => {
                 onChange={handleChange}
                 min="0"
                 step="100"
+              />
+            </div>
+            <div className="form-group">
+              <label>
+                Kitchen Login Password{" "}
+                {editingId ? <span style={{ color: "#64748b", fontSize: "12px" }}>(leave blank to keep)</span> : ""}
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder={editingId ? "New password (optional)" : "Create login password"}
               />
             </div>
             {!isManager && (
@@ -466,6 +501,7 @@ const StaffManagement = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Monthly Salary</th>
+              <th>Kitchen Login</th>
               <th>Shop</th>
               <th>Status</th>
               <th>Actions</th>
@@ -473,13 +509,44 @@ const StaffManagement = () => {
           </thead>
           <tbody>
             {staff.length === 0 ? (
-              <tr><td colSpan="6" style={{ textAlign: "center", padding: 40, color: "#94a3b8" }}>No staff members yet.</td></tr>
+              <tr><td colSpan="7" style={{ textAlign: "center", padding: 40, color: "#94a3b8" }}>No staff members yet.</td></tr>
             ) : (
               staff.map((s) => (
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{s.phone || "-"}</td>
                   <td>₹{Number(s.monthly_salary).toFixed(2)}</td>
+                  <td>
+                    {s.has_kitchen_login ? (
+                      <span
+                        style={{
+                          background: "#eff6ff",
+                          color: "#1d4ed8",
+                          padding: "4px 10px",
+                          borderRadius: "20px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        ✓ Active Account
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          background: "#f1f5f9",
+                          color: "#64748b",
+                          padding: "4px 10px",
+                          borderRadius: "20px",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Synced
+                      </span>
+                    )}
+                  </td>
                   <td>{isManager ? "My Shop" : getShopName(s.shop)}</td>
                   <td>
                     <span className={`status-badge ${s.is_active ? "" : "inactive"}`}>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FaBell, FaShoppingCart } from "react-icons/fa";
 
@@ -17,7 +18,15 @@ import "./CSS/WalkInOrder.css";
 const BaseURL = import.meta.env.VITE_WS_URL;
 
 export default function WalkInOrder() {
-  // ---- state ----
+  const navigate = useNavigate();
+
+  // ---- role guard ----
+  const userRole = localStorage.getItem("role");
+  useEffect(() => {
+    if (userRole === "preparing_staff") {
+      navigate("/manager/orders", { replace: true });
+    }
+  }, [userRole, navigate]);
   const [loading, setLoading] = useState(true);
   const [carts, setCarts] = useState([]);
   const [selectedCartId, setSelectedCartId] = useState(null);

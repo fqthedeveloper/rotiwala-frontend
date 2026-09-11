@@ -354,22 +354,67 @@
 
 .mobile-toggle {
   display: none;
-  border: none;
-  background: transparent;
-  font-size: 28px;
+  border: 1.5px solid rgba(109, 19, 34, 0.16);
+  background: rgba(255, 250, 241, 0.92);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   color: var(--rw-maroon);
   cursor: pointer;
-  padding: 5px;
-  transition: 0.3s ease;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(109, 19, 34, 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-toggle:hover {
-  color: var(--rw-gold);
+  background: var(--rw-grad-maroon);
+  color: #fff;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(109, 19, 34, 0.25);
+}
+
+.mobile-toggle:active {
+  transform: scale(0.92);
+}
+
+.mobile-avatar-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--rw-gold);
+  background: var(--rw-grad-maroon);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(109, 19, 34, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+}
+
+.mobile-avatar-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(212, 164, 55, 0.35);
+}
+
+.mobile-avatar-initial {
+  font-size: 15px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #fff;
 }
 
 @media (max-width: 576px) {
   .mobile-toggle {
-    font-size: 24px;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
   }
 }
 
@@ -380,25 +425,13 @@
   }
 
   .mobile-toggle {
-    display: block;
+    display: flex;
   }
 
-  .login-btn {
-    display: none;
-  }
-}
-
-.mobile-toggle {
-  color: var(--rw-maroon);
-}
-
-.mobile-toggle:hover {
-  color: var(--rw-gold);
-}
-
-@media (max-width: 576px) {
-  .login-btn {
-    display: none;
+  .auth-btns,
+  .login-btn,
+  .register-btn {
+    display: none !important;
   }
 }
 
@@ -560,18 +593,22 @@
 }
 
 .dropdown-menu{
-
   border:none;
-
   border-radius:18px;
-
   box-shadow:
     0 20px 50px
     rgba(0,0,0,.15);
+  background: white;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  display: none;
+  z-index: 9999;
 }
 
-.profile-dropdown:hover
-.dropdown-menu {
+.profile-dropdown:hover .dropdown-menu,
+.profile-dropdown .dropdown-menu.show {
   display: block;
 }
 

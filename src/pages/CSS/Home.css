@@ -954,27 +954,64 @@ same marque use same everting
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 1px solid var(--rw-line);
+  border: 1.5px solid var(--rw-line);
   background: var(--rw-card);
   box-shadow: var(--rw-shadow-sm);
   color: var(--rw-maroon);
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.3s var(--rw-ease);
+  transition: all 0.28s var(--rw-ease);
 }
 .rw-t-arrow:hover {
   background: var(--rw-grad-maroon);
   color: var(--rw-cream);
+  border-color: transparent;
   transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(109, 19, 34, 0.25);
+}
+
+.rw-t-arrow-desktop {
+  display: flex;
+}
+
+.rw-t-arrow-mobile {
+  display: none;
+  width: 44px;
+  height: 44px;
+  font-size: 1rem;
+}
+
+.rw-t-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .rw-t-arrow-desktop {
+    display: none !important;
+  }
+  .rw-t-arrow-mobile {
+    display: flex !important;
+  }
+  .rw-t-slider {
+    width: 100% !important;
+  }
+  .rw-t-wrap {
+    padding: 0 4px;
+  }
 }
 
 .rw-t-dots {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 8px;
 }
 .rw-t-dot {
@@ -982,51 +1019,65 @@ same marque use same everting
   height: 10px;
   border-radius: 999px;
   border: none;
-  background: rgba(109, 19, 34, 0.18);
+  background: rgba(109, 19, 34, 0.25);
   cursor: pointer;
   transition: all 0.3s var(--rw-ease);
 }
 .rw-t-dot.active {
   background: var(--rw-maroon);
-  width: 30px;
+  width: 28px;
+  box-shadow: 0 2px 8px rgba(109, 19, 34, 0.35);
 }
 
 /* ===================================================
    CTA STRIP
 =================================================== */
 .rw-cta {
-  margin-top: 90px;
+  margin-top: 80px;
   margin-bottom: 70px;
   position: relative;
-  background: var(--rw-grad-maroon);
+  background: linear-gradient(135deg, #3d0711 0%, #6d1322 50%, #8f1d2c 100%);
   border-radius: var(--rw-r-lg);
-  padding: 52px 56px;
+  padding: clamp(34px, 5vw, 56px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 22px;
-  color: var(--rw-cream);
+  gap: 24px;
+  color: #ffffff;
   overflow: hidden;
-  box-shadow: var(--rw-shadow-lg);
+  box-shadow: 0 16px 48px rgba(67, 10, 21, 0.3);
+  border: 1px solid rgba(212, 164, 55, 0.3);
 }
 .rw-cta-glow {
   position: absolute;
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, rgba(212, 164, 55, 0.3), transparent 70%);
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(247, 198, 0, 0.35), transparent 70%);
   border-radius: 50%;
-  top: -160px;
-  right: -90px;
+  top: -140px;
+  right: -80px;
+  pointer-events: none;
 }
 .rw-cta-text h3 {
   font-family: var(--rw-serif);
   margin: 0 0 8px;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 600;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
 }
-.rw-cta-text p { margin: 0; color: rgba(250, 243, 230, 0.75); }
-.rw-cta .rw-btn { position: relative; z-index: 1; }
+.rw-cta-text p {
+  margin: 0;
+  color: #fcefd2 !important;
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  font-weight: 500;
+}
+.rw-cta .rw-btn {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 8px 24px rgba(212, 164, 55, 0.4);
+}
 
 /* ===================================================
    WHATSAPP FLOAT
@@ -1092,7 +1143,7 @@ same marque use same everting
 }
 
 @media (max-width: 768px) {
-  .rw-home { padding: 16px; }
+  .rw-home { padding: 16px; padding-bottom: 100px; }
   .rw-marquee { margin: 0 -16px 48px; }
   .rw-hero { padding: 48px 22px; border-radius: 26px; }
   .rw-hero-title { font-size: 2.5rem; }
@@ -1110,10 +1161,11 @@ same marque use same everting
   .rw-t-text { font-size: 1.05rem; max-width: 100%; }
   .rw-t-arrow { width: 42px; height: 42px; }
   .rw-cta { padding: 36px 26px; text-align: center; justify-content: center; }
-  .rw-wa { bottom: 18px; right: 18px; width: 52px; height: 52px; }
+  .rw-wa { bottom: 84px; right: 18px; width: 52px; height: 52px; }
 }
 
 @media (max-width: 576px) {
+  .rw-home { padding: 12px; padding-bottom: 110px; }
   .rw-hero { padding: 40px 18px; }
   .rw-hero-title { font-size: 2.05rem; }
   .rw-hero-kicker { font-size: 0.68rem; padding: 8px 14px; letter-spacing: 0.1em; }

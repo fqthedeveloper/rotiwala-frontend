@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaStore,
   FaSyncAlt,
@@ -15,9 +16,14 @@ import {
   FaPlus,
   FaListUl,
   FaCog,
+  FaTv,
+  FaUtensils,
+  FaKey,
 } from "react-icons/fa";
 import "./CSS/Dashboard.css";
 import api from "../../service/api";   // ✅ use the axios instance with auth interceptors
+import { tokenOrderAction } from "../../service/orderService";
+import toast from "react-hot-toast";
 
 const STAT_META = [
   { key: "pending",   label: "Pending Orders",   icon: FaClock,        accent: "amber",   hint: "Awaiting acceptance" },
@@ -61,7 +67,7 @@ function StatCard({ meta, value, changed, index }) {
   const num = useCountUp(value ?? 0, 900);
   const Icon = meta.icon;
   const display = meta.currency
-    ? `$${num.toFixed(2)}`
+    ? `₹${Math.round(num).toLocaleString("en-IN")}`
     : Math.round(num).toLocaleString();
 
   return (
@@ -158,13 +164,90 @@ function BarChart({ stats }) {
   );
 }
 
-function QuickActions() {
-  const actions = [
-    { key: "new-order",   label: "New Order",       icon: FaPlus },
-    { key: "view-orders", label: "View All Orders", icon: FaListUl },
-    { key: "reports",     label: "Sales Report",    icon: FaChartBar },
-    { key: "settings",    label: "Store Settings",  icon: FaCog },
-  ];
+function TokenQuickBar({ onActionSuccess }) {
+  const [tokenInput, setTokenInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleAction = async (action) => {
+    if (!tokenInput.trim()) {
+      toast.error("Please enter a token number (e.g. 0001)");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await tokenOrderAction({
+        token_number: tokenInput.trim(),
+        action: action,
+        mark_as_paid: true,
+      });
+      toast.success(res.message || `Token #${tokenInput} updated to ${action}`);
+      setTokenInput("");
+      if (onActionSuccess) onActionSuccess();
+    } catch (err) {
+      toast.error(err.response?.data?.error || `Failed to update token #${tokenInput}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="token-fast-bar mb-4">
+      <div className="token-bar-left">
+        <span className="token-bar-badge">⚡ Quick Token Action</span>
+        <span className="token-bar-hint">Update order status directly using token number</span>
+      </div>
+      <div className="token-bar-right">
+        <input
+          type="text"
+          placeholder="Token # (e.g. 0001)"
+          value={tokenInput}
+          onChange={(e) => setTokenInput(e.target.value)}
+          className="token-num-input"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAction("ready");
+          }}
+        />
+        <button
+          className="btn btn-success token-btn ready"
+          disabled={loading}
+          onClick={() => handleAction("ready")}
+        >
+          🔔 Mark Ready
+        </button>
+        <button
+          className="btn btn-primary token-btn complete"
+          disabled={loading}
+          onClick={() => handleAction("complete")}
+        >
+          ✅ Deliver / Complete
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function QuickActions({ isPreparingStaff, navigate }) {
+  const actions = isPreparingStaff
+    ? [
+        { key: "view-orders", label: "Kitchen Orders Queue", icon: FaListUl, path: "/manager/orders" },
+        { key: "display", label: "📺 TV Waiting Board", icon: FaTv, path: "/display", external: true },
+        { key: "profile", label: "My Profile & Password", icon: FaKey, path: "/manager/profile" },
+      ]
+    : [
+        { key: "walkin", label: "Walk-in Order", icon: FaPlus, path: "/manager/walkin" },
+        { key: "view-orders", label: "View All Orders", icon: FaListUl, path: "/manager/orders" },
+        { key: "staff", label: "Kitchen Staff Team", icon: FaUtensils, path: "/manager/preparing-staff" },
+        { key: "display", label: "📺 TV Waiting Board", icon: FaTv, path: "/display", external: true },
+      ];
+
+  const handleClick = (action) => {
+    if (action.external) {
+      window.open(action.path, "_blank");
+    } else {
+      navigate(action.path);
+    }
+  };
+
   return (
     <div className="quick-actions" data-testid="quick-actions">
       {actions.map((a, i) => {
@@ -174,6 +257,7 @@ function QuickActions() {
             key={a.key}
             className="qa-btn"
             style={{ animationDelay: `${i * 80}ms` }}
+            onClick={() => handleClick(a)}
             data-testid={`qa-${a.key}`}
           >
             <span className="qa-icon"><Icon /></span>
@@ -273,6 +357,10 @@ export default function ManagerDashboard() {
     today_sales: stats?.today_sales,
   };
 
+  const navigate = useNavigate();
+  const userRole = localStorage.getItem("role");
+  const isPreparingStaff = userRole === "preparing_staff";
+
   return (
     <div className="manager-dashboard" data-testid="manager-dashboard">
       <div className="dashboard-bg" aria-hidden="true">
@@ -288,9 +376,11 @@ export default function ManagerDashboard() {
             <FaStore className="store-icon" />
           </div>
           <div className="header-titles">
-            <span className="header-eyebrow">Manager Console</span>
+            <span className="header-eyebrow">
+              {isPreparingStaff ? "Kitchen & Preparation Console" : "Manager Console"}
+            </span>
             <h1 className="header-title" data-testid="dashboard-title">
-              {stats?.store_name || "Your Store"}
+              {stats?.shop_name || stats?.store_name || (isPreparingStaff ? "Kitchen Station" : "Your Store")}
             </h1>
             <span className="header-subtitle">
               <FaBolt /> Live overview · updates in real time
@@ -313,6 +403,9 @@ export default function ManagerDashboard() {
         <DashboardSkeleton />
       ) : (
         <>
+          {/* Fast Token Action Bar */}
+          <TokenQuickBar onActionSuccess={() => load(true)} />
+
           <section className="stats-grid-dashboard" data-testid="stats-grid">
             {STAT_META.map((m, i) => (
               <StatCard
@@ -344,7 +437,7 @@ export default function ManagerDashboard() {
                   <p>Shortcuts you use every day</p>
                 </div>
               </div>
-              <QuickActions />
+              <QuickActions isPreparingStaff={isPreparingStaff} navigate={navigate} />
               <AlertCard pending={stats?.pending ?? 0} />
             </div>
           </section>

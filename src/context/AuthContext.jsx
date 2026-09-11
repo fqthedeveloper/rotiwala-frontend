@@ -35,14 +35,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("selected_shop");
+    localStorage.clear();
+    sessionStorage.clear();
     setUser(null);
     window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
   const updateUser = (newData) => {

@@ -53,12 +53,12 @@ const TestimonialSection = () => {
   const currentReview = reviews[currentIndex];
 
   return (
-    <>
+    <div className="rw-testimonials-container">
       {/* Arrows + Slider */}
       <div className="rw-t-wrap" data-testid="testimonials">
         <button
           data-testid="testimonial-prev-btn"
-          className="rw-t-arrow"
+          className="rw-t-arrow rw-t-arrow-desktop"
           onClick={handlePrev}
           aria-label="Previous"
         >
@@ -70,13 +70,13 @@ const TestimonialSection = () => {
             <motion.div
               key={currentIndex}
               className="rw-t-card"
-              initial={{ opacity: 0, x: 60 }}
+              initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -60 }}
-              transition={{ duration: 0.45, ease: EASE }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.4, ease: EASE }}
             >
               <FaQuoteLeft className="rw-t-quote" />
-              <p className="rw-t-text">{currentReview.text}</p>
+              <p className="rw-t-text">&ldquo;{currentReview.text}&rdquo;</p>
               <div className="rw-t-stars">
                 {Array.from({ length: currentReview.rating || 5 }).map((_, i) => (
                   <FaStar key={i} />
@@ -87,8 +87,8 @@ const TestimonialSection = () => {
                   {currentReview.customer_name ? currentReview.customer_name.charAt(0) : 'U'}
                 </div>
                 <div>
-                  <strong>{currentReview.customer_name || 'Customer'}</strong>
-                  <span>{currentReview.role || 'Customer'}</span>
+                  <strong>{currentReview.customer_name || 'Valued Customer'}</strong>
+                  <span>{currentReview.role || 'Verified Foodie'}</span>
                 </div>
               </div>
             </motion.div>
@@ -97,7 +97,7 @@ const TestimonialSection = () => {
 
         <button
           data-testid="testimonial-next-btn"
-          className="rw-t-arrow"
+          className="rw-t-arrow rw-t-arrow-desktop"
           onClick={handleNext}
           aria-label="Next"
         >
@@ -105,19 +105,37 @@ const TestimonialSection = () => {
         </button>
       </div>
 
-      {/* Dots below */}
-      <div className="rw-t-dots">
-        {reviews.map((_, i) => (
-          <button
-            key={i}
-            data-testid={`testimonial-dot-${i}`}
-            className={`rw-t-dot ${i === currentIndex ? 'active' : ''}`}
-            onClick={() => setCurrentIndex(i)}
-            aria-label={`Go to testimonial ${i + 1}`}
-          />
-        ))}
+      {/* Navigation Controls */}
+      <div className="rw-t-nav-bar">
+        <button
+          className="rw-t-arrow rw-t-arrow-mobile"
+          onClick={handlePrev}
+          aria-label="Previous Testimonial"
+        >
+          <FaChevronLeft />
+        </button>
+
+        <div className="rw-t-dots">
+          {reviews.map((_, i) => (
+            <button
+              key={i}
+              data-testid={`testimonial-dot-${i}`}
+              className={`rw-t-dot ${i === currentIndex ? 'active' : ''}`}
+              onClick={() => setCurrentIndex(i)}
+              aria-label={`Go to testimonial ${i + 1}`}
+            />
+          ))}
+        </div>
+
+        <button
+          className="rw-t-arrow rw-t-arrow-mobile"
+          onClick={handleNext}
+          aria-label="Next Testimonial"
+        >
+          <FaChevronRight />
+        </button>
       </div>
-    </>
+    </div>
   );
 };
 

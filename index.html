@@ -27,7 +27,24 @@
     <title>Roti Wala - Fresh Homemade Food Delivery</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%, #fffef8 0%, #fff7e6 45%, #faebd3 100%);font-family:'Outfit','Plus Jakarta Sans',sans-serif;z-index:999999;gap:18px;">
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+          <img src="/logo.png" alt="Roti Waale Nashik" style="height:64px;width:auto;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(113,21,42,0.15));" />
+        </div>
+        <div style="width:160px;height:5px;background:rgba(113,21,42,0.1);border-radius:99px;overflow:hidden;position:relative;">
+          <div style="position:absolute;top:0;left:0;bottom:0;width:40%;background:linear-gradient(90deg,#991b1b,#d97706,#f59e0b);border-radius:99px;animation:initialSplashSlide 1.2s infinite ease-in-out;"></div>
+        </div>
+        <span style="color:#785340;font-size:0.75rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;">Loading Freshness...</span>
+      </div>
+      <style>
+        @keyframes initialSplashSlide {
+          0% { left: -40%; width: 30%; }
+          50% { left: 35%; width: 50%; }
+          100% { left: 100%; width: 30%; }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 

@@ -57,17 +57,14 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     const result = await logoutConfirm();
 
     if (result.isConfirmed) {
-      localStorage.removeItem("access");
-      localStorage.removeItem("refresh");
-      localStorage.removeItem("user");
-      localStorage.removeItem("role");
-      localStorage.removeItem("user_id");
-
+      localStorage.clear();
+      sessionStorage.clear();
+      window.dispatchEvent(new Event("authChanged"));
+      window.dispatchEvent(new Event("cartUpdated"));
       if (logout) {
         await logout();
       }
-
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 

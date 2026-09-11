@@ -45,15 +45,16 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
     const result = await logoutConfirm();
 
     if (result.isConfirmed) {
-      localStorage.removeItem("access");
-      localStorage.removeItem("refresh");
-      localStorage.removeItem("user");
-      localStorage.removeItem("role");
-      localStorage.removeItem("user_id");
-
-      navigate("/login");
+      localStorage.clear();
+      sessionStorage.clear();
+      window.dispatchEvent(new Event("authChanged"));
+      window.dispatchEvent(new Event("cartUpdated"));
+      navigate("/login", { replace: true });
     }
   };
+
+  const userRole = localStorage.getItem("role");
+  const isPreparingStaff = userRole === "preparing_staff";
 
   return (
     <>
@@ -65,32 +66,36 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
       <aside className={`admin-sidebar ${isOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           <h3>🍽️ Roti Waale</h3>
-          <p>Manager Panel</p>
+          <p>{isPreparingStaff ? "Kitchen Staff Panel" : "Manager Panel"}</p>
         </div>
 
         <nav className="sidebar-nav">
           {/* Dashboard */}
           <NavLink to="/manager/dashboard" onClick={closeSidebar}>
             <i className="bi bi-grid"></i>
-            Dashboard
+            {isPreparingStaff ? "Kitchen Dashboard" : "Dashboard"}
           </NavLink>
 
-          <NavLink to="/manager/menu-items" onClick={closeSidebar}>
+          {!isPreparingStaff && (
+            <>
+              <NavLink to="/manager/menu-items" onClick={closeSidebar}>
                 <i className="bi bi-box"></i>
                 Menu Items
-          </NavLink>
+              </NavLink>
 
-          <NavLink to="/manager/settings/order-capacity" onClick={closeSidebar}>
-            <i className="bi bi-speedometer2"></i>
-            Order Capacity
-          </NavLink>
+              <NavLink to="/manager/settings/order-capacity" onClick={closeSidebar}>
+                <i className="bi bi-speedometer2"></i>
+                Order Capacity
+              </NavLink>
+            </>
+          )}
 
           {/* ===== Orders ===== */}
           <div
             className="sidebar-section clickable"
             onClick={() => toggleSection("orders")}
           >
-            <span>Orders</span>
+            <span>Orders &amp; Kitchen</span>
             <i className={`bi bi-chevron-${expandedSections.orders ? "down" : "right"}`}></i>
           </div>
 
@@ -100,17 +105,29 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-bag"></i>
                 Orders
               </NavLink>
-              <NavLink to="/manager/walkin" onClick={closeSidebar}>
-                <i className="bi bi-cart-plus"></i>
-                Walk-In Orders
+              {!isPreparingStaff && (
+                <NavLink to="/manager/walkin" onClick={closeSidebar}>
+                  <i className="bi bi-cart-plus"></i>
+                  Walk-In Orders
+                </NavLink>
+              )}
+
+              <NavLink to="/display" target="_blank" rel="noopener noreferrer" onClick={closeSidebar}>
+                <i className="bi bi-tv"></i>
+                📺 Live Token Display
               </NavLink>
 
-              <NavLink to="/manager/delivery" onClick={closeSidebar}>
-                <FaTruck className="me-2" /> Delivery
-              </NavLink>
-
+              {!isPreparingStaff && (
+                <NavLink to="/manager/delivery" onClick={closeSidebar}>
+                  <FaTruck className="me-2" /> Delivery
+                </NavLink>
+              )}
             </>
           )}
+
+          {/* Manager-only sections below */}
+          {!isPreparingStaff && (
+            <>
 
           {/* ===== Customers ===== */}
           <div
@@ -145,9 +162,13 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
 
           {expandedSections.staff && (
             <>
+              <NavLink to="/manager/preparing-staff" onClick={closeSidebar}>
+                <i className="bi bi-people-fill"></i>
+                Kitchen Preparing Staff
+              </NavLink>
               <NavLink to="/manager/staff" onClick={closeSidebar}>
                 <i className="bi bi-person-badge"></i>
-                Staff Management
+                Staff Salaries &amp; Payroll
               </NavLink>
             </>
           )}
@@ -196,8 +217,14 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
               </NavLink>
             </>
           )}
+        </>
+      )}
 
-
+          {/* ===== Profile & Security ===== */}
+          <NavLink to="/manager/profile" onClick={closeSidebar}>
+            <i className="bi bi-person-gear"></i>
+            My Profile &amp; Password
+          </NavLink>
         </nav>
 
         <div className="p-3 mt-auto">

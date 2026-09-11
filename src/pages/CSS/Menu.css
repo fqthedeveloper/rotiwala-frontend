@@ -777,3 +777,159 @@
   }
   .m-food-img-wrap { height: 120px; }
 }
+
+/* ===================================================
+   SHARED LUXURY THEME FOR ABOUT & CONTACT PAGES
+   =================================================== */
+
+.page-shell {
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+  padding: clamp(14px, 2.5vw, 32px);
+  font-family: "Plus Jakarta Sans", "Poppins", system-ui, sans-serif;
+  color: var(--m-text);
+  background: var(--m-bg);
+  overflow-x: hidden;
+}
+
+/* Luxury Cards */
+.luxury-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(212, 164, 55, 0.25);
+  box-shadow: 0 10px 30px rgba(43, 26, 18, 0.07);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.luxury-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 44px rgba(43, 26, 18, 0.13);
+  border-color: rgba(212, 164, 55, 0.5);
+}
+
+/* Gold Buttons & Gradients */
+.btn-gold {
+  background: linear-gradient(135deg, #d4a437 0%, #f0dc9f 100%);
+  color: #211510 !important;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(212, 164, 55, 0.35);
+  transition: all 0.25s ease;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #c49427 0%, #ecd488 100%);
+  color: #160e0a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(212, 164, 55, 0.5);
+}
+
+.btn-outline-gold {
+  background: transparent;
+  border: 2px solid #d4a437;
+  color: #8a5a00 !important;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 11px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.btn-outline-gold:hover {
+  background: #d4a437;
+  color: #211510 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(212, 164, 55, 0.3);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #b9852a 0%, #d4a437 50%, #8a5a00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.bg-gold {
+  background: linear-gradient(135deg, #d4a437 0%, #f0dc9f 100%) !important;
+  color: #211510 !important;
+}
+
+.text-gold {
+  color: #b9852a !important;
+}
+
+.border-gold {
+  border-color: rgba(212, 164, 55, 0.3) !important;
+}
+
+.bg-glass-heavy {
+  background: rgba(255, 250, 241, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Form inputs in Luxury Cards */
+.luxury-card .form-control,
+.luxury-card input,
+.luxury-card textarea {
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.22s ease;
+}
+
+.luxury-card .form-control:focus,
+.luxury-card input:focus,
+.luxury-card textarea:focus {
+  border-color: #d4a437;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(212, 164, 55, 0.16);
+  outline: none;
+}
+
+.luxury-card label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+/* Responsive adjustments for About and Contact */
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 12px;
+  }
+  .luxury-card {
+    padding: 24px 18px !important;
+    border-radius: 18px;
+  }
+  .menu-hero.about-hero,
+  .menu-hero.contact-hero {
+    padding: 40px 18px;
+    border-radius: 20px;
+  }
+  .btn-gold,
+  .btn-outline-gold {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}

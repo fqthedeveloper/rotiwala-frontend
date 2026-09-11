@@ -350,3 +350,415 @@
     justify-content: center;
   }
 }
+
+/* ============================================
+   ORDER HEADER BADGES & PILLS
+   ============================================ */
+.header-title-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.token-pill {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+  display: inline-flex;
+  align-items: center;
+}
+
+.delivery-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+.delivery-pill.delivery {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+.delivery-pill.pickup {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* ============================================
+   LIVE TRACKING & MAP SECTION
+   ============================================ */
+.order-map-container {
+  margin: 30px 0 20px 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.order-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.order-map-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-map-header-title h5 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #1e293b;
+}
+
+.map-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+.map-header-icon.delivery {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+.map-header-icon.pickup {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.map-delivery-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.map-delivery-tag.delivery {
+  background: #0284c7;
+  color: #ffffff;
+}
+.map-delivery-tag.pickup {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+/* Map Leaflet Wrapper */
+.leaflet-map-wrapper {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.order-leaflet-map {
+  width: 100%;
+  height: 330px;
+  min-height: 280px;
+}
+
+.map-popup-card h6 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #0f172a;
+}
+.map-popup-card p {
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+  color: #475569;
+}
+
+/* Delivery Details Under Map */
+.delivery-tracking-details {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.driver-info-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 14px 18px;
+}
+
+.driver-avatar {
+  font-size: 2rem;
+  background: #dcfce7;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.driver-meta {
+  flex: 1;
+}
+
+.driver-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.driver-title-row h6 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #166534;
+}
+
+.driver-status-badge {
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+
+.driver-phone-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #16a34a;
+  color: #ffffff !important;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: background 0.2s ease;
+}
+.driver-phone-btn:hover {
+  background: #15803d;
+}
+
+.driver-pending-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 14px 18px;
+}
+
+.pending-icon-bubble {
+  font-size: 1.8rem;
+  color: #2563eb;
+  background: #dbeafe;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.delivery-dest-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+
+.dest-icon-bubble {
+  color: #ea580c;
+  font-size: 1.3rem;
+  margin-top: 2px;
+}
+
+.dest-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.dest-text {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Pickup Details Under Map */
+.pickup-location-details {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.token-pickup-banner {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 2px dashed #f59e0b;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.token-badge-icon {
+  font-size: 2.2rem;
+  color: #d97706;
+  background: #fde68a;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.token-badge-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #92400e;
+  letter-spacing: 1px;
+}
+
+.token-badge-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #b45309;
+  margin: 2px 0 4px 0;
+  line-height: 1;
+}
+
+.token-badge-sub {
+  font-size: 0.85rem;
+  color: #78350f;
+  font-weight: 500;
+}
+
+.shop-pickup-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+
+.shop-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.shop-card-info h5 {
+  margin: 0 0 6px 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.shop-address {
+  font-size: 0.92rem;
+  color: #475569;
+  max-width: 450px;
+}
+
+.shop-quick-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.shop-quick-meta .quick-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.shop-quick-meta a {
+  color: #0284c7;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.btn-open-directions {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.btn-open-directions:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+  background: linear-gradient(135deg, #c2410c, #9a3412);
+}
+
+@media (max-width: 600px) {
+  .order-map-container {
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .order-leaflet-map {
+    height: 260px;
+  }
+  .token-pickup-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  .shop-card-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .btn-open-directions {
+    width: 100%;
+    justify-content: center;
+  }
+}

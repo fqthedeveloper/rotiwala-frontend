@@ -1,220 +1,290 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import {
+  FaHome,
+  FaUtensils,
+  FaInfoCircle,
+  FaPhoneAlt,
+  FaTachometerAlt,
+  FaTv,
+  FaShoppingCart,
+  FaUser,
+  FaClipboardList,
+  FaSignOutAlt,
+  FaTimes,
+  FaStore,
+  FaLock,
+  FaUserPlus,
+  FaFire,
+  FaKey
+} from "react-icons/fa";
+import { getCartCount } from "../../service/cartService";
+import "./MobileMenu.css";
 
 const MobileMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || "null"));
+  const [cartCount, setCartCount] = useState(0);
 
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const syncUser = () => {
+    setUser(JSON.parse(localStorage.getItem("user") || "null"));
+  };
+
+  const loadCart = async () => {
+    const token = localStorage.getItem("access");
+    if (!token) {
+      setCartCount(0);
+      return;
+    }
+    try {
+      const data = await getCartCount();
+      setCartCount(data.count || 0);
+    } catch {
+      setCartCount(0);
+    }
+  };
 
   useEffect(() => {
-    const syncUser = () => {
-      setUser(JSON.parse(localStorage.getItem("user")));
+    syncUser();
+    loadCart();
+
+    const handleAuth = () => {
+      syncUser();
+      loadCart();
     };
 
-    window.addEventListener("authChanged", syncUser);
+    window.addEventListener("authChanged", handleAuth);
+    window.addEventListener("cartUpdated", loadCart);
 
-    return () => window.removeEventListener("authChanged", syncUser);
+    return () => {
+      window.removeEventListener("authChanged", handleAuth);
+      window.removeEventListener("cartUpdated", loadCart);
+    };
   }, []);
 
   const logout = () => {
     localStorage.clear();
-
+    sessionStorage.clear();
     setUser(null);
-
+    setCartCount(0);
     window.dispatchEvent(new Event("authChanged"));
-
+    window.dispatchEvent(new Event("cartUpdated"));
     onClose();
-
-    navigate("/");
+    navigate("/login", { replace: true });
   };
 
   if (!isOpen) return null;
 
+  const role = user?.role;
+  const initial = user?.first_name?.charAt(0) || user?.phone?.charAt(1) || "U";
+  const displayName = user?.first_name
+    ? `${user.first_name} ${user.last_name || ""}`.trim()
+    : user?.phone || "Food Lover";
+
   return (
     <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(4px)",
-          zIndex: 9998,
-        }}
-      />
+      <div className="rw-mobile-backdrop" onClick={onClose} aria-hidden="true" />
 
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          width: "85%",
-          maxWidth: "360px",
-          height: "100vh",
-          background: "#fff",
-          zIndex: 9999,
-          boxShadow: "-10px 0 30px rgba(0,0,0,.15)",
-          display: "flex",
-          flexDirection: "column",
-          overflowY: "auto",
-          animation: "slideIn .3s ease",
-        }}
-      >
-        <div
-          style={{
-            background: "linear-gradient(135deg,#ff9800,#ff5722)",
-            padding: "25px 20px",
-            color: "#fff",
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              right: "15px",
-              top: "15px",
-              width: "40px",
-              height: "40px",
-              border: "none",
-              borderRadius: "50%",
-              background: "rgba(255,255,255,.2)",
-              color: "#fff",
-              fontSize: "24px",
-              cursor: "pointer",
-            }}
-          >
-            ×
+      <aside className="rw-mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+        {/* Drawer Header */}
+        <div className="rw-mobile-drawer-header">
+          <button className="rw-mobile-close-btn" onClick={onClose} aria-label="Close menu">
+            <FaTimes />
           </button>
 
-          <h3
-            style={{
-              margin: 0,
-              fontWeight: "800",
-            }}
-          >
-            🍽️ Roti Waale
+          <h3 className="rw-mobile-brand-title">
+            <FaFire style={{ color: "#f7c600" }} /> Roti Waale
           </h3>
+          <span className="rw-mobile-brand-sub">Fresh Tandoor · Hot Meals</span>
 
           {user && (
-            <div
-              style={{
-                marginTop: "10px",
-                fontSize: "14px",
-                opacity: 0.95,
-              }}
-            >
-              {user.phone}
-              <br />
-              {user.role}
+            <div className="rw-mobile-user-card">
+              <div className="rw-mobile-user-avatar">
+                {initial}
+              </div>
+              <div className="rw-mobile-user-details">
+                <div className="rw-mobile-user-name">{displayName}</div>
+                <div className="rw-mobile-user-phone">{user.phone}</div>
+                <span className="rw-mobile-role-badge">
+                  {role === "preparing_staff"
+                    ? "🍳 Kitchen Staff"
+                    : role === "manager"
+                    ? "👔 Shop Manager"
+                    : role === "super_admin"
+                    ? "👑 Super Admin"
+                    : "👤 Customer"}
+                </span>
+                {user.shop_name && (
+                  <div style={{ fontSize: "11px", color: "#fef3c7", marginTop: "3px" }}>
+                    📍 {user.shop_name}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        <div
-          style={{
-            padding: "15px",
-            flex: 1,
-          }}
-        >
-          <NavItem to="/" text="🏠 Home" onClose={onClose} />
+        {/* Drawer Navigation List */}
+        <nav className="rw-mobile-drawer-body">
+          <div className="rw-mobile-section-label">Explore</div>
 
-          <NavItem to="/menu" text="🍔 Menu" onClose={onClose} />
+          <MobileNavItem to="/" icon={<FaHome />} text="Home" onClose={onClose} />
+          <MobileNavItem to="/menu" icon={<FaUtensils />} text="Our Menu" onClose={onClose} />
+          <MobileNavItem to="/about" icon={<FaInfoCircle />} text="About Us" onClose={onClose} />
+          <MobileNavItem to="/contact" icon={<FaPhoneAlt />} text="Contact & Support" onClose={onClose} />
 
-          <NavItem to="/about" text="ℹ️ About" onClose={onClose} />
-
-          <NavItem to="/contact" text="📞 Contact" onClose={onClose} />
-
-          {(user?.role === "super_admin" || user?.role === "manager") && (
-            <NavItem
-              to="/admin/dashboard"
-              text="📊 Dashboard"
-              onClose={onClose}
-            />
+          {/* Role-Specific Portal Links */}
+          {role === "super_admin" && (
+            <>
+              <div className="rw-mobile-section-label">Administration</div>
+              <MobileNavItem
+                to="/admin/dashboard"
+                icon={<FaTachometerAlt />}
+                text="Admin Dashboard"
+                onClose={onClose}
+              />
+            </>
           )}
 
-          {!user ? (
+          {role === "manager" && (
             <>
-              <NavItem to="/login" text="🔐 Login" onClose={onClose} />
-
-              <NavItem to="/register" text="📝 Register" onClose={onClose} />
+              <div className="rw-mobile-section-label">Management Portal</div>
+              <MobileNavItem
+                to="/manager/dashboard"
+                icon={<FaTachometerAlt />}
+                text="Manager Dashboard"
+                onClose={onClose}
+              />
+              <MobileNavItem
+                to="/manager/orders"
+                icon={<FaClipboardList />}
+                text="Order Console"
+                onClose={onClose}
+              />
+              <MobileNavItem
+                to="/display"
+                icon={<FaTv />}
+                text="Live TV Waiting Board"
+                onClose={onClose}
+                isExternal
+              />
             </>
+          )}
+
+          {role === "preparing_staff" && (
+            <>
+              <div className="rw-mobile-section-label">Kitchen Station</div>
+              <MobileNavItem
+                to="/manager/dashboard"
+                icon={<FaTachometerAlt />}
+                text="Kitchen Dashboard"
+                onClose={onClose}
+              />
+              <MobileNavItem
+                to="/manager/orders"
+                icon={<FaClipboardList />}
+                text="Kitchen Orders Queue"
+                onClose={onClose}
+              />
+              <MobileNavItem
+                to="/display"
+                icon={<FaTv />}
+                text="Live TV Waiting Board"
+                onClose={onClose}
+                isExternal
+              />
+            </>
+          )}
+
+          {/* Account / User Section */}
+          <div className="rw-mobile-section-label">My Account</div>
+
+          {!user ? (
+            <div className="rw-mobile-auth-grid">
+              <NavLink to="/login" onClick={onClose} className="rw-mobile-login-link">
+                <FaLock className="me-2" /> Login
+              </NavLink>
+              <NavLink to="/register" onClick={onClose} className="rw-mobile-reg-link">
+                <FaUserPlus className="me-2" /> Register
+              </NavLink>
+            </div>
           ) : (
             <>
-              <NavItem to="/cart" text="🛒 Cart" onClose={onClose} />
+              <MobileNavItem
+                to="/cart"
+                icon={<FaShoppingCart />}
+                text="My Cart"
+                badge={cartCount > 0 ? cartCount : null}
+                onClose={onClose}
+              />
 
-              <NavItem to="/my-orders" text="📋 My Orders" onClose={onClose} />
-              <NavItem to="/profile" text="👤 Profile" onClose={onClose} />
+              {role === "customer" && (
+                <MobileNavItem
+                  to="/my-orders"
+                  icon={<FaClipboardList />}
+                  text="My Past Orders"
+                  onClose={onClose}
+                />
+              )}
 
-              <button
-                onClick={logout}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
-                  color: "#fff",
-                  padding: "14px",
-                  borderRadius: "12px",
-                  marginTop: "20px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                }}
-              >
-                Logout
+              {role === "preparing_staff" ? (
+                <MobileNavItem
+                  to="/manager/profile"
+                  icon={<FaKey />}
+                  text="Kitchen Profile & Password"
+                  onClose={onClose}
+                />
+              ) : (
+                <MobileNavItem
+                  to="/profile"
+                  icon={<FaUser />}
+                  text="Profile Settings"
+                  onClose={onClose}
+                />
+              )}
+
+              <button onClick={logout} className="rw-mobile-logout-btn">
+                <FaSignOutAlt /> Sign Out Securely
               </button>
             </>
           )}
-        </div>
+        </nav>
 
-        <div
-          style={{
-            padding: "15px",
-            textAlign: "center",
-            fontSize: "12px",
-            color: "#888",
-            borderTop: "1px solid #eee",
-          }}
-        >
-          © 2026 Roti Wala
+        {/* Drawer Footer */}
+        <div className="rw-mobile-drawer-footer">
+          © 2026 Roti Waale · Crafted for Flavor & Hygiene
         </div>
-      </div>
-
-      <style>
-        {`
-          @keyframes slideIn{
-            from{
-              transform:translateX(100%);
-            }
-            to{
-              transform:translateX(0);
-            }
-          }
-        `}
-      </style>
+      </aside>
     </>
   );
 };
 
-function NavItem({ to, text, onClose }) {
+function MobileNavItem({ to, icon, text, badge, onClose, isExternal }) {
+  if (isExternal) {
+    return (
+      <a
+        href={to}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClose}
+        className="rw-mobile-nav-link"
+      >
+        <span className="rw-mobile-nav-icon">{icon}</span>
+        <span>{text}</span>
+        {badge && <span className="rw-mobile-nav-badge">{badge}</span>}
+      </a>
+    );
+  }
+
   return (
     <NavLink
       to={to}
       onClick={onClose}
-      style={({ isActive }) => ({
-        display: "block",
-        textDecoration: "none",
-        padding: "14px 16px",
-        borderRadius: "12px",
-        marginBottom: "10px",
-        background: isActive ? "#fff7ed" : "#f8f9fa",
-        color: "#333",
-        fontWeight: "600",
-        transition: ".3s",
-      })}
+      className={({ isActive }) => `rw-mobile-nav-link ${isActive ? "active" : ""}`}
     >
-      {text}
+      <span className="rw-mobile-nav-icon">{icon}</span>
+      <span>{text}</span>
+      {badge && <span className="rw-mobile-nav-badge">{badge}</span>}
     </NavLink>
   );
 }

@@ -15,6 +15,8 @@ import {
   FaCommentDots
 } from "react-icons/fa";
 import { getContactInfo, submitFeedback } from "../service/contactService";
+import "./CSS/Menu.css";
+
 const Contact = () => {
   const [contact, setContact] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -184,7 +186,7 @@ const Contact = () => {
                     href={mapUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn btn-outline-light w-100 py-2 border-gold text-gold btn-primary"
+                    className="btn btn-outline-gold w-100 py-2 fw-bold"
                     style={{ borderRadius: "var(--radius-sm)" }}
                   >
                     <FaDirections className="me-2" /> Navigate on Google Maps

@@ -17,8 +17,11 @@ const AuthRoute = ({ children }) => {
     if (role === "super_admin") {
       return <Navigate to="/admin/dashboard" replace />;
     }
-    if (role === "manager") {
+    if (role === "manager" || role === "preparing_staff") {
       return <Navigate to="/manager/dashboard" replace />;
+    }
+    if (role === "delivery_boy") {
+      return <Navigate to="/delivery/dashboard" replace />;
     }
     // Default: customer or any other role → home
     return <Navigate to="/" replace />;

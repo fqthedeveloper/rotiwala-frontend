@@ -161,7 +161,8 @@
 }
 
 /* ---- Badge ---- */
-.badge {
+.menu-item-card .badge,
+.menu-card .badge {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -173,11 +174,13 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.badge.available {
+.menu-item-card .badge.available,
+.menu-card .badge.available {
   background: rgba(219, 255, 228, 0.92);
   color: #0d8a3d;
 }
-.badge.unavailable {
+.menu-item-card .badge.unavailable,
+.menu-card .badge.unavailable {
   background: rgba(255, 228, 228, 0.92);
   color: #d12a2a;
 }

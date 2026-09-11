@@ -39,7 +39,7 @@ export default function Login() {
     window.dispatchEvent(new Event("authChanged"));
 
     if (user.role === "super_admin") navigate("/admin/dashboard");
-    else if (user.role === "manager") navigate("/manager/dashboard");
+    else if (user.role === "manager" || user.role === "preparing_staff") navigate("/manager/dashboard");
     else navigate("/");
   };
 

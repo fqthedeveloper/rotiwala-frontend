@@ -35,8 +35,8 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
         getDeliveryBoys(),
       ]);
       setReadyOrders(orders || []);
-      // Filter only online AND available boys
-      setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
+      // Keep all delivery boys so manager can assign any driver, with status indicator
+      setDeliveryBoys(boys || []);
     } catch (error) {
       console.error(error);
       Swal.fire('Error', 'Failed to load data', 'error');
@@ -65,7 +65,7 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
       setReadyOrders((prev) => prev.filter((o) => o.id !== orderId));
       // Refresh boys list after assignment
       const boys = await getDeliveryBoys();
-      setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
+      setDeliveryBoys(boys || []);
     } catch (error) {
       Swal.fire('Error', error.response?.data?.error || 'Assignment failed', 'error');
     } finally {
@@ -80,7 +80,7 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
       Swal.fire('Success', `Auto-assigned to ${result.delivery_boy_name || 'delivery boy'}`, 'success');
       setReadyOrders((prev) => prev.filter((o) => o.id !== orderId));
       const boys = await getDeliveryBoys();
-      setDeliveryBoys((boys || []).filter((b) => b.is_online && b.is_available));
+      setDeliveryBoys(boys || []);
     } catch (error) {
       Swal.fire('Error', error.response?.data?.error || 'Auto-assignment failed', 'error');
     } finally {
@@ -205,12 +205,12 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                                 [order.id]: e.target.value,
                               }))
                             }
-                            disabled={autoAssignEnabled}
+                            disabled={assigning[order.id]}
                           >
                             <option value="">Select boy</option>
                             {deliveryBoys.map((b) => (
                               <option key={b.id} value={b.id}>
-                                {b.full_name} {!b.is_available ? '🔴' : '🟢'}
+                                {b.full_name} ({b.phone || 'No phone'}) {b.is_online ? (b.is_available ? '🟢 Online' : '🟡 Busy') : '⚪ Offline'}
                               </option>
                             ))}
                           </select>
@@ -219,7 +219,7 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                           <div className="d-flex gap-2 flex-wrap">
                             <button
                               className="btn btn-warning btn-sm dm-btn-assign"
-                              disabled={assigning[order.id] || autoAssignEnabled}
+                              disabled={assigning[order.id] || !selectedBoy[order.id]}
                               onClick={() =>
                                 handleAssign(
                                   order.id,
@@ -240,7 +240,7 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                             </button>
                             <button
                               className="btn btn-outline-primary btn-sm dm-btn-auto"
-                              disabled={assigning[order.id] || deliveryBoys.length === 0}
+                              disabled={assigning[order.id]}
                               onClick={() => handleAutoAssign(order.id)}
                             >
                               <FaTruck className="me-1" /> Auto

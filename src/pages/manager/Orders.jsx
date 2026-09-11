@@ -24,6 +24,9 @@ import {
   FaPhone,
   FaTruck,
   FaHome,
+  FaEdit,
+  FaBan,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 
 import {
@@ -34,9 +37,18 @@ import {
   readyOrder,
   paymentReceived,
   collectedOrder,
+  cancelWalkInOrder,
 } from "../../service/orderService";
 
+import {
+  getDeliveryBoys,
+  assignDeliveryBoy,
+  autoAssignDelivery,
+} from "../../service/deliveryService";
+
 import ReceiptPrinter from "./components/ReceiptPrinter";
+import EditWalkInOrderModal from "./components/EditWalkInOrderModal";
+import CancelOnlineOrderModal from "./components/CancelOnlineOrderModal";
 
 import "./CSS/Orders.css";
 
@@ -67,7 +79,18 @@ const formatTimeOnly = (isoString) => {
 };
 
 // ---------- Subcomponents ----------
-const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
+const OrderCard = memo(({
+  order,
+  onAction,
+  onReject,
+  onPrint,
+  isPreparingStaff,
+  onEditWalkIn,
+  onCancelWalkIn,
+  onCancelOnline,
+  onAssignDriver,
+  onHandToDriver,
+}) => {
   const [loadingAction, setLoadingAction] = useState(null);
 
   const handleAction = async (action, id) => {
@@ -99,6 +122,8 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
     }
   };
 
+  const isDelivery = order.delivery_option === "delivery";
+
   const renderActions = () => {
     const { status, id, payment_status } = order;
     const commonProps = (action) => ({
@@ -108,7 +133,7 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
 
     const actionButtons = [];
 
-    // Print button
+    // Print button â€” always visible
     actionButtons.push(
       <button
         key="print"
@@ -120,77 +145,175 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
       </button>
     );
 
-    // Payment collection button for unpaid orders
-    if (payment_status !== "paid" && status !== "collected") {
-      actionButtons.push(
-        <button
-          key="payment"
-          className="btn-action payment"
-          {...commonProps("payment")}
-        >
-          {loadingAction === "payment" ? <span className="spinner-sm" /> : <FaMoneyBill />}
-          {isDelivery ? "Collect Payment" : "Payment Received"}
-        </button>
-      );
-    }
-
-    // Status-specific actions
-    switch (status) {
-      case "pending":
-        actionButtons.push(
-          <button key="accept" className="btn-action accept" {...commonProps("accept")}>
-            {loadingAction === "accept" ? <span className="spinner-sm" /> : <FaCheck />}
-            Accept
-          </button>,
-          <button
-            key="reject"
-            className="btn-action reject"
-            onClick={() => handleReject(id)}
-            disabled={loadingAction !== null}
-          >
-            {loadingAction === "reject" ? <span className="spinner-sm" /> : <FaTimes />}
-            Reject
-          </button>
-        );
-        break;
-
-      case "accepted":
-        actionButtons.push(
-          <button key="preparing" className="btn-action preparing" {...commonProps("preparing")}>
-            {loadingAction === "preparing" ? <span className="spinner-sm" /> : <FaFire />}
-            Preparing
-          </button>
-        );
-        break;
-
-      case "preparing":
-        actionButtons.push(
-          <button key="ready" className="btn-action ready" {...commonProps("ready")}>
-            {loadingAction === "ready" ? <span className="spinner-sm" /> : <FaBoxOpen />}
-            Ready
-          </button>
-        );
-        break;
-
-      case "ready":
-        if (payment_status === "paid") {
+    if (isPreparingStaff) {
+      // ---- Kitchen staff: only kitchen-relevant actions ----
+      switch (status) {
+        case "accepted":
           actionButtons.push(
-            <button key="collected" className="btn-action collected" {...commonProps("collected")}>
-              {loadingAction === "collected" ? <span className="spinner-sm" /> : <FaCheckCircle />}
-              Collected
+            <button key="preparing" className="btn-action preparing" {...commonProps("preparing")}>
+              {loadingAction === "preparing" ? <span className="spinner-sm" /> : <FaFire />}
+              Start Preparing
             </button>
           );
-        }
-        break;
+          break;
+        case "preparing":
+          actionButtons.push(
+            <button key="ready" className="btn-action ready" {...commonProps("ready")}>
+              {loadingAction === "ready" ? <span className="spinner-sm" /> : <FaBoxOpen />}
+              Mark Ready ðŸ””
+            </button>
+          );
+          break;
+        default:
+          break;
+      }
+    } else {
+      // ---- Manager: all actions ----
 
-      default:
-        break;
+      // Payment collection button for unpaid orders
+      if (payment_status !== "paid" && status !== "collected") {
+        actionButtons.push(
+          <button
+            key="payment"
+            className="btn-action payment"
+            {...commonProps("payment")}
+          >
+            {loadingAction === "payment" ? <span className="spinner-sm" /> : <FaMoneyBill />}
+            {isDelivery ? "Collect Payment" : "Payment Received"}
+          </button>
+        );
+      }
+
+      // Status-specific actions
+      switch (status) {
+        case "pending":
+          actionButtons.push(
+            <button key="accept" className="btn-action accept" {...commonProps("accept")}>
+              {loadingAction === "accept" ? <span className="spinner-sm" /> : <FaCheck />}
+              Accept
+            </button>,
+            <button
+              key="reject"
+              className="btn-action reject"
+              onClick={() => (onCancelOnline ? onCancelOnline(order) : handleReject(id))}
+              disabled={loadingAction !== null}
+              title="Reject or cancel this online order"
+            >
+              {loadingAction === "reject" ? <span className="spinner-sm" /> : <FaTimes />}
+              Reject
+            </button>
+          );
+          break;
+
+        case "accepted":
+          actionButtons.push(
+            <button key="preparing" className="btn-action preparing" {...commonProps("preparing")}>
+              {loadingAction === "preparing" ? <span className="spinner-sm" /> : <FaFire />}
+              Preparing
+            </button>
+          );
+          break;
+
+        case "preparing":
+          actionButtons.push(
+            <button key="ready" className="btn-action ready" {...commonProps("ready")}>
+              {loadingAction === "ready" ? <span className="spinner-sm" /> : <FaBoxOpen />}
+              Ready
+            </button>
+          );
+          break;
+
+        case "ready":
+          if (isDelivery) {
+            const hasDriver = !!(order.delivery_details && order.delivery_details.delivery_boy_name);
+            if (!hasDriver) {
+              actionButtons.push(
+                <button
+                  key="assign-driver"
+                  className="btn-action assign"
+                  onClick={() => onAssignDriver && onAssignDriver(order)}
+                  disabled={loadingAction !== null}
+                  title="Assign a delivery driver to this order"
+                >
+                  <FaTruck /> Assign Driver
+                </button>
+              );
+            } else {
+              actionButtons.push(
+                <button
+                  key="hand-to-driver"
+                  className="btn-action collected"
+                  onClick={() => (onHandToDriver ? onHandToDriver(order) : handleAction("collected", id))}
+                  disabled={loadingAction !== null}
+                  title={`Hand over to ${order.delivery_details.delivery_boy_name}`}
+                >
+                  {loadingAction === "collected" ? <span className="spinner-sm" /> : <FaTruck />}
+                  Hand to Driver
+                </button>
+              );
+            }
+          } else {
+            actionButtons.push(
+              <button key="collected" className="btn-action collected" {...commonProps("collected")}>
+                {loadingAction === "collected" ? <span className="spinner-sm" /> : <FaCheckCircle />}
+                Deliver / Complete
+              </button>
+            );
+          }
+          break;
+
+        default:
+          break;
+      }
+
+      // Online order manager controls: Cancel with reason (Shop Issue vs Customer Fault)
+      if (
+        order.order_type !== "walkin" &&
+        ["accepted", "preparing", "ready"].includes(status)
+      ) {
+        actionButtons.push(
+          <button
+            key="cancel-online"
+            className="btn-action cancel"
+            onClick={() => onCancelOnline && onCancelOnline(order)}
+            disabled={loadingAction !== null}
+            title="Cancel online order (Shop Issue vs Customer Fault)"
+          >
+            <FaBan /> Cancel Order
+          </button>
+        );
+      }
+
+      // Walk-in order manager controls: Edit items/details and Cancel with reason before delivered
+      if (
+        order.order_type === "walkin" &&
+        ["pending", "accepted", "preparing", "ready"].includes(status)
+      ) {
+        actionButtons.push(
+          <button
+            key="edit-walkin"
+            className="btn-action edit"
+            onClick={() => onEditWalkIn && onEditWalkIn(order)}
+            disabled={loadingAction !== null}
+            title="Edit items or details of this walk-in order"
+          >
+            <FaEdit /> Edit Order
+          </button>,
+          <button
+            key="cancel-walkin"
+            className="btn-action cancel"
+            onClick={() => onCancelWalkIn && onCancelWalkIn(order)}
+            disabled={loadingAction !== null}
+            title="Cancel this walk-in order with a reason"
+          >
+            <FaBan /> Cancel
+          </button>
+        );
+      }
     }
 
     return actionButtons;
   };
-
-  const isDelivery = order.delivery_option === "delivery";
 
   return (
     <div className="order-card">
@@ -199,6 +322,11 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         <div className="order-header-left">
           <div className="order-header-top">
             <h5>#{order.order_number}</h5>
+            {order.token_number && (
+              <span className="token-badge-highlight">
+                Token #{order.token_number}
+              </span>
+            )}
             <span className={`order-type-badge ${order.order_type}`}>
               {order.order_type}
             </span>
@@ -214,9 +342,37 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
 
       {/* Customer & Order Info */}
       <div className="customer-box">
-        <h6><FaUser /> Customer</h6>
+        <div className="customer-box-header">
+          <h6><FaUser /> Customer</h6>
+          {order.customer_is_flagged && (
+            <span className="customer-flagged-pill">
+              <FaExclamationTriangle /> Flagged Customer
+            </span>
+          )}
+        </div>
+
+        {order.customer_is_flagged && (
+          <div className="customer-flagged-alert">
+            <div className="flagged-alert-title">
+              <FaExclamationTriangle className="flag-warn-icon" />
+              <strong>Warning: Customer Flagged (Score: {order.customer_trust_score ?? 0} pts)</strong>
+            </div>
+            <p className="flagged-alert-desc">
+              {order.customer_flag_reasons && order.customer_flag_reasons.length > 0
+                ? order.customer_flag_reasons.join(" • ")
+                : "Customer previously reported for no-show or unreachable on phone calls."}
+            </p>
+          </div>
+        )}
+
         <div className="detail-row"><span>Name</span><strong>{order.customer_name || "Customer"}</strong></div>
         <div className="detail-row"><span>Phone</span><strong>{order.customer_phone || "-"}</strong></div>
+        <div className="detail-row">
+          <span>Trust Score</span>
+          <strong className={order.customer_is_flagged ? "trust-score-flagged" : "trust-score-normal"}>
+            {order.customer_trust_score ?? 100} pts {order.customer_is_flagged && "(⚠️ Flagged)"}
+          </strong>
+        </div>
         <div className="detail-row"><span>Amount</span><strong>₹{order.total_amount}</strong></div>
         <div className="detail-row"><span>Payment</span><strong className="payment-method-text">{order.payment_method}</strong></div>
         <div className="detail-row"><span>Payment Status</span><strong className={`payment-status-text ${order.payment_status}`}>{order.payment_status}</strong></div>
@@ -311,6 +467,63 @@ const OrderCard = memo(({ order, onAction, onReject, onPrint }) => {
         <div className="rejection-box">
           <h6><FaTimes /> Rejection Reason</h6>
           <p>{order.rejection_reason}</p>
+        </div>
+      )}
+
+      {/* Delivery Details (only for delivery orders) */}
+      {isDelivery && (
+        <div className="delivery-box">
+          <div className="delivery-box-header">
+            <h6><FaTruck /> Delivery Details</h6>
+            {order.delivery_details?.delivery_boy_name && order.status !== "collected" && (
+              <button
+                type="button"
+                className="delivery-reassign-btn"
+                onClick={() => onAssignDriver && onAssignDriver(order)}
+                title="Change or reassign delivery boy"
+              >
+                Change
+              </button>
+            )}
+          </div>
+          {order.delivery_details?.delivery_boy_name ? (
+            <>
+              <div className="detail-row">
+                <span>Driver</span>
+                <strong>{order.delivery_details.delivery_boy_name}</strong>
+              </div>
+              {order.delivery_details.delivery_boy_phone && (
+                <div className="detail-row">
+                  <span>Phone</span>
+                  <strong>
+                    <a href={`tel:${order.delivery_details.delivery_boy_phone}`} className="driver-phone-link">
+                      <FaPhone style={{ fontSize: 11, marginRight: 4 }} />
+                      {order.delivery_details.delivery_boy_phone}
+                    </a>
+                  </strong>
+                </div>
+              )}
+              <div className="detail-row">
+                <span>Assignment</span>
+                <span className={`driver-status-badge ${order.delivery_details.status || "assigned"}`}>
+                  {order.delivery_details.status || "Assigned"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="delivery-unassigned-row">
+              <span className="unassigned-text">⚠️ Driver Not Assigned</span>
+              {order.status !== "collected" && (
+                <button
+                  type="button"
+                  className="assign-driver-sm-btn"
+                  onClick={() => onAssignDriver && onAssignDriver(order)}
+                >
+                  <FaTruck style={{ marginRight: 4 }} /> Assign
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -447,10 +660,20 @@ export default function Orders() {
   const [socketConnected, setSocketConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Role detection
+  const userRole = localStorage.getItem("role");
+  const isPreparingStaff = userRole === "preparing_staff";
+
   // Receipt printer states
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedOrderType, setSelectedOrderType] = useState('online');
+
+  // Walk-in order edit state
+  const [editingWalkInOrder, setEditingWalkInOrder] = useState(null);
+
+  // Online order cancellation state (Shop Issue vs Customer Fault)
+  const [cancellingOnlineOrder, setCancellingOnlineOrder] = useState(null);
 
   const socketRef = useRef(null);
   const reconnectAttempt = useRef(0);
@@ -538,6 +761,63 @@ export default function Orders() {
     }
   }, [loadOrders]);
 
+  // Walk-in order cancellation with reason/purpose
+  const handleCancelWalkIn = useCallback(async (order) => {
+    const { value: reason } = await Swal.fire({
+      title: "Cancel Walk-In Order",
+      html: `<p style="font-size:14px; color:#64748b; margin-bottom:12px;">Cancelling Walk-In Order <b>#${order.order_number}</b>. Please select the cancellation purpose / reason:</p>`,
+      input: "select",
+      inputOptions: {
+        "Customer changed mind / Left": "Customer changed mind / Left",
+        "Wrong order entered": "Wrong order entered",
+        "Payment issue / Unpaid": "Payment issue / Unpaid",
+        "Items out of stock": "Items out of stock",
+        "Custom reason": "Custom reason (enter details)...",
+      },
+      inputPlaceholder: "Select a cancellation reason",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Continue",
+      inputValidator: (val) => {
+        if (!val) return "Please choose a reason to proceed";
+      },
+    });
+
+    if (!reason) return;
+
+    let finalReason = reason;
+    if (reason === "Custom reason") {
+      const { value: textReason } = await Swal.fire({
+        title: "Reason Details",
+        input: "textarea",
+        inputLabel: "Please describe the reason for cancellation",
+        inputPlaceholder: "e.g., Customer requested cancel and left the shop...",
+        showCancelButton: true,
+        confirmButtonColor: "#e11d48",
+        inputValidator: (val) => {
+          if (!val || !val.trim()) return "Please enter reason details";
+        },
+      });
+      if (!textReason) return;
+      finalReason = textReason.trim();
+    }
+
+    try {
+      await cancelWalkInOrder(order.id, finalReason);
+      Swal.fire({
+        icon: "success",
+        title: "Order Cancelled",
+        text: `Walk-in order #${order.order_number} has been cancelled.`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      await loadOrders();
+    } catch (err) {
+      Swal.fire("Error", err?.response?.data?.error || "Failed to cancel walk-in order", "error");
+    }
+  }, [loadOrders]);
+
   // ----- Print Receipt Handler -----
   const handlePrintReceipt = useCallback((order) => {
     setSelectedOrderId(order.id);
@@ -545,13 +825,163 @@ export default function Orders() {
     setShowReceipt(true);
   }, []);
 
+  // ----- Delivery Driver Assignment Handler -----
+  const handleAssignDriver = useCallback(async (order) => {
+    try {
+      Swal.fire({
+        title: "Loading Delivery Drivers...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const deliveryBoys = await getDeliveryBoys();
+      Swal.close();
+
+      const boyOptionsHtml = (deliveryBoys || [])
+        .map((b) => {
+          const statusDot = b.is_online ? (b.is_available ? '🟢' : '🟡') : '⚪';
+          const statusText = b.is_online ? (b.is_available ? 'Available' : 'Busy') : 'Offline';
+          return `<option value="${b.id}">${b.full_name} (${b.phone || 'No phone'}) - ${statusDot} ${statusText}</option>`;
+        })
+        .join("");
+
+      const { value: formValues } = await Swal.fire({
+        title: `🚚 Assign Delivery Driver`,
+        html: `
+          <div style="text-align:left; font-size:14px;">
+            <p style="margin-bottom:12px; color:#475569;">
+              Order <b>#${order.order_number}</b> &bull; ₹${order.total_amount} &bull; ${order.customer_name || 'Customer'}<br>
+              <small style="color:#64748b;">📍 ${order.delivery_address || 'Home Delivery'}</small>
+            </p>
+            <div style="margin-bottom:16px;">
+              <button type="button" id="btn-swal-auto-assign" style="width:100%; font-weight:700; padding:12px 14px; border-radius:12px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; border:none; box-shadow:0 4px 14px rgba(245,158,11,0.35); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                ⚡ 1-Click Auto Assign (Fastest)
+              </button>
+            </div>
+            <div style="text-align:center; font-weight:700; color:#94a3b8; margin-bottom:12px; font-size:12px; text-transform:uppercase; letter-spacing:1px;">
+              &mdash; OR SELECT DRIVER MANUALLY &mdash;
+            </div>
+            <label style="display:block; font-weight:700; margin-bottom:6px; color:#334155;">Delivery Boy:</label>
+            <select id="swal-select-boy" class="swal2-select" style="width:100%; display:block; margin:0 0 10px 0; padding:10px 12px; border-radius:10px; border:1.5px solid #cbd5e1; font-size:14px;">
+              <option value="">-- Choose a driver --</option>
+              ${boyOptionsHtml}
+            </select>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Assign Selected Driver",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#64748b",
+        didOpen: () => {
+          const autoBtn = document.getElementById("btn-swal-auto-assign");
+          if (autoBtn) {
+            autoBtn.addEventListener("click", async () => {
+              Swal.showLoading();
+              try {
+                const res = await autoAssignDelivery(order.id);
+                Swal.fire({
+                  icon: "success",
+                  title: "Driver Assigned!",
+                  text: `Order #${order.order_number} auto-assigned to ${res.delivery_boy_name || "driver"}.`,
+                  timer: 2500,
+                  showConfirmButton: false,
+                });
+                await loadOrders();
+              } catch (err) {
+                Swal.fire(
+                  "Auto-Assign Notice",
+                  err?.response?.data?.error || "Could not auto-assign. Please pick a driver manually from the dropdown.",
+                  "warning"
+                );
+              }
+            });
+          }
+        },
+        preConfirm: () => {
+          const boyId = document.getElementById("swal-select-boy")?.value;
+          if (!boyId) {
+            Swal.showValidationMessage("Please select a delivery boy or use 1-Click Auto Assign");
+            return false;
+          }
+          return { boyId: parseInt(boyId, 10) };
+        },
+      });
+
+      if (formValues && formValues.boyId) {
+        Swal.showLoading();
+        await assignDeliveryBoy(order.id, formValues.boyId);
+        Swal.fire({
+          icon: "success",
+          title: "Driver Assigned!",
+          text: `Delivery driver assigned successfully to Order #${order.order_number}.`,
+          timer: 2500,
+          showConfirmButton: false,
+        });
+        await loadOrders();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", err?.response?.data?.error || "Failed to assign delivery driver", "error");
+    }
+  }, [loadOrders]);
+
+  // ----- Hand to Driver Handler -----
+  const handleHandToDriver = useCallback(async (order) => {
+    const driverName = order.delivery_details?.delivery_boy_name || "Delivery Driver";
+    const { isConfirmed } = await Swal.fire({
+      title: "Hand Over Order to Driver?",
+      html: `
+        <div style="font-size:15px; color:#334155; line-height:1.5;">
+          Ready to dispatch Order <b>#${order.order_number}</b>?<br>
+          <strong style="color:#0f172a; margin-top:8px; display:inline-block;">🚚 Driver: ${driverName}</strong>
+          ${order.delivery_details?.delivery_boy_phone ? `<br><small style="color:#64748b;">📞 ${order.delivery_details.delivery_boy_phone}</small>` : ''}
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Hand to Driver",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (isConfirmed) {
+      try {
+        await collectedOrder(order.id);
+        Swal.fire({
+          icon: "success",
+          title: "Dispatched!",
+          text: `Order #${order.order_number} marked handed over to ${driverName}.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        await loadOrders();
+      } catch (err) {
+        Swal.fire("Error", err?.response?.data?.error || "Failed to update order status", "error");
+      }
+    }
+  }, [loadOrders]);
+
   // ----- Filtering -----
+  // Kitchen staff only see active kitchen orders (not pending or completed)
+  const KITCHEN_STATUSES = ["pending", "accepted", "preparing", "ready"];
+
   const filteredOrders = useMemo(() => {
     let result = orders;
+
+    // For preparing staff, only show kitchen-relevant statuses
+    if (isPreparingStaff) {
+      result = result.filter((o) => KITCHEN_STATUSES.includes(o.status));
+    }
+
     if (search.trim()) {
       const keyword = search.toLowerCase().trim();
       result = result.filter((order) =>
         order.order_number?.toLowerCase().includes(keyword) ||
+        order.token_number?.toLowerCase().includes(keyword) ||
         order.customer_name?.toLowerCase().includes(keyword) ||
         order.customer_phone?.toLowerCase().includes(keyword) ||
         order.status?.toLowerCase().includes(keyword) ||
@@ -564,25 +994,32 @@ export default function Orders() {
       result = result.filter((order) => order.status === statusFilter);
     }
     return result;
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, isPreparingStaff]);
 
   // ----- Stats -----
   const stats = useMemo(() => {
+    // For kitchen staff, stats are calculated over kitchen-relevant orders only
+    const baseOrders = isPreparingStaff
+      ? orders.filter((o) => KITCHEN_STATUSES.includes(o.status))
+      : orders;
+
     return {
-      total: orders.length,
-      pending: orders.filter((o) => o.status === "pending").length,
-      accepted: orders.filter((o) => o.status === "accepted").length,
-      preparing: orders.filter((o) => o.status === "preparing").length,
-      ready: orders.filter((o) => o.status === "ready").length,
-      collected: orders.filter((o) => o.status === "collected").length,
-      revenue: orders.reduce((sum, o) => sum + Number(o.total_amount), 0),
+      total: baseOrders.length,
+      pending: baseOrders.filter((o) => o.status === "pending").length,
+      accepted: baseOrders.filter((o) => o.status === "accepted").length,
+      preparing: baseOrders.filter((o) => o.status === "preparing").length,
+      ready: baseOrders.filter((o) => o.status === "ready").length,
+      collected: baseOrders.filter((o) => o.status === "collected").length,
+      revenue: baseOrders.reduce((sum, o) => sum + Number(o.total_amount), 0),
     };
-  }, [orders]);
+  }, [orders, isPreparingStaff]);
 
   // ----- Effects -----
   useEffect(() => {
-    document.title = `${socketConnected ? "🟢" : "🔴"} Manager Orders`;
-  }, [socketConnected]);
+    document.title = isPreparingStaff
+      ? `${socketConnected ? "🟢" : "🔴"} Kitchen Orders`
+      : `${socketConnected ? "🟢" : "🔴"} Manager Orders`;
+  }, [socketConnected, isPreparingStaff]);
 
   useEffect(() => {
     loadOrders();
@@ -618,8 +1055,14 @@ export default function Orders() {
         {/* Topbar */}
         <div className="orders-topbar">
           <div className="topbar-text">
-            <h2 className="orders-title">Orders Management</h2>
-            <p className="orders-subtitle">Real‑Time Manager Dashboard</p>
+            <h2 className="orders-title">
+              {isPreparingStaff ? "🍳 Kitchen Orders" : "Orders Management"}
+            </h2>
+            <p className="orders-subtitle">
+              {isPreparingStaff
+                ? "Preparing • Packaging • Ready — Real-Time Kitchen View"
+                : "Real-Time Manager Dashboard"}
+            </p>
           </div>
           <div className={`socket-status ${socketConnected ? "online" : "offline"}`}>
             <FaBell />
@@ -648,8 +1091,12 @@ export default function Orders() {
         <div className="orders-grid">
           {filteredOrders.length === 0 ? (
             <div className="empty-orders">
-              <h4>No Orders Found</h4>
-              <p>Try adjusting your filters or refresh the page.</p>
+              <h4>{isPreparingStaff ? "No Active Kitchen Orders" : "No Orders Found"}</h4>
+              <p>
+                {isPreparingStaff
+                  ? "All orders are either completed or not yet accepted."
+                  : "Try adjusting your filters or refresh the page."}
+              </p>
             </div>
           ) : (
             filteredOrders.map((order) => (
@@ -659,11 +1106,45 @@ export default function Orders() {
                 onAction={handleAction}
                 onReject={handleReject}
                 onPrint={handlePrintReceipt}
+                isPreparingStaff={isPreparingStaff}
+                onEditWalkIn={(ord) => setEditingWalkInOrder(ord)}
+                onCancelWalkIn={handleCancelWalkIn}
+                onCancelOnline={(ord) => setCancellingOnlineOrder(ord)}
+                onAssignDriver={handleAssignDriver}
+                onHandToDriver={handleHandToDriver}
               />
             ))
           )}
         </div>
       </div>
+
+      {/* Edit Walk-In Order Modal */}
+      {editingWalkInOrder && (
+        <EditWalkInOrderModal
+          isOpen={!!editingWalkInOrder}
+          order={editingWalkInOrder}
+          onClose={() => setEditingWalkInOrder(null)}
+          onOrderUpdated={(updatedOrder) => {
+            loadOrders();
+            if (updatedOrder) {
+              setEditingWalkInOrder(updatedOrder);
+            }
+          }}
+        />
+      )}
+
+      {/* Cancel Online Order Modal (Shop Issue vs Customer Fault) */}
+      {cancellingOnlineOrder && (
+        <CancelOnlineOrderModal
+          isOpen={!!cancellingOnlineOrder}
+          order={cancellingOnlineOrder}
+          onClose={() => setCancellingOnlineOrder(null)}
+          onSuccess={() => {
+            setCancellingOnlineOrder(null);
+            loadOrders();
+          }}
+        />
+      )}
 
       {/* Receipt Printer Modal */}
       {showReceipt && (

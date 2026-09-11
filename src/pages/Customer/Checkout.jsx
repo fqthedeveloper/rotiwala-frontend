@@ -1,8 +1,7 @@
-// frontend/src/pages/Checkout.jsx
-
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { FaArrowLeft, FaShoppingCart } from "react-icons/fa";
 import { getCart } from "../../service/cartService";
 import { placeOrder } from "../../service/orderService";
 import { getOnlineOrderStatus } from "../../service/orderCapacityService";
@@ -831,10 +830,37 @@ const handlePlaceOrder = async () => {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-12 col-lg-10 col-xl-9">
+            {/* Top Navigation: Back to Cart button */}
+            <div className="checkout-top-nav">
+              <button
+                type="button"
+                className="checkout-back-link-btn"
+                onClick={() => navigate("/cart")}
+                aria-label="Back to Cart"
+              >
+                <FaArrowLeft className="me-2" />
+                <span>Back to Cart</span>
+              </button>
+            </div>
+
             <div className="checkout-card">
               <div className="checkout-header">
-                <h2>Checkout</h2>
-                <p>Complete your order and delivery/pickup details</p>
+                <div className="checkout-header-inner">
+                  <button
+                    type="button"
+                    className="btn-checkout-header-back"
+                    onClick={() => navigate("/cart")}
+                    aria-label="Back to Cart"
+                  >
+                    <FaArrowLeft className="me-2" />
+                    <span>Back to Cart</span>
+                  </button>
+                  <div className="checkout-header-titles">
+                    <h2>Checkout</h2>
+                    <p>Complete your order and delivery/pickup details</p>
+                  </div>
+                  <div className="checkout-header-spacer" aria-hidden="true" />
+                </div>
               </div>
 
               <div className="card-body p-4 p-md-5">
@@ -1294,7 +1320,17 @@ const handlePlaceOrder = async () => {
                 )}
 
                 {/* ----- CART ITEMS with per‑item discount breakdown ----- */}
-                <h5 className="section-title mt-4">Cart Items</h5>
+                <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4 mb-2">
+                  <h5 className="section-title mb-0">Cart Items ({cart?.items?.length || 0})</h5>
+                  <button
+                    type="button"
+                    className="btn-checkout-edit-cart"
+                    onClick={() => navigate("/cart")}
+                    title="Edit item quantities or modify cart"
+                  >
+                    <FaShoppingCart className="me-1" /> Edit Cart
+                  </button>
+                </div>
                 {cart?.items?.map((item, index) => {
                   const breakdown = itemsBreakdown.find(
                     (b) => b.item_name === item.item_name
@@ -1387,6 +1423,17 @@ const handlePlaceOrder = async () => {
                     ⚠️ Delivery not available for this address. Please choose a location within {deliveryRadius} km.
                   </div>
                 )}
+
+                {/* Back to Cart Action */}
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    className="checkout-return-cart-link"
+                    onClick={() => navigate("/cart")}
+                  >
+                    <FaArrowLeft className="me-2" /> Return to Cart to modify items
+                  </button>
+                </div>
               </div>
             </div>
           </div>

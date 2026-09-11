@@ -1,5 +1,5 @@
 // src/App.js
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useLoading } from "./context/LoadingContext";
 
@@ -28,6 +28,7 @@ import OrderCapacitySettings from "./pages/manager/OrderCapacitySettings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import DisplayScreen from "./pages/DisplayScreen";
 
 const getPageTitle = (pathname) => {
   const titles = {
@@ -44,6 +45,10 @@ const getPageTitle = (pathname) => {
     "/cart": "Cart - Roti Wala",
     "/checkout": "Checkout - Roti Wala",
     "/my-orders": "My Orders - Roti Wala",
+    "/display": "Order Token Board - Roti Wala",
+    "/display/:shopId": "Order Token Board - Roti Wala",
+    "/dashboard": "Dashboard - Roti Wala",
+    "/deshboard": "Dashboard - Roti Wala",
 
 
     "/admin/shops": "Shops - Roti Wala",
@@ -100,6 +105,8 @@ const getPageTitle = (pathname) => {
     "/manager/staff": "Staff Management - Roti Wala",
     "/manager/staff/salary/add": "Add Staff Salary - Roti Wala",
     "/manager/staff/salary/detail/:staffId": "Staff Salary Detail - Roti Wala",
+    "/manager/preparing-staff": "Kitchen Staff Team - Roti Wala",
+    "/manager/profile": "Staff Profile & Password - Roti Wala",
     "/admin/testimonials": "Testimonials Management - Roti Wala",
     "/admin/videos": "Video Management - Roti Wala",
 
@@ -178,7 +185,7 @@ import DeliveryManagement from './pages/manager/Delivery/DeliveryManagement';
 
 
 // Customer Pages
-import Cart from "./components/layout/CartDrawer";
+import Cart from "./pages/Customer/Cart";
 import Checkout from "./pages/Customer/Checkout";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetail from "./pages/Customer/OrderDetail";
@@ -196,6 +203,28 @@ import ManagerOrders from "./pages/manager/Orders";
 import WalkInOrder from "./pages/manager/WalkInOrder";
 import CustomerManagement from "./pages/manager/CustomerManagement";
 import ManagerExpenses from "./pages/manager/Expenses/ManagerExpenses";
+import PreparingStaffManagement from "./pages/manager/PreparingStaffManagement";
+import StaffProfile from "./pages/manager/StaffProfile";
+
+// Smart Dashboard Redirect for any role (resolves /dashboard and typos like /deshboard)
+const DashboardRedirect = () => {
+  const role = localStorage.getItem("role");
+  const access = localStorage.getItem("access");
+
+  if (!access) {
+    return <Navigate to="/login" replace />;
+  }
+  if (role === "super_admin") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  if (role === "manager" || role === "preparing_staff") {
+    return <Navigate to="/manager/dashboard" replace />;
+  }
+  if (role === "delivery_boy") {
+    return <Navigate to="/delivery/dashboard" replace />;
+  }
+  return <Navigate to="/my-orders" replace />;
+};
 
 function App() {
   const location = useLocation();
@@ -208,11 +237,11 @@ function App() {
   useEffect(() => {
     const showTimer = setTimeout(() => {
       showLoading('Loading page...', 'warm', 'md');
-    }, 80);
+    }, 60);
 
     const autoHideTimer = setTimeout(() => {
       hideLoading();
-    }, 250);
+    }, 500);
 
     return () => {
       clearTimeout(showTimer);
@@ -252,7 +281,8 @@ function App() {
           }
         />
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="/dashboard" element={<DashboardRedirect />} />
+        <Route path="/deshboard" element={<DashboardRedirect />} />
 
         <Route
           path="/cart"
@@ -302,6 +332,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       {/* ADMIN ROUTES */}
@@ -315,6 +346,7 @@ function App() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="shops" element={<Shops />} />
         <Route path="shops/add-shop" element={<AddShop />} />
         <Route path="shops/edit/:id" element={<EditShop />} />
@@ -360,18 +392,24 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
 
+      {/* FULLSCREEN CUSTOMER WAITING & DELIVERY DISPLAY */}
+      <Route path="/display" element={<DisplayScreen />} />
+      <Route path="/display/:shopId" element={<DisplayScreen />} />
+      <Route path="/delivery-screen" element={<DisplayScreen />} />
+      <Route path="/delivery-screen/:shopId" element={<DisplayScreen />} />
 
-      {/* MANAGER ROUTES */}
+      {/* MANAGER & KITCHEN STAFF ROUTES */}
       <Route
         path="/manager"
         element={
           <ProtectedRoute>
-            <RoleRoute role="manager">
+            <RoleRoute roles={["manager", "preparing_staff"]}>
               <ManagerLayout />
             </RoleRoute>
           </ProtectedRoute>
         }
       >
+        <Route index element={<Navigate to="/manager/dashboard" replace />} />
         <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="settings/order-capacity" element={<OrderCapacitySettings />} />
         <Route path="menu-items" element={<MenuItems />} />
@@ -393,6 +431,8 @@ function App() {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="staff/salary/add" element={<StaffSalaryForm />} />
         <Route path="staff/salary/detail/:staffId" element={<StaffSalaryDetail />} />
+        <Route path="preparing-staff" element={<PreparingStaffManagement />} />
+        <Route path="profile" element={<StaffProfile />} />
         <Route path="feedback" element={<FeedbackManagement />} />
         <Route path="delivery" element={<DeliveryManagement />} />
         <Route path="*" element={<NotFound />} />

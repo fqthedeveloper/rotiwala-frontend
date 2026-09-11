@@ -58,8 +58,15 @@ export const acceptOrder = async (orderId) => {
   return response.data;
 };
 
-export const rejectOrder = async (orderId, reason) => {
-  const response = await api.post(`/orders/${orderId}/reject/`, { reason });
+export const rejectOrder = async (orderId, payload) => {
+  const data = typeof payload === "string" ? { reason: payload } : payload;
+  const response = await api.post(`/orders/${orderId}/reject/`, data);
+  return response.data;
+};
+
+export const cancelOnlineOrderByManager = async (orderId, payload) => {
+  const data = typeof payload === "string" ? { reason: payload } : payload;
+  const response = await api.post(`/orders/${orderId}/cancel-by-manager/`, data);
   return response.data;
 };
 
@@ -234,5 +241,67 @@ export const getSuperAdminTopProducts = async () => {
 
 export const getSuperAdminOrders = async (params = {}) => {
   const response = await api.get("/orders/superadmin/orders/", { params });
+  return response.data;
+};
+
+/*
+=================================
+DISPLAY SCREEN & TOKEN ACTIONS
+=================================
+*/
+
+export const getDisplayScreenTokens = async (shopId = null) => {
+  const url = shopId ? `/orders/display-screen/?shop_id=${shopId}` : "/orders/display-screen/";
+  const response = await api.get(url);
+  return response.data;
+};
+
+export const tokenOrderAction = async (tokenNumber, action, orderId = null, shopId = null) => {
+  const payload = { action };
+  if (tokenNumber) payload.token_number = tokenNumber;
+  if (orderId) payload.order_id = orderId;
+  if (shopId) payload.shop_id = shopId;
+  const response = await api.post("/orders/token-action/", payload);
+  return response.data;
+};
+
+export const getStaffOrders = async (params = {}) => {
+  const response = await api.get("/orders/staff/", { params });
+  return response.data;
+};
+
+/*
+=================================
+WALK-IN ORDER MANAGEMENT (MANAGER)
+=================================
+*/
+
+export const cancelWalkInOrder = async (orderId, reason) => {
+  const response = await api.post(`/orders/walkin/order/${orderId}/cancel/`, { reason });
+  return response.data;
+};
+
+export const updatePlacedOrder = async (orderId, data) => {
+  const response = await api.patch(`/orders/walkin/order/${orderId}/update/`, data);
+  return response.data;
+};
+
+export const addPlacedOrderItem = async (orderId, menuItemId, quantity = 1) => {
+  const response = await api.post(`/orders/walkin/order/${orderId}/add-item/`, {
+    menu_item: menuItemId,
+    quantity,
+  });
+  return response.data;
+};
+
+export const updatePlacedOrderItem = async (itemId, quantity) => {
+  const response = await api.patch(`/orders/walkin/order/item/${itemId}/`, {
+    quantity,
+  });
+  return response.data;
+};
+
+export const deletePlacedOrderItem = async (itemId) => {
+  const response = await api.delete(`/orders/walkin/order/item/${itemId}/delete/`);
   return response.data;
 };

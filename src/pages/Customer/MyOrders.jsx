@@ -78,88 +78,59 @@ export default function MyOrders() {
    */
   useEffect(() => {
     if (loading) return;
-
     if (!orders || orders.length === 0) return;
 
     // Another review popup is already being displayed/handled
     if (popupShownRef.current) return;
 
     /*
-     * Find the first collected order which:
-     *
-     * - has not been reviewed
-     * - has not been skipped
-     * - has not already been handled in this page session
+     * Collect all completed / collected orders.
+     * We only prompt review for the LATEST collected order.
+     * If skipped, we do not ask again until the NEXT order is collected.
      */
-    const collectedOrder = orders.find((order) => {
-      if (!order) return false;
+    const collectedOrders = orders.filter(
+      (order) => order && order.status === "collected" && order.id
+    );
 
-      if (order.status !== "collected") {
-        return false;
-      }
+    if (collectedOrders.length === 0) return;
 
-      if (!order.id) {
-        return false;
-      }
+    // Sort to find the latest collected order (highest ID)
+    const latestCollectedOrder = [...collectedOrders].sort(
+      (a, b) => (b.id || 0) - (a.id || 0)
+    )[0];
 
-      // Already handled during this page session
-      if (handledReviewOrdersRef.current.has(order.id)) {
-        return false;
-      }
+    if (!latestCollectedOrder) return;
 
-      // Already reviewed/skipped according to reviewPopup.js
-      if (isOrderReviewedOrSkipped(order.id)) {
-        return false;
-      }
+    // Already handled during this page session
+    if (handledReviewOrdersRef.current.has(latestCollectedOrder.id)) {
+      return;
+    }
 
-      return true;
-    });
-
-    if (!collectedOrder) {
+    // Already reviewed, skipped, or below dismissed threshold
+    if (isOrderReviewedOrSkipped(latestCollectedOrder.id)) {
       return;
     }
 
     /*
      * Mark popup as currently shown BEFORE opening it.
-     *
-     * This prevents duplicate popups if the component renders
-     * again while showReviewPopup is open.
      */
     popupShownRef.current = true;
+    handledReviewOrdersRef.current.add(latestCollectedOrder.id);
 
-    /*
-     * Mark this order as handled immediately.
-     *
-     * This is important because even if the popup is skipped,
-     * the same order must not open again on the next polling
-     * request.
-     */
-    handledReviewOrdersRef.current.add(collectedOrder.id);
+    const allCollectedIds = collectedOrders.map((o) => o.id);
 
     showReviewPopup(
-      collectedOrder.id,
-      collectedOrder.order_number
+      latestCollectedOrder.id,
+      latestCollectedOrder.order_number,
+      allCollectedIds
     )
       .then(() => {
-        /*
-         * Popup has been closed.
-         *
-         * We intentionally DO NOT remove the order from
-         * handledReviewOrdersRef.
-         *
-         * This prevents the same order from showing again.
-         */
+        // Handled successfully or skipped
       })
       .catch((error) => {
         console.error("Review popup error:", error);
       })
       .finally(() => {
-        /*
-         * Allow another DIFFERENT collected order to show its
-         * review popup.
-         *
-         * Do not use setTimeout here.
-         */
         popupShownRef.current = false;
       });
   }, [orders, loading]);

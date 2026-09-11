@@ -261,8 +261,8 @@ const About = () => {
       {/* CTA FOOTER BANNER */}
       <section className="container my-5 py-4">
         <motion.div
-          className="p-5 rounded-4 text-center position-relative overflow-hidden shadow-lg"
-          style={{ background: "var(--grad-hero)", color: "#FFFFFF" }}
+          className="p-4 p-md-5 rounded-4 text-center position-relative overflow-hidden shadow-lg border border-gold"
+          style={{ background: "linear-gradient(135deg, #430a15 0%, #6d1322 55%, #8f1d2c 100%)", color: "#FFFFFF" }}
           whileHover={{ scale: 1.01 }}
         >
           <FaMapMarkerAlt className="display-4 text-gold mb-3" />

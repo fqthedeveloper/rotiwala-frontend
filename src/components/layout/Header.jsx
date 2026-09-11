@@ -4,13 +4,14 @@ import MobileMenu from "./MobileMenu";
 import "./Header.css";
 import Logo from "../../assets/react.svg";
 import { getCartCount } from "../../service/cartService";
-import { FaMapMarkerAlt, FaShoppingCart } from "react-icons/fa";
+import { FaMapMarkerAlt, FaShoppingCart, FaBars, FaUser } from "react-icons/fa";
 
 const Header = ({ onOpenCart }) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState(null);
 
   const syncUser = () => {
@@ -41,6 +42,16 @@ const Header = ({ onOpenCart }) => {
   }, []);
 
   useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".profile-dropdown")) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     if (user) {
       loadCartCount();
     } else {
@@ -58,10 +69,13 @@ const Header = ({ onOpenCart }) => {
 
   const logout = () => {
     localStorage.clear();
+    sessionStorage.clear();
     setUser(null);
     setCartCount(0);
+    setDropdownOpen(false);
     window.dispatchEvent(new Event("authChanged"));
-    navigate("/");
+    window.dispatchEvent(new Event("cartUpdated"));
+    navigate("/login", { replace: true });
   };
 
   const handleCartClick = (e) => {
@@ -106,7 +120,7 @@ const Header = ({ onOpenCart }) => {
               </button>
 
               {!user ? (
-                <div className="auth-btns">
+                <div className="auth-btns d-none d-lg-flex">
                   <Link to="/login" className="login-btn">
                     Login
                   </Link>
@@ -116,7 +130,11 @@ const Header = ({ onOpenCart }) => {
                 </div>
               ) : (
                 <div className="profile-dropdown">
-                  <button className="profile-btn">
+                  <button
+                    className="profile-btn"
+                    onClick={() => setDropdownOpen((prev) => !prev)}
+                    type="button"
+                  >
                     <div className="avatar">
                       {user.first_name?.charAt(0) || user.phone?.charAt(1) || "U"}
                     </div>
@@ -125,27 +143,87 @@ const Header = ({ onOpenCart }) => {
                         ? `${user.first_name} ${user.last_name || ""}`
                         : user.phone}
                     </span>
+                    <span style={{ fontSize: "11px", opacity: 0.7 }}>▼</span>
                   </button>
 
-                  <div className="dropdown-menu">
+                  <div className={`dropdown-menu ${dropdownOpen ? "show" : ""}`}>
                     <div className="dropdown-user">
-                      {user.phone}
-                      <br />
-                      <small className="text-muted">({user.role})</small>
+                      <div className="fw-bold">{user.first_name ? `${user.first_name} ${user.last_name || ""}` : user.phone}</div>
+                      <div className="text-muted small">{user.phone}</div>
+                      <span className="badge bg-warning text-dark mt-1 text-uppercase" style={{ fontSize: "10px", padding: "4px 8px" }}>
+                        {user.role === "preparing_staff" ? "🍳 Kitchen Staff" : user.role === "manager" ? "👔 Manager" : user.role}
+                      </span>
+                      {user.shop_name && (
+                        <div className="text-muted small mt-1">📍 {user.shop_name}</div>
+                      )}
                     </div>
+
                     {user.role === "super_admin" && (
-                      <Link to="/admin/dashboard">Dashboard</Link>
+                      <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)}>
+                        📊 Admin Dashboard
+                      </Link>
                     )}
                     {user.role === "manager" && (
-                      <Link to="/manager/dashboard">Dashboard</Link>
+                      <>
+                        <Link to="/manager/dashboard" onClick={() => setDropdownOpen(false)}>
+                          📊 Manager Dashboard
+                        </Link>
+                        <Link to="/display" target="_blank" rel="noopener noreferrer" onClick={() => setDropdownOpen(false)}>
+                          📺 Live TV Display
+                        </Link>
+                      </>
+                    )}
+                    {user.role === "preparing_staff" && (
+                      <>
+                        <Link to="/manager/dashboard" onClick={() => setDropdownOpen(false)}>
+                          🍳 Kitchen Dashboard
+                        </Link>
+                        <Link to="/manager/orders" onClick={() => setDropdownOpen(false)}>
+                          📋 Kitchen Orders
+                        </Link>
+                        <Link to="/display" target="_blank" rel="noopener noreferrer" onClick={() => setDropdownOpen(false)}>
+                          📺 Live TV Display
+                        </Link>
+                      </>
                     )}
                     {user.role === "customer" && (
-                      <Link to="/my-orders">My Orders</Link>
+                      <Link to="/my-orders" onClick={() => setDropdownOpen(false)}>
+                        📋 My Orders
+                      </Link>
                     )}
-                    <Link to="/profile">Profile</Link>
-                    <button onClick={logout}>Logout</button>
+
+                    {user.role === "preparing_staff" ? (
+                      <Link to="/manager/profile" onClick={() => setDropdownOpen(false)}>
+                        👤 Kitchen Profile &amp; Password
+                      </Link>
+                    ) : (
+                      <Link to="/profile" onClick={() => setDropdownOpen(false)}>
+                        👤 Profile
+                      </Link>
+                    )}
+
+                    <div style={{ borderTop: "1px solid #eee", margin: "4px 0" }}></div>
+                    <button
+                      onClick={logout}
+                      className="text-danger fw-bold"
+                      style={{ background: "transparent" }}
+                    >
+                      🚪 Logout
+                    </button>
                   </div>
                 </div>
+              )}
+
+              {user && (
+                <button
+                  className="mobile-avatar-btn d-lg-none"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open User Menu"
+                >
+                  <span className="mobile-avatar-initial">
+                    {user.first_name?.charAt(0) || user.phone?.charAt(1) || "U"}
+                  </span>
+                </button>
               )}
 
               <button
@@ -153,7 +231,7 @@ const Header = ({ onOpenCart }) => {
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open Mobile Menu"
               >
-                ☰
+                <FaBars />
               </button>
             </div>
           </div>

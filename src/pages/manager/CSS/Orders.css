@@ -358,6 +358,65 @@
   color: #5a1700;
   font-size: 14px;
 }
+
+.customer-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.customer-box-header h6 {
+  margin-bottom: 0;
+}
+.customer-flagged-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  animation: pulse 2s infinite;
+}
+
+.customer-flagged-alert {
+  background: #fef2f2;
+  border: 1.5px solid #f87171;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.flagged-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b91c1c;
+  font-size: 12.5px;
+  margin-bottom: 3px;
+}
+.flag-warn-icon {
+  font-size: 14px;
+  color: #dc2626;
+  flex-shrink: 0;
+}
+.flagged-alert-desc {
+  font-size: 11.5px;
+  color: #7f1d1d;
+  margin: 0;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.trust-score-flagged {
+  color: #dc2626 !important;
+  font-weight: 800;
+}
+.trust-score-normal {
+  color: #16a34a !important;
+}
 .detail-row {
   display: flex;
   justify-content: space-between;
@@ -525,6 +584,8 @@
 .btn-action.ready     { background: linear-gradient(135deg, #198754, #28a745); }
 .btn-action.payment   { background: linear-gradient(135deg, #ffc107, #ffb300); color: #5a1700; }
 .btn-action.collected { background: linear-gradient(135deg, #212529, #495057); }
+.btn-action.edit      { background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; }
+.btn-action.cancel    { background: linear-gradient(135deg, #e11d48, #f43f5e); color: #fff; }
 
 .spinner-sm {
   display: inline-block;
@@ -702,4 +763,148 @@
   font-weight: 500;
   word-break: break-word;
   color: #333;
+}
+
+/* Walk-in token badge */
+.token-badge-highlight {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.35);
+  margin-left: 6px;
+  border: 1px solid #b45309;
+}
+
+/* ============ DELIVERY DETAILS BOX ============ */
+.delivery-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.delivery-box:hover {
+  border-color: #cbd5e1;
+}
+.delivery-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.delivery-box-header h6 {
+  margin: 0;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.delivery-box-header h6 svg {
+  color: #f59e0b;
+  font-size: 14px;
+}
+.delivery-reassign-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.delivery-reassign-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.driver-phone-link {
+  color: #2563eb;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 700;
+}
+.driver-phone-link:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+.driver-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.driver-status-badge.assigned {
+  background: #fef3c7;
+  color: #b45309;
+}
+.driver-status-badge.accepted {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.driver-status-badge.picked_up {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+.driver-status-badge.out_for_delivery {
+  background: #dcfce7;
+  color: #15803d;
+}
+.driver-status-badge.delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.delivery-unassigned-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.unassigned-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #d97706;
+}
+.assign-driver-sm-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.assign-driver-sm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+}
+
+/* Assign Driver action button */
+.btn-action.assign {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+.btn-action.assign:not(:disabled):hover {
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
 }
