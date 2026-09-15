@@ -27,7 +27,10 @@ import {
   FaEdit,
   FaBan,
   FaExclamationTriangle,
+  FaVolumeUp,
+  FaVolumeMute,
 } from "react-icons/fa";
+
 
 import {
   getManagerOrders,
@@ -51,6 +54,8 @@ import EditWalkInOrderModal from "./components/EditWalkInOrderModal";
 import CancelOnlineOrderModal from "./components/CancelOnlineOrderModal";
 
 import "./CSS/Orders.css";
+import useNewOrderAlert from "../../hooks/useNewOrderAlert";
+
 
 const BaseURL = import.meta.env.VITE_WS_URL;
 
@@ -1014,7 +1019,11 @@ export default function Orders() {
     };
   }, [orders, isPreparingStaff]);
 
+  // 🔔 Sound & browser notification when new pending orders arrive
+  const { soundEnabled, toggleSound } = useNewOrderAlert(stats?.pending);
+
   // ----- Effects -----
+
   useEffect(() => {
     document.title = isPreparingStaff
       ? `${socketConnected ? "🟢" : "🔴"} Kitchen Orders`
@@ -1064,9 +1073,33 @@ export default function Orders() {
                 : "Real-Time Manager Dashboard"}
             </p>
           </div>
-          <div className={`socket-status ${socketConnected ? "online" : "offline"}`}>
-            <FaBell />
-            <span>{socketConnected ? "LIVE" : "OFFLINE"}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Sound toggle */}
+            <button
+              onClick={toggleSound}
+              title={soundEnabled ? 'Turn off order alert sound' : 'Turn on order alert sound'}
+              style={{
+                background: soundEnabled ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)',
+                border: `1.5px solid ${soundEnabled ? '#10b981' : '#ef4444'}`,
+                color: soundEnabled ? '#10b981' : '#ef4444',
+                borderRadius: '8px',
+                padding: '6px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {soundEnabled ? <FaVolumeUp size={13} /> : <FaVolumeMute size={13} />}
+              {soundEnabled ? 'Sound ON' : 'Sound OFF'}
+            </button>
+            <div className={`socket-status ${socketConnected ? "online" : "offline"}`}>
+              <FaBell />
+              <span>{socketConnected ? "LIVE" : "OFFLINE"}</span>
+            </div>
           </div>
         </div>
 

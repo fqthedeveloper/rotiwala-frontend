@@ -19,11 +19,15 @@ import {
   FaTv,
   FaUtensils,
   FaKey,
+  FaVolumeUp,
+  FaVolumeMute,
 } from "react-icons/fa";
 import "./CSS/Dashboard.css";
 import api from "../../service/api";   // ✅ use the axios instance with auth interceptors
 import { tokenOrderAction } from "../../service/orderService";
 import toast from "react-hot-toast";
+import useNewOrderAlert from "../../hooks/useNewOrderAlert";
+
 
 const STAT_META = [
   { key: "pending",   label: "Pending Orders",   icon: FaClock,        accent: "amber",   hint: "Awaiting acceptance" },
@@ -339,7 +343,13 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     load(false);
+    // Auto-poll every 30 seconds to detect new orders
+    const interval = setInterval(() => load(false), 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  // 🔔 Sound & notification alert when new pending orders arrive
+  const { soundEnabled, toggleSound } = useNewOrderAlert(stats?.pending);
 
   const completionPct = useMemo(() => {
     if (!stats) return 0;
@@ -387,16 +397,42 @@ export default function ManagerDashboard() {
             </span>
           </div>
         </div>
-        <button
-          className={`refresh-btn ${refreshing ? "is-refreshing" : ""}`}
-          onClick={() => load(true)}
-          disabled={refreshing}
-          data-testid="refresh-btn"
-        >
-          <FaSyncAlt className="refresh-icon" />
-          <span className="refresh-label">Refresh</span>
-          <span className="refresh-ripple" aria-hidden="true" />
-        </button>
+        <div className="d-flex align-items-center gap-2">
+          {/* Sound toggle */}
+          <button
+            className={`refresh-btn`}
+            onClick={toggleSound}
+            title={soundEnabled ? 'Turn off order alert sound' : 'Turn on order alert sound'}
+            style={{
+              background: soundEnabled ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)',
+              border: `1px solid ${soundEnabled ? '#10b981' : '#ef4444'}`,
+              color: soundEnabled ? '#10b981' : '#ef4444',
+              borderRadius: '10px',
+              padding: '8px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            {soundEnabled ? <FaVolumeUp /> : <FaVolumeMute />}
+            <span className="refresh-label">{soundEnabled ? 'Sound ON' : 'Sound OFF'}</span>
+          </button>
+
+          <button
+            className={`refresh-btn ${refreshing ? "is-refreshing" : ""}`}
+            onClick={() => load(true)}
+            disabled={refreshing}
+            data-testid="refresh-btn"
+          >
+            <FaSyncAlt className="refresh-icon" />
+            <span className="refresh-label">Refresh</span>
+            <span className="refresh-ripple" aria-hidden="true" />
+          </button>
+        </div>
       </header>
 
       {loading ? (

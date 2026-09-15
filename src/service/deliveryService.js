@@ -188,3 +188,16 @@ export const getOrderTracking = async (orderId) => {
   const response = await api.get(`/delivery/tracking/${orderId}/`);
   return response.data;
 };
+
+// ============================================================
+// PAYMENT PROOFS (Manager)
+// ============================================================
+
+/**
+ * Get all delivery assignments with payment proof details
+ * Supports filters: ?is_paid=true|false, ?payment_mode=upi|cash
+ */
+export const getAssignmentsWithProofs = async (params = {}) => {
+  const response = await api.get('/delivery/assignments/', { params });
+  return response.data;
+};

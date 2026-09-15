@@ -204,3 +204,20 @@ export const updateDeliveryAssignmentMode = async (shopId, mode) => {
   });
   return response.data;
 };
+
+/**
+ * Update shop UPI settings (upi_id and/or upi_qr_image)
+ * Sends multipart/form-data so the image file is uploaded
+ * @param {number} shopId
+ * @param {Object} data - { upi_id?: string, upi_qr_image?: File }
+ */
+export const updateShopUPI = async (shopId, data) => {
+  const formData = new FormData();
+  if (data.upi_id !== undefined) formData.append('upi_id', data.upi_id);
+  if (data.upi_qr_image instanceof File) formData.append('upi_qr_image', data.upi_qr_image);
+
+  const response = await api.patch(`/shops/${shopId}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

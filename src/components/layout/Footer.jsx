@@ -171,8 +171,15 @@ const Footer = () => {
           <div className="footer-bottom-wrapper">
 
             <div>
-              © {year} Roti Wala.
-              All Rights Reserved.
+              © {year} Roti Wala. v1.5.0 (Beta). All Rights Reserved. | Developed with ❤️ by{" "}
+              <a
+                href="https://faizanqureshi.netlify.app/"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#f59e0b", textDecoration: "underline", fontWeight: 600 }}
+              >
+                Faizan Qureshi
+              </a>
             </div>
 
             <div className="footer-bottom-links">

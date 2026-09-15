@@ -1,15 +1,19 @@
 // frontend/src/pages/manager/DeliveryManagement.jsx
 
 import React, { useState, useEffect } from 'react';
-import { FaTruck, FaUserCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaTruck, FaUserCog, FaToggleOn, FaToggleOff, FaMoneyCheckAlt } from 'react-icons/fa';
+import { MdQrCodeScanner } from 'react-icons/md';
 import Swal from 'sweetalert2';
 import DeliveryBoyList from './DeliveryBoyList';
 import DeliveryAssignment from './DeliveryAssignment';
+import PaymentProofs from './PaymentProofs';
+import UPISettings from './UPISettings';
 import { updateDeliveryAssignmentMode, getShopById } from '../../../service/shopService';
 import '../CSS/DeliveryBoy.css';
 
 const DeliveryManagement = () => {
   const [activeTab, setActiveTab] = useState('boys');
+
   const [autoAssign, setAutoAssign] = useState(false);
   const [shopId, setShopId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -113,7 +117,7 @@ const DeliveryManagement = () => {
 
       {/* Navigation Tabs */}
       <div className="dm-tabs-wrapper">
-        <ul className="nav nav-tabs dm-tabs">
+        <ul className="nav nav-tabs dm-tabs flex-nowrap overflow-auto" style={{ whiteSpace: 'nowrap' }}>
           <li className="nav-item">
             <button
               className={`nav-link dm-tab-link ${activeTab === 'boys' ? 'active' : ''}`}
@@ -130,12 +134,30 @@ const DeliveryManagement = () => {
               <FaTruck className="me-2" /> Assign Orders
             </button>
           </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link dm-tab-link ${activeTab === 'proofs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('proofs')}
+            >
+              <FaMoneyCheckAlt className="me-2" /> Payment Proofs
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link dm-tab-link ${activeTab === 'upi' ? 'active' : ''}`}
+              onClick={() => setActiveTab('upi')}
+            >
+              <MdQrCodeScanner className="me-2" size={16} /> UPI Settings
+            </button>
+          </li>
         </ul>
       </div>
 
       <div className="tab-content dm-tab-content">
         {activeTab === 'boys' && <DeliveryBoyList />}
         {activeTab === 'assign' && <DeliveryAssignment autoAssignEnabled={autoAssign} />}
+        {activeTab === 'proofs' && <PaymentProofs />}
+        {activeTab === 'upi' && <UPISettings />}
       </div>
     </div>
   );
