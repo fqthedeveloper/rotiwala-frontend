@@ -53,6 +53,8 @@ const getPageTitle = (pathname) => {
 
     "/admin/shops": "Shops - Roti Wala",
     "/admin/shops/add-shop": "Add Shop - Roti Wala",
+    "/admin/upi-settings": "UPI Settings - Roti Wala",
+    "/manager/upi-settings": "UPI Settings - Roti Wala",
     "/admin/managers": "Managers - Roti Wala",
     "/admin/managers/add": "Add Manager - Roti Wala",
     "/admin/categories": "Categories - Roti Wala",
@@ -180,6 +182,7 @@ import MarqueeManagement from './pages/admin/MarqueeManagement';
 import FeedbackManagement from './pages/admin/FeedbackManagement';
 // In your main App.js or routes file
 import DeliveryManagement from './pages/manager/Delivery/DeliveryManagement';
+import UPISettings from './pages/manager/Delivery/UPISettings';
 
 
 
@@ -353,6 +356,7 @@ function App() {
         <Route path="managers" element={<Managers />} />
         <Route path="managers/add" element={<AddManager />} />
         <Route path="managers/edit/:id" element={<EditManager />} />
+        <Route path="upi-settings" element={<UPISettings />} />
         <Route path="categories" element={<Categories />} />
         <Route path="categories/add" element={<AddCategory />} />
         <Route path="menu-items" element={<MenuItems />} />
@@ -412,6 +416,10 @@ function App() {
         <Route index element={<Navigate to="/manager/dashboard" replace />} />
         <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="settings/order-capacity" element={<OrderCapacitySettings />} />
+        <Route path="upi-settings" element={<UPISettings />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="categories/add" element={<AddCategory />} />
+        <Route path="categories/edit/:id" element={<EditCategory />} />
         <Route path="menu-items" element={<MenuItems />} />
         <Route path="menu-items/add" element={<AddMenuItem />} />
         <Route path="menu-items/edit/:id" element={<EditMenuItem />} />        

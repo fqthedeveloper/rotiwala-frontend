@@ -7,6 +7,7 @@ import "./CSS/Login.css";
 export default function Login() {
   const navigate = useNavigate();
   const otpRef = useRef(null);
+  const passwordInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("otp");
   const [phone, setPhone] = useState("");
@@ -179,7 +180,12 @@ export default function Login() {
 
         {activeTab === "otp" ? (
           !otpSent ? (
-            <>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendOTP();
+              }}
+            >
               <div className="mb-3">
                 <input
                   type="tel"
@@ -187,14 +193,24 @@ export default function Login() {
                   placeholder="Mobile Number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
                 />
               </div>
-              <button className="btn btn-primary w-100" onClick={sendOTP} disabled={loading}>
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+                disabled={loading}
+              >
                 {loading ? "Sending OTP..." : "Send OTP"}
               </button>
-            </>
+            </form>
           ) : (
-            <>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                verifyOTP();
+              }}
+            >
               <div className="otp-phone">
                 OTP sent on Whatsapp to The number:
                 <br />
@@ -209,19 +225,32 @@ export default function Login() {
                   placeholder="Enter OTP"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
+                  autoComplete="one-time-code"
                 />
               </div>
-              <button className="btn btn-success w-100" onClick={verifyOTP} disabled={loading}>
+              <button
+                type="submit"
+                className="btn btn-success w-100"
+                disabled={loading}
+              >
                 {loading ? "Verifying..." : "Verify OTP"}
               </button>
-              <button className="btn btn-link mt-3" onClick={() => setOtpSent(false)}>
+              <button
+                type="button"
+                className="btn btn-link mt-3"
+                onClick={() => setOtpSent(false)}
+              >
                 Change Number
               </button>
-            </>
+            </form>
           )
         ) : (
-          // Password tab – unchanged
-          <>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              loginWithPassword();
+            }}
+          >
             <div className="mb-3">
               <input
                 type="tel"
@@ -232,11 +261,21 @@ export default function Login() {
                   setPhone(e.target.value);
                   setPhoneError("");
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (!password.trim() && passwordInputRef.current) {
+                      e.preventDefault();
+                      passwordInputRef.current.focus();
+                    }
+                  }
+                }}
+                autoComplete="username tel"
               />
               {phoneError && <div className="invalid-feedback d-block">{phoneError}</div>}
             </div>
             <div className="mb-3">
               <input
+                ref={passwordInputRef}
                 type={showPassword ? "text" : "password"}
                 className={`form-control ${passwordError ? "is-invalid" : ""}`}
                 placeholder="Password"
@@ -245,6 +284,7 @@ export default function Login() {
                   setPassword(e.target.value);
                   setPasswordError("");
                 }}
+                autoComplete="current-password"
               />
               {passwordError && <div className="invalid-feedback d-block">{passwordError}</div>}
             </div>
@@ -260,10 +300,14 @@ export default function Login() {
                 Show Password
               </label>
             </div>
-            <button className="btn btn-primary w-100" onClick={loginWithPassword} disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
               {loading ? "Logging in..." : "Login"}
             </button>
-          </>
+          </form>
         )}
 
         {/* reCAPTCHA container removed */}

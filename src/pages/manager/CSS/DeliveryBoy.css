@@ -662,3 +662,109 @@
     padding: 20px;
   }
 }
+
+/* =========================================
+   LIVE RADAR TRACKING & CUSTOM MARKERS
+   ========================================= */
+.dm-rider-marker-wrapper,
+.dm-shop-marker-wrapper,
+.dm-dest-marker-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+.dm-radar-pulse {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dm-rider-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+}
+
+.dm-rider-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.dm-radar-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2.5px solid #3b82f6;
+  opacity: 0.8;
+  animation: dmRadarPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  z-index: 1;
+}
+
+.dm-radar-ring.delay {
+  animation-delay: 0.75s;
+}
+
+@keyframes dmRadarPing {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.3);
+    opacity: 0;
+  }
+}
+
+.dm-rider-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  z-index: 4;
+}
+
+.dm-shop-badge,
+.dm-customer-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.dm-shop-emoji,
+.dm-customer-emoji {
+  font-size: 26px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+  line-height: 1;
+}
+
+.dm-marker-label {
+  background: rgba(15, 23, 42, 0.88);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+  margin-top: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}

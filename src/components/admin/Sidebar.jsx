@@ -109,6 +109,10 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                 <i className="bi bi-person-badge"></i>
                 Managers
               </NavLink>
+              <NavLink to="/admin/upi-settings" onClick={closeSidebar}>
+                <i className="bi bi-qr-code"></i>
+                UPI Settings
+              </NavLink>
             </>
           )}
 

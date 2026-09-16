@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   FaUserPlus, FaToggleOn, FaToggleOff, FaCheck, FaTimes, FaEdit,
-  FaTruck, FaPhoneAlt, FaUser, FaMapMarkerAlt, FaExternalLinkAlt, FaTimesCircle, FaSyncAlt
+  FaTruck, FaPhoneAlt, FaUser, FaMapMarkerAlt, FaExternalLinkAlt, FaTimesCircle, FaSyncAlt, FaClock
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import {
@@ -28,11 +28,39 @@ const DeliveryBoyList = () => {
     loadingTracking: false,
   });
 
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   const loadBoys = async () => {
     setLoading(true);
     try {
       const data = await getDeliveryBoys();
-      setBoys(data);
+      // Ensure current assignments are sorted newest first ("upside"), oldest last ("downside")
+      const sortedBoys = (data || []).map((boy) => {
+        if (boy.current_assignments && Array.isArray(boy.current_assignments)) {
+          boy.current_assignments.sort((a, b) => {
+            const timeA = new Date(a.assigned_at || a.ordered_at || 0).getTime() || a.id;
+            const timeB = new Date(b.assigned_at || b.ordered_at || 0).getTime() || b.id;
+            return timeB - timeA;
+          });
+        }
+        return boy;
+      });
+      setBoys(sortedBoys);
     } catch (error) {
       console.error(error);
       Swal.fire('Error', 'Failed to load delivery boys', 'error');
@@ -202,11 +230,19 @@ const DeliveryBoyList = () => {
                       {boy.current_assignments && boy.current_assignments.length > 0 ? (
                         <div className="d-flex flex-column gap-1">
                           {boy.current_assignments.map((assignment) => (
-                            <button key={assignment.id} className="btn btn-link btn-sm p-0 text-start d-flex align-items-center gap-1 dm-order-link" onClick={() => openTrackingModal(assignment.order_id, assignment.order_number)}>
-                              <FaMapMarkerAlt className="text-warning" size={12} />
-                              <span className="text-primary">{assignment.order_number}</span>
-                              <FaExternalLinkAlt size={10} className="text-muted" />
-                            </button>
+                            <div key={assignment.id} className="d-flex flex-column">
+                              <button className="btn btn-link btn-sm p-0 text-start d-flex align-items-center gap-1 dm-order-link" onClick={() => openTrackingModal(assignment.order_id, assignment.order_number)}>
+                                <FaMapMarkerAlt className="text-warning" size={12} />
+                                <span className="text-primary fw-medium">{assignment.order_number}</span>
+                                <FaExternalLinkAlt size={10} className="text-muted" />
+                              </button>
+                              {(assignment.assigned_at || assignment.ordered_at) && (
+                                <small className="text-muted d-flex align-items-center mt-0" style={{ fontSize: '0.72rem' }}>
+                                  <FaClock size={9} className="me-1 text-warning" />
+                                  {formatDateTime(assignment.assigned_at || assignment.ordered_at)}
+                                </small>
+                              )}
+                            </div>
                           ))}
                         </div>
                       ) : (<span className="text-muted">—</span>)}
@@ -245,13 +281,23 @@ const DeliveryBoyList = () => {
                 </div>
                 <div className="mb-3">
                   {boy.current_assignments && boy.current_assignments.length > 0 ? (
-                    <div className="small"><strong>Current Orders:</strong><div className="d-flex flex-column gap-1 mt-1">
-                      {boy.current_assignments.map((assignment) => (
-                        <button key={assignment.id} className="btn btn-link btn-sm p-0 text-start d-flex align-items-center gap-1 dm-order-link" onClick={() => openTrackingModal(assignment.order_id, assignment.order_number)}>
-                          <FaMapMarkerAlt className="text-warning" size={12} /><span className="text-primary">{assignment.order_number}</span>
-                        </button>
-                      ))}
-                    </div></div>
+                    <div className="small"><strong>Current Orders:</strong>
+                      <div className="d-flex flex-column gap-2 mt-1">
+                        {boy.current_assignments.map((assignment) => (
+                          <div key={assignment.id} className="bg-light p-1 px-2 rounded border">
+                            <button className="btn btn-link btn-sm p-0 text-start d-flex align-items-center gap-1 dm-order-link" onClick={() => openTrackingModal(assignment.order_id, assignment.order_number)}>
+                              <FaMapMarkerAlt className="text-warning" size={12} /><span className="text-primary fw-medium">{assignment.order_number}</span>
+                            </button>
+                            {(assignment.assigned_at || assignment.ordered_at) && (
+                              <div className="text-muted small d-flex align-items-center mt-1" style={{ fontSize: '0.72rem' }}>
+                                <FaClock size={9} className="me-1 text-warning" />
+                                {formatDateTime(assignment.assigned_at || assignment.ordered_at)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : (<div className="small text-muted">No current orders</div>)}
                 </div>
                 <div className="d-grid gap-2 d-sm-flex">
@@ -299,9 +345,14 @@ const DeliveryBoyList = () => {
 
                   <div className="mt-3 row g-3">
                     <div className="col-md-6">
-                      <div className="info-block"><strong>Status:</strong> {trackingModal.trackingData.status}</div>
+                      <div className="info-block"><strong>Status:</strong> <span className="badge bg-warning text-dark text-uppercase">{trackingModal.trackingData.status}</span></div>
                       <div className="info-block"><strong>Delivery Boy:</strong> {trackingModal.trackingData.delivery_boy.full_name}</div>
                       <div className="info-block"><strong>Phone:</strong> {trackingModal.trackingData.delivery_boy.phone}</div>
+                      {(trackingModal.trackingData.ordered_at || trackingModal.trackingData.assigned_at) && (
+                        <div className="info-block">
+                          <strong>Time:</strong> <FaClock className="me-1 text-warning" size={12} /> {formatDateTime(trackingModal.trackingData.ordered_at || trackingModal.trackingData.assigned_at)}
+                        </div>
+                      )}
                     </div>
                     <div className="col-md-6">
                       <div className="info-block"><strong>Shop:</strong> {trackingModal.trackingData.shop.name}</div>

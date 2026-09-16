@@ -28,13 +28,36 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
   const [assigning, setAssigning] = useState({});
   const [selectedBoy, setSelectedBoy] = useState({});
 
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   const loadData = async () => {
     try {
       const [orders, boys] = await Promise.all([
         getReadyOrders(),
         getDeliveryBoys(),
       ]);
-      setReadyOrders(orders || []);
+      // Sort orders newest first (upside) and oldest last (downside)
+      const sortedOrders = [...(orders || [])].sort((a, b) => {
+        const timeA = new Date(a.ordered_at || a.created_at || 0).getTime() || a.id;
+        const timeB = new Date(b.ordered_at || b.created_at || 0).getTime() || b.id;
+        return timeB - timeA;
+      });
+      setReadyOrders(sortedOrders);
       // Keep all delivery boys so manager can assign any driver, with status indicator
       setDeliveryBoys(boys || []);
     } catch (error) {
@@ -144,6 +167,7 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                 <thead className="table-light">
                   <tr>
                     <th>Order #</th>
+                    <th>Time</th>
                     <th>Customer</th>
                     <th>Amount</th>
                     <th>Distance</th>
@@ -166,6 +190,12 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                       <tr key={order.id}>
                         <td>
                           <strong className="dm-order-number">{order.order_number}</strong>
+                        </td>
+                        <td>
+                          <div className="d-flex align-items-center text-muted small" title="Order Placed At">
+                            <FaClock className="me-1 text-warning" size={12} />
+                            <span>{formatDateTime(order.ordered_at || order.created_at) || 'Just now'}</span>
+                          </div>
                         </td>
                         <td>
                           <div className="dm-customer-info">
@@ -270,8 +300,14 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
               return (
                 <div className="card mb-3 dm-card-item" key={order.id}>
                   <div className="card-body">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <strong className="dm-order-number">{order.order_number}</strong>
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <strong className="dm-order-number">{order.order_number}</strong>
+                        <div className="text-muted small d-flex align-items-center mt-1">
+                          <FaClock className="me-1 text-warning" size={11} />
+                          <span>{formatDateTime(order.ordered_at || order.created_at) || 'Just now'}</span>
+                        </div>
+                      </div>
                       <span className="dm-amount">
                         <FaMoneyBillWave className="me-1 text-success" />
                         ₹{order.total_amount}
@@ -295,8 +331,8 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                       ) : (
                         <span className="text-muted">Distance N/A</span>
                       )}
-                      <span className="text-muted">
-                        <FaClock className="me-1" /> Ready
+                      <span className="badge bg-warning text-dark">
+                        Ready
                       </span>
                     </div>
                     <div className="mb-3">
@@ -309,12 +345,12 @@ const DeliveryAssignment = ({ autoAssignEnabled }) => {
                             [order.id]: e.target.value,
                           }))
                         }
-                        disabled={autoAssignEnabled}
+                        disabled={assigning[order.id]}
                       >
                         <option value="">Select delivery boy</option>
                         {deliveryBoys.map((b) => (
                           <option key={b.id} value={b.id}>
-                            {b.full_name} {!b.is_available ? '🔴' : '🟢'}
+                            {b.full_name} ({b.phone || 'No phone'}) {b.is_online ? (b.is_available ? '🟢 Online' : '🟡 Busy') : '⚪ Offline'}
                           </option>
                         ))}
                       </select>

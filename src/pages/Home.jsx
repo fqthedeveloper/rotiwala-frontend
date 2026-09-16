@@ -6,6 +6,7 @@ import {
   motion,
   useScroll,
   useTransform,
+  useInView,
 } from "framer-motion";
 import Lenis from "lenis";
 import Swal from "sweetalert2";
@@ -25,6 +26,8 @@ import {
   FaChevronRight,
   FaQuoteLeft,
   FaArrowRight,
+  FaStore,
+  FaUsers,
 } from "react-icons/fa";
 import "./CSS/Home.css";
 
@@ -46,6 +49,54 @@ import { useLoading } from "../context/LoadingContext";
 import { getPublicStats } from "../service/reportServices";
 
 const EASE = [0.22, 1, 0.36, 1];
+
+const AnimatedStatCounter = ({ value = 0, suffix = "+" }) => {
+  const [displayCount, setDisplayCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-20px" });
+  const countRef = useRef(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const target = typeof value === "number" ? value : parseInt(value, 10) || 0;
+    const startValue = countRef.current;
+
+    if (startValue === target) {
+      setDisplayCount(target);
+      return;
+    }
+
+    const duration = 1200;
+    const startTime = performance.now();
+    let frameId;
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = Math.round(startValue + (target - startValue) * ease);
+      setDisplayCount(current);
+      countRef.current = current;
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      } else {
+        setDisplayCount(target);
+        countRef.current = target;
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [isInView, value]);
+
+  return (
+    <span ref={ref}>
+      {displayCount}
+      {suffix}
+    </span>
+  );
+};
 
 const Chapter = ({ no, kicker, title, accent, sub }) => (
   <motion.div
@@ -91,10 +142,9 @@ export default function Home() {
   const [locationDenied, setLocationDenied] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [stats, setStats] = useState([
-    { num: "10+", label: "Shops" },
-    { num: "500+", label: "Daily Orders" },
-    { num: "100+", label: "Menu Items" },
-    { num: "5K+", label: "Happy Customers" },
+    { value: 0, suffix: "+", label: "Shops", icon: <FaStore /> },
+    { value: 0, suffix: "+", label: "Menu Items", icon: <FaUtensils /> },
+    { value: 0, suffix: "+", label: "Happy Customers", icon: <FaUsers /> },
   ]);
 
   // Use only backend data — no fallback mock data
@@ -290,10 +340,24 @@ export default function Home() {
     try {
       const data = await getPublicStats();
       setStats([
-        { num: `${data.shops}+`, label: "Shops" },
-        { num: `${data.daily_orders}+`, label: "Daily Orders" },
-        { num: `${data.menu_items}+`, label: "Menu Items" },
-        { num: `${data.customers}+`, label: "Happy Customers" },
+        {
+          value: Number(data.shops ?? 0),
+          suffix: "+",
+          label: "Shops",
+          icon: <FaStore />,
+        },
+        {
+          value: Number(data.menu_items ?? 0),
+          suffix: "+",
+          label: "Menu Items",
+          icon: <FaUtensils />,
+        },
+        {
+          value: Number(data.customers ?? 0),
+          suffix: "+",
+          label: "Happy Customers",
+          icon: <FaUsers />,
+        },
       ]);
     } catch (err) {
       console.error("Failed to fetch stats:", err);
@@ -733,15 +797,15 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* ============ STATS BAND (now from backend) ============ */}
+      {/* ============ STATS BAND (dynamic from backend) ============ */}
       <motion.section
         className="rw-stats"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: true, amount: 0.2 }}
         variants={{
           hidden: {},
-          visible: { transition: { staggerChildren: 0.1 } },
+          visible: { transition: { staggerChildren: 0.15 } },
         }}
       >
         {stats.map((s, i) => (
@@ -749,11 +813,15 @@ export default function Home() {
             key={i}
             className="rw-stat"
             variants={{
-              hidden: { opacity: 0, y: 30 },
-              visible: { opacity: 1, y: 0, transition: { ease: EASE } },
+              hidden: { opacity: 0, y: 26 },
+              visible: { opacity: 1, y: 0, transition: { ease: EASE, duration: 0.6 } },
             }}
+            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <h2>{s.num}</h2>
+            {s.icon && <div className="rw-stat-icon">{s.icon}</div>}
+            <h2>
+              <AnimatedStatCounter value={s.value} suffix={s.suffix} />
+            </h2>
             <span>{s.label}</span>
           </motion.div>
         ))}

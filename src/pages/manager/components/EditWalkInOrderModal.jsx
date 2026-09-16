@@ -10,6 +10,10 @@ import {
   FaUser,
   FaPhone,
   FaStickyNote,
+  FaMoneyBillWave,
+  FaQrcode,
+  FaCheckCircle,
+  FaClock,
 } from "react-icons/fa";
 import {
   updatePlacedOrder,
@@ -28,6 +32,8 @@ export default function EditWalkInOrderModal({
   const [items, setItems] = useState([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const [notes, setNotes] = useState("");
   const [availableMenuItems, setAvailableMenuItems] = useState([]);
   const [selectedMenuItem, setSelectedMenuItem] = useState("");
@@ -40,6 +46,8 @@ export default function EditWalkInOrderModal({
       setItems(order.items || []);
       setCustomerName(order.customer_name || "");
       setCustomerPhone(order.customer_phone || "");
+      setPaymentMethod((order.payment_method || "cash").toLowerCase());
+      setPaymentStatus((order.payment_status || "unpaid").toLowerCase());
       setNotes(order.notes || "");
       loadShopMenu(order.shop);
     }
@@ -158,13 +166,15 @@ export default function EditWalkInOrderModal({
     }
   };
 
-  // Save customer details and notes
+  // Save customer details, payment method & status, and notes
   const handleSaveDetails = async () => {
     try {
       setSaving(true);
       const res = await updatePlacedOrder(order.id, {
         customer_name: customerName,
         customer_phone: customerPhone,
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
         notes,
       });
 
@@ -175,7 +185,7 @@ export default function EditWalkInOrderModal({
       Swal.fire({
         icon: "success",
         title: "Order Updated",
-        text: "Walk-In order details updated successfully.",
+        text: "Order details, payment method, and items saved successfully.",
         timer: 1800,
         showConfirmButton: false,
       });
@@ -231,10 +241,10 @@ export default function EditWalkInOrderModal({
         >
           <div>
             <h5 style={{ margin: 0, fontWeight: "800", fontSize: "1.15rem" }}>
-              ✏️ Edit Walk-In Order #{order.token_number || order.order_number}
+              ✏️ Edit Order #{order.token_number || order.order_number}
             </h5>
             <small style={{ color: "#fcefd2" }}>
-              Status: <strong style={{ textTransform: "uppercase" }}>{order.status}</strong> · Walk-In Order
+              Status: <strong style={{ textTransform: "uppercase" }}>{order.status}</strong> · {order.order_type === "walkin" ? "Walk-In Order" : "Online Order"}
             </small>
           </div>
           <button
@@ -258,22 +268,27 @@ export default function EditWalkInOrderModal({
 
         {/* Modal Body */}
         <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-          {/* Customer info */}
+          {/* Customer info & Payment Method */}
           <div
             style={{
               background: "#f8fafc",
-              padding: "14px",
+              padding: "16px",
               borderRadius: "14px",
               border: "1px solid #e2e8f0",
               marginBottom: "18px",
             }}
           >
-            <div style={{ fontWeight: "700", marginBottom: "10px", fontSize: "0.85rem", color: "#475569" }}>
-              CUSTOMER & NOTES
+            <div style={{ fontWeight: "700", marginBottom: "12px", fontSize: "0.85rem", color: "#475569", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>CUSTOMER & PAYMENT DETAILS</span>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#64748b", textTransform: "uppercase", background: "#e2e8f0", padding: "2px 8px", borderRadius: "6px" }}>
+                {order.order_type === "walkin" ? "Walk-In" : "Online"}
+              </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+
+            {/* Name and Phone */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b" }}>
+                <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", display: "block", marginBottom: "4px" }}>
                   <FaUser className="me-1" /> Customer Name
                 </label>
                 <input
@@ -286,12 +301,13 @@ export default function EditWalkInOrderModal({
                     borderRadius: "8px",
                     border: "1px solid #cbd5e1",
                     fontSize: "14px",
+                    background: "#ffffff",
                   }}
                   placeholder="e.g. Rahul"
                 />
               </div>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b" }}>
+                <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", display: "block", marginBottom: "4px" }}>
                   <FaPhone className="me-1" /> Phone Number
                 </label>
                 <input
@@ -304,13 +320,175 @@ export default function EditWalkInOrderModal({
                     borderRadius: "8px",
                     border: "1px solid #cbd5e1",
                     fontSize: "14px",
+                    background: "#ffffff",
                   }}
                   placeholder="e.g. 9876543210"
                 />
               </div>
             </div>
+
+            {/* Payment Method Selection (Cash / UPI) */}
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                <FaMoneyBillWave style={{ color: "#16a34a" }} /> Payment Method
+                <span style={{ fontSize: "11px", fontWeight: "500", color: "#64748b" }}>
+                  (Switch between Cash or UPI if client changed payment method)
+                </span>
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                {/* Cash Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cash")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 14px",
+                    borderRadius: "10px",
+                    border: paymentMethod === "cash" ? "2px solid #16a34a" : "1.5px solid #cbd5e1",
+                    background: paymentMethod === "cash" ? "#f0fdf4" : "#ffffff",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "8px",
+                      background: paymentMethod === "cash" ? "#dcfce7" : "#f1f5f9",
+                      color: paymentMethod === "cash" ? "#16a34a" : "#64748b",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "16px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FaMoneyBillWave />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "cash" ? "#15803d" : "#334155" }}>
+                      💵 Cash
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>
+                      Cash on Counter / Delivery
+                    </div>
+                  </div>
+                  {paymentMethod === "cash" && (
+                    <FaCheckCircle style={{ color: "#16a34a", fontSize: "16px" }} />
+                  )}
+                </button>
+
+                {/* UPI Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("upi")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 14px",
+                    borderRadius: "10px",
+                    border: paymentMethod === "upi" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
+                    background: paymentMethod === "upi" ? "#eff6ff" : "#ffffff",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "8px",
+                      background: paymentMethod === "upi" ? "#dbeafe" : "#f1f5f9",
+                      color: paymentMethod === "upi" ? "#2563eb" : "#64748b",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "16px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FaQrcode />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "upi" ? "#1d4ed8" : "#334155" }}>
+                      📱 UPI / QR Code
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>
+                      Shop QR Scan / Online
+                    </div>
+                  </div>
+                  {paymentMethod === "upi" && (
+                    <FaCheckCircle style={{ color: "#2563eb", fontSize: "16px" }} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Payment Status Selection (Unpaid / Paid) */}
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                <FaClock style={{ color: "#f59e0b" }} /> Payment Status
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentStatus("unpaid")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: paymentStatus === "unpaid" ? "2px solid #ef4444" : "1.5px solid #cbd5e1",
+                    background: paymentStatus === "unpaid" ? "#fef2f2" : "#ffffff",
+                    color: paymentStatus === "unpaid" ? "#dc2626" : "#64748b",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#dc2626" }} />
+                  Unpaid (Pending)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentStatus("paid")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: paymentStatus === "paid" ? "2px solid #16a34a" : "1.5px solid #cbd5e1",
+                    background: paymentStatus === "paid" ? "#f0fdf4" : "#ffffff",
+                    color: paymentStatus === "paid" ? "#15803d" : "#64748b",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <FaCheckCircle style={{ color: "#16a34a", fontSize: "14px" }} />
+                  Paid (Received)
+                </button>
+              </div>
+            </div>
+
+            {/* Notes */}
             <div>
-              <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b" }}>
+              <label style={{ fontSize: "12px", fontWeight: "600", color: "#64748b", display: "block", marginBottom: "4px" }}>
                 <FaStickyNote className="me-1" /> Kitchen Notes / Instructions
               </label>
               <input
@@ -323,8 +501,9 @@ export default function EditWalkInOrderModal({
                   borderRadius: "8px",
                   border: "1px solid #cbd5e1",
                   fontSize: "14px",
+                  background: "#ffffff",
                 }}
-                placeholder="e.g. Well done, extra crispy"
+                placeholder="e.g. Extra crispy, client changed payment to UPI"
               />
             </div>
           </div>

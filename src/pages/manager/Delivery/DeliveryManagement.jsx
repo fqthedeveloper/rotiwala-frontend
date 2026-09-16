@@ -1,6 +1,7 @@
 // frontend/src/pages/manager/DeliveryManagement.jsx
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaTruck, FaUserCog, FaToggleOn, FaToggleOff, FaMoneyCheckAlt } from 'react-icons/fa';
 import { MdQrCodeScanner } from 'react-icons/md';
 import Swal from 'sweetalert2';
@@ -154,10 +155,20 @@ const DeliveryManagement = () => {
       </div>
 
       <div className="tab-content dm-tab-content">
-        {activeTab === 'boys' && <DeliveryBoyList />}
-        {activeTab === 'assign' && <DeliveryAssignment autoAssignEnabled={autoAssign} />}
-        {activeTab === 'proofs' && <PaymentProofs />}
-        {activeTab === 'upi' && <UPISettings />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'boys' && <DeliveryBoyList />}
+            {activeTab === 'assign' && <DeliveryAssignment autoAssignEnabled={autoAssign} />}
+            {activeTab === 'proofs' && <PaymentProofs />}
+            {activeTab === 'upi' && <UPISettings />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

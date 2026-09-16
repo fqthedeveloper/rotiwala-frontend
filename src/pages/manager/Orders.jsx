@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import Swal from "sweetalert2";
 import {
   FaCheck,
@@ -29,6 +31,7 @@ import {
   FaExclamationTriangle,
   FaVolumeUp,
   FaVolumeMute,
+  FaPlus,
 } from "react-icons/fa";
 
 
@@ -289,31 +292,35 @@ const OrderCard = memo(({
         );
       }
 
-      // Walk-in order manager controls: Edit items/details and Cancel with reason before delivered
+      // Manager controls: Edit items/details/payment method (Cash/UPI)
       if (
-        order.order_type === "walkin" &&
         ["pending", "accepted", "preparing", "ready"].includes(status)
       ) {
         actionButtons.push(
           <button
-            key="edit-walkin"
+            key="edit-order"
             className="btn-action edit"
             onClick={() => onEditWalkIn && onEditWalkIn(order)}
             disabled={loadingAction !== null}
-            title="Edit items or details of this walk-in order"
+            title="Edit items, customer details, or payment method (Cash / UPI)"
           >
             <FaEdit /> Edit Order
-          </button>,
-          <button
-            key="cancel-walkin"
-            className="btn-action cancel"
-            onClick={() => onCancelWalkIn && onCancelWalkIn(order)}
-            disabled={loadingAction !== null}
-            title="Cancel this walk-in order with a reason"
-          >
-            <FaBan /> Cancel
           </button>
         );
+
+        if (order.order_type === "walkin") {
+          actionButtons.push(
+            <button
+              key="cancel-walkin"
+              className="btn-action cancel"
+              onClick={() => onCancelWalkIn && onCancelWalkIn(order)}
+              disabled={loadingAction !== null}
+              title="Cancel this walk-in order with a reason"
+            >
+              <FaBan /> Cancel
+            </button>
+          );
+        }
       }
     }
 
@@ -321,7 +328,12 @@ const OrderCard = memo(({
   };
 
   return (
-    <div className="order-card">
+    <motion.div
+      className="order-card"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
       {/* Header */}
       <div className="order-header">
         <div className="order-header-left">
@@ -379,8 +391,18 @@ const OrderCard = memo(({
           </strong>
         </div>
         <div className="detail-row"><span>Amount</span><strong>₹{order.total_amount}</strong></div>
-        <div className="detail-row"><span>Payment</span><strong className="payment-method-text">{order.payment_method}</strong></div>
-        <div className="detail-row"><span>Payment Status</span><strong className={`payment-status-text ${order.payment_status}`}>{order.payment_status}</strong></div>
+        <div className="detail-row">
+          <span>Payment</span>
+          <strong className="payment-method-text">
+            {order.payment_method?.toLowerCase() === "upi" ? "📱 UPI" : "💵 Cash"}
+          </strong>
+        </div>
+        <div className="detail-row">
+          <span>Payment Status</span>
+          <strong className={`payment-status-text ${order.payment_status}`}>
+            {order.payment_status?.toLowerCase() === "paid" ? "🟢 Paid" : "🟡 Unpaid"}
+          </strong>
+        </div>
         <div className="detail-divider" />
         <div className="detail-row"><span>Order Type</span><strong className="order-type-text">{order.order_type}</strong></div>
 
@@ -563,7 +585,7 @@ const OrderCard = memo(({
 
       {/* Actions */}
       <div className="actions-box">{renderActions()}</div>
-    </div>
+    </motion.div>
   );
 });
 
@@ -1073,7 +1095,18 @@ export default function Orders() {
                 : "Real-Time Manager Dashboard"}
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {!isPreparingStaff && (
+              <Link
+                to="/manager/walkin"
+                className="btn-new-walkin"
+                title="Create a new Walk-In / Counter Order"
+              >
+                <FaPlus size={12} />
+                <span>New Walk-In</span>
+              </Link>
+            )}
+
             {/* Sound toggle */}
             <button
               onClick={toggleSound}

@@ -801,41 +801,99 @@ same marque use same everting
 .rw-stats {
   margin-top: 90px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
   background:
-    radial-gradient(ellipse 50% 80% at 50% 0%, rgba(212, 164, 55, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 50% 0%, rgba(212, 164, 55, 0.14), transparent 70%),
     var(--rw-ink);
   border-radius: var(--rw-r-lg);
-  padding: 56px 40px;
+  padding: 48px 36px;
   box-shadow: var(--rw-shadow-lg);
+  border: 1px solid rgba(212, 164, 55, 0.16);
+  position: relative;
+  overflow: hidden;
 }
-.rw-stat { text-align: center; position: relative; }
+
+.rw-stats::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 164, 55, 0.4), transparent);
+}
+
+.rw-stat {
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border-radius: var(--rw-r-md);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease;
+  cursor: default;
+}
+
+.rw-stat:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .rw-stat + .rw-stat::before {
   content: "";
   position: absolute;
-  left: -10px;
+  left: -12px;
   top: 15%;
   height: 70%;
   width: 1px;
   background: rgba(212, 164, 55, 0.22);
 }
+
+.rw-stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(212, 164, 55, 0.12);
+  border: 1px solid rgba(212, 164, 55, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rw-gold);
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.rw-stat:hover .rw-stat-icon {
+  transform: scale(1.12) rotate(4deg);
+  background: rgba(212, 164, 55, 0.22);
+  box-shadow: 0 0 16px rgba(212, 164, 55, 0.3);
+}
+
 .rw-stat h2 {
   font-family: var(--rw-serif);
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 600;
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  font-weight: 700;
   margin: 0 0 6px;
   background: var(--rw-grad-gold);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  line-height: 1.15;
 }
+
 .rw-stat span {
-  color: rgba(250, 243, 230, 0.6);
-  font-size: 0.8rem;
+  color: rgba(250, 243, 230, 0.7);
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 /* ===================================================
@@ -1152,8 +1210,8 @@ same marque use same everting
   .rw-tag-delivery { left: 4%; }
   .rw-tag-rating { right: 4%; }
   .rw-shop-card { grid-template-columns: 1fr; }
-  .rw-stats { grid-template-columns: repeat(2, 1fr); gap: 34px 20px; }
-  .rw-stat + .rw-stat::before { display: none; }
+  .rw-stats { grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 40px 20px; }
+  .rw-stat + .rw-stat::before { left: -8px; }
   .rw-t-card { padding: 40px 32px; }
 }
 
@@ -1171,7 +1229,10 @@ same marque use same everting
   .rw-tag { font-size: 0.78rem; padding: 9px 14px; }
   .rw-chapter { margin: 64px 0 32px; }
   .rw-food-frame { height: 210px; }
-  .rw-stats { padding: 40px 26px; }
+  .rw-stats { padding: 32px 14px; gap: 10px; margin-top: 60px; }
+  .rw-stat-icon { width: 38px; height: 38px; font-size: 1rem; margin-bottom: 8px; }
+  .rw-stat h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+  .rw-stat span { font-size: 0.72rem; letter-spacing: 0.08em; }
   .rw-t-card { padding: 32px 24px; min-height: 250px; }
   .rw-t-text { font-size: 1.05rem; max-width: 100%; }
   .rw-t-arrow { width: 42px; height: 42px; }
@@ -1195,7 +1256,12 @@ same marque use same everting
   .rw-shop-actions .rw-btn { flex: 1; }
   .rw-cats { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
   .rw-cat-icon { width: 48px; height: 48px; font-size: 1.25rem; }
-  .rw-stats { grid-template-columns: repeat(2, 1fr); padding: 32px 20px; }
+  .rw-stats { grid-template-columns: repeat(3, 1fr); padding: 22px 8px; gap: 6px; margin-top: 44px; }
+  .rw-stat { padding: 6px 2px; }
+  .rw-stat + .rw-stat::before { left: -3px; }
+  .rw-stat-icon { width: 32px; height: 32px; font-size: 0.88rem; margin-bottom: 6px; }
+  .rw-stat h2 { font-size: clamp(1.25rem, 4.5vw, 1.75rem); margin-bottom: 4px; }
+  .rw-stat span { font-size: 0.62rem; letter-spacing: 0.04em; }
   .rw-t-card { padding: 28px 20px; }
   .rw-t-quote { font-size: 2.4rem; }
   .rw-t-wrap { gap: 8px; }

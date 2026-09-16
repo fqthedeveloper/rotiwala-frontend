@@ -78,6 +78,11 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
 
           {!isPreparingStaff && (
             <>
+              <NavLink to="/manager/categories" onClick={closeSidebar}>
+                <i className="bi bi-stack"></i>
+                Categories
+              </NavLink>
+
               <NavLink to="/manager/menu-items" onClick={closeSidebar}>
                 <i className="bi bi-box"></i>
                 Menu Items
@@ -86,6 +91,11 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
               <NavLink to="/manager/settings/order-capacity" onClick={closeSidebar}>
                 <i className="bi bi-speedometer2"></i>
                 Order Capacity
+              </NavLink>
+
+              <NavLink to="/manager/upi-settings" onClick={closeSidebar}>
+                <i className="bi bi-qr-code"></i>
+                UPI Settings
               </NavLink>
             </>
           )}
