@@ -188,7 +188,7 @@ import UPISettings from './pages/manager/Delivery/UPISettings';
 
 
 // Customer Pages
-import Cart from "./pages/Customer/Cart";
+import Cart from "./components/layout/CartDrawer";
 import Checkout from "./pages/Customer/Checkout";
 import MyOrders from "./pages/Customer/MyOrders";
 import OrderDetail from "./pages/Customer/OrderDetail";
