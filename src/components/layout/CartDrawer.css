@@ -158,8 +158,9 @@
   width: 60px;
   height: 60px;
   border-radius: 12px;
-  object-fit: cover;
-  background: #f2e6d0;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px;
 }
 
 .cart-item-details {

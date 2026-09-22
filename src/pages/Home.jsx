@@ -43,6 +43,7 @@ import {
   getItemsByCategoryPublic,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
+import { getServerImageUrl } from "../utils/imageUtils";
 
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext";
@@ -738,11 +739,10 @@ export default function Home() {
             >
               <div className="rw-food-frame">
                 <img
-                  src={item.image_url || item.image}
+                  src={getServerImageUrl(item.image_url || item.image)}
                   alt={item.name}
                   className="rw-food-img"
                   loading="lazy"
-                  onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                 />
                 <span className="rw-food-badge">
                   <FaFire /> {item.is_special ? "Special" : "Hot"}

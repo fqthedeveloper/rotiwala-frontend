@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaTimes, FaPlus, FaMinus, FaArrowRight } from "react-icons/fa";
 import { getCart, updateCartItem, removeCartItem } from "../../service/cartService";
 import { getShopsPublic } from "../../service/shopService";
+import { getServerImageUrl } from "../../utils/imageUtils";
 import "./CartDrawer.css";
 import logo from "/logo.png"; 
 
@@ -19,15 +20,16 @@ const getCartItemDetails = (item) => {
     item.item_price ?? item.price ?? product.base_price ?? product.price,
   );
 
+  const rawImage =
+    item.image_url ||
+    item.item_image ||
+    product.image_url ||
+    product.image;
+
   return {
     id: item.id,
     name: item.item_name || product.name || item.name || "Menu item",
-    image:
-      item.image_url ||
-      item.item_image ||
-      product.image_url ||
-      product.image ||
-      logo,
+    image: rawImage ? getServerImageUrl(rawImage) : logo,
     quantity,
     unitPrice,
     total: toAmount(item.total_price ?? item.item_total) || unitPrice * quantity,
@@ -150,7 +152,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                     src={item.image}
                     alt={item.name}
                     className="cart-item-img"
-                    onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                   />
                   <div className="cart-item-details">
                     <h5>{item.name}</h5>

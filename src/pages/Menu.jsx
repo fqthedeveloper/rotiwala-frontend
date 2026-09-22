@@ -21,6 +21,7 @@ import {
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
 import { getNearestShop } from "../service/shopService";
+import { getServerImageUrl } from "../utils/imageUtils";
 import OnlineOrderStatus from "../components/order-capacity/OnlineOrderStatus";
 
 import "./CSS/Menu.css";
@@ -516,11 +517,10 @@ const Menu = () => {
             >
               <div className="m-food-img-wrap">
                 <img
-                  src={item.image_url || item.image || "/food-placeholder.jpg"}
+                  src={getServerImageUrl(item.image_url || item.image)}
                   alt={item.name}
                   className="m-food-img"
                   loading="lazy"
-                  onError={(e) => (e.target.src = "/food-placeholder.jpg")}
                 />
                 <span className="m-food-badge">
                   <FaFire /> Hot
