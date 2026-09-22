@@ -30,6 +30,10 @@ const AddCategory = () => {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error(`Image size is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Maximum allowed is 25 MB.`);
+        return;
+      }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -140,7 +144,7 @@ const AddCategory = () => {
                     <div className="py-2 text-center">
                       <Upload size={32} className="text-warning mb-2 mx-auto d-block" />
                       <div className="fw-bold text-dark">Click to browse or drop an image</div>
-                      <small className="text-muted">PNG, JPG, or WEBP up to 5MB</small>
+                      <small className="text-muted">High-res PNG, JPG, or WEBP up to 20MB</small>
                     </div>
                   )}
                 </label>

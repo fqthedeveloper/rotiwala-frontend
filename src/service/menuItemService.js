@@ -11,44 +11,31 @@ export const getMenuItems =
     return res.data;
   };
 
-export const createMenuItem =
-  async (formData) => {
+export const createMenuItem = async (formData, onUploadProgress) => {
+  const res = await api.post("/menu/items/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 180000, // 3 minutes for high-res 20MB image uploads
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    onUploadProgress,
+  });
+  return res.data;
+};
 
-    const res =
-      await api.post(
-        "/menu/items/",
-        formData,
-        {
-          headers:{
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return res.data;
-  };
-
-export const updateMenuItem =
-  async (
-    id,
-    formData
-  ) => {
-
-    const res =
-      await api.put(
-        `/menu/items/${id}/`,
-        formData,
-        {
-          headers:{
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return res.data;
-  };
+export const updateMenuItem = async (id, formData, onUploadProgress) => {
+  const res = await api.put(`/menu/items/${id}/`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 180000, // 3 minutes for high-res 20MB image uploads
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    onUploadProgress,
+  });
+  return res.data;
+};
 
 export const deleteMenuItem =
   async (id) => {

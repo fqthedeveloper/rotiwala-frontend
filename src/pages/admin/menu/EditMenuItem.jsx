@@ -33,6 +33,8 @@ const EditMenuItem = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageMeta, setImageMeta] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     document.title = 'Edit Menu Item | Roti Wala';
@@ -89,8 +91,19 @@ const EditMenuItem = () => {
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error(`Image size is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Please select an image under 25 MB.`);
+        return;
+      }
+      const sizeMB = file.size / (1024 * 1024);
+      const sizeStr = sizeMB >= 1 ? `${sizeMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`;
       setImageFile(file);
+      setImageMeta({ name: file.name, sizeStr, isLarge: sizeMB > 5 });
       setImagePreview(URL.createObjectURL(file));
+
+      if (sizeMB > 5) {
+        toast.success(`High-res PNG (${sizeStr}) accepted. It will be compressed & optimized automatically upon upload.`, { duration: 4000 });
+      }
     }
   };
 
@@ -98,6 +111,8 @@ const EditMenuItem = () => {
     e.stopPropagation();
     setImageFile(null);
     setImagePreview(null);
+    setImageMeta(null);
+    setUploadProgress(0);
   };
 
   const handleSubmit = async (e) => {
@@ -136,7 +151,13 @@ const EditMenuItem = () => {
 
     try {
       setLoading(true);
-      await updateMenuItem(id, data);
+      setUploadProgress(0);
+      await updateMenuItem(id, data, (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percent);
+        }
+      });
       toast.success('Menu item updated successfully!');
       navigate(`${basePath}/menu-items`);
     } catch (error) {
@@ -144,10 +165,11 @@ const EditMenuItem = () => {
       Swal.fire({
         icon: 'error',
         title: 'Update Failed',
-        text: error.response?.data?.detail || 'Something went wrong while updating the item.',
+        text: error.response?.data?.detail || error.response?.data?.image?.[0] || 'Something went wrong while updating the item.',
       });
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -287,8 +309,22 @@ const EditMenuItem = () => {
                     className="d-none"
                   />
                   {imagePreview ? (
-                    <div className="menu-upload-preview">
-                      <img src={imagePreview} alt="Dish Preview" />
+                    <div className="menu-upload-preview text-center">
+                      <img
+                        src={imagePreview}
+                        alt="Dish Preview"
+                        style={{ maxHeight: '200px', objectFit: 'contain', margin: '0 auto', display: 'block' }}
+                      />
+                      {imageMeta && (
+                        <div className="mt-2 d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                          <span className="badge bg-secondary" style={{ maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                            {imageMeta.name}
+                          </span>
+                          <span className={`badge ${imageMeta.isLarge ? 'bg-success' : 'bg-primary'}`}>
+                            {imageMeta.sizeStr}
+                          </span>
+                        </div>
+                      )}
                       <button
                         type="button"
                         className="menu-upload-clear-btn"
@@ -302,11 +338,28 @@ const EditMenuItem = () => {
                     <div className="py-2 text-center">
                       <Upload size={32} className="text-warning mb-2 mx-auto d-block" />
                       <div className="fw-bold text-dark">Click to browse or replace photo</div>
-                      <small className="text-muted">PNG, JPG, or WEBP up to 5MB</small>
+                      <small className="text-muted">High-res PNG, JPG, or WEBP up to 20MB (Auto-optimized)</small>
                     </div>
                   )}
                 </label>
               </div>
+
+              {/* Upload Progress Bar */}
+              {loading && uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="menu-form-group" style={{ gridColumn: '1 / -1' }}>
+                  <div className="d-flex justify-content-between text-muted small mb-1">
+                    <span>Uploading high-resolution image...</span>
+                    <span className="fw-bold text-primary">{uploadProgress}%</span>
+                  </div>
+                  <div className="progress" style={{ height: '8px' }}>
+                    <div
+                      className="progress-bar progress-bar-striped progress-bar-animated bg-warning"
+                      role="progressbar"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Available for Sale Switch */}
               <div className="menu-form-group" style={{ gridColumn: '1 / -1' }}>
@@ -347,7 +400,10 @@ const EditMenuItem = () => {
               <button type="submit" className="menu-btn-primary" disabled={loading}>
                 {loading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-1" /> Updating...
+                    <span className="spinner-border spinner-border-sm me-1" />
+                    {uploadProgress > 0 && uploadProgress < 100
+                      ? `Uploading (${uploadProgress}%)...`
+                      : 'Processing & Optimizing...'}
                   </>
                 ) : (
                   <>
