@@ -216,48 +216,79 @@ export default function Home() {
   const fetchAllShops = async () => {
     try {
       const data = await getShopsPublic();
-      setShops(data);
-      setShowShops(true);
+      if (Array.isArray(data)) {
+        setShops(data);
+      }
+      return data;
     } catch (e) {
       console.log(e);
+      return [];
     }
   };
 
   const loadLocation = async () => {
-    if (!navigator.geolocation) {
-      setLocationDenied(true);
-      await fetchAllShops();
-      setLoading(false);
-      return;
+    // 1. Fetch available shops immediately
+    let allShops = [];
+    try {
+      const data = await getShopsPublic();
+      if (Array.isArray(data)) {
+        allShops = data;
+        setShops(data);
+      }
+    } catch (e) {
+      console.warn("Could not fetch shops:", e);
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const nearest = await getNearestShop(
-            pos.coords.latitude,
-            pos.coords.longitude,
-          );
-          setNearestShop(nearest);
-          localStorage.setItem("selected_shop", nearest.id);
-          // Load menu for the nearest shop
-          if (nearest && nearest.id) {
-            await loadMenu(nearest.id);
+    // 2. Auto-select shop immediately (from localStorage if saved, or first shop)
+    let chosenShop = null;
+    const savedShopId = localStorage.getItem("selected_shop");
+    if (savedShopId && allShops.length > 0) {
+      chosenShop = allShops.find((s) => String(s.id) === String(savedShopId));
+    }
+    if (!chosenShop && allShops.length > 0) {
+      chosenShop = allShops[0];
+    }
+
+    if (chosenShop) {
+      setNearestShop(chosenShop);
+      localStorage.setItem("selected_shop", chosenShop.id);
+      loadMenu(chosenShop.id);
+      setLoading(false);
+    }
+
+    // 3. In parallel, query browser geolocation to automatically detect nearest shop
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const nearest = await getNearestShop(
+              pos.coords.latitude,
+              pos.coords.longitude,
+            );
+            if (nearest && nearest.id) {
+              setNearestShop(nearest);
+              localStorage.setItem("selected_shop", nearest.id);
+              if (!chosenShop || String(chosenShop.id) !== String(nearest.id)) {
+                await loadMenu(nearest.id);
+              }
+            }
+          } catch (e) {
+            console.warn("Could not detect nearest shop by GPS:", e);
+          } finally {
+            setLoading(false);
           }
-        } catch (e) {
-          console.log(e);
+        },
+        (err) => {
+          console.warn("Geolocation denied or unavailable:", err);
           setLocationDenied(true);
-          await fetchAllShops();
-        } finally {
           setLoading(false);
-        }
-      },
-      async () => {
-        setLocationDenied(true);
-        await fetchAllShops();
-        setLoading(false);
-      },
-    );
+        },
+        { timeout: 8000, maximumAge: 60000 },
+      );
+    } else {
+      setLocationDenied(true);
+      setLoading(false);
+    }
   };
 
   const loadMenu = async (shopId) => {
@@ -282,6 +313,7 @@ export default function Home() {
     showLoading("Loading available shops...", "warm", "md");
     try {
       await fetchAllShops();
+      setShowShops(true);
     } finally {
       setIsLoadingMore(false);
       hideLoading();
@@ -326,13 +358,10 @@ export default function Home() {
   };
 
   const handleChangeShop = async () => {
-    setIsLoadingMore(true);
-    showLoading("Loading shops...", "warm", "md");
-    try {
+    if (shops.length > 0) {
+      setShowShops((prev) => !prev);
+    } else {
       await loadAllShops();
-    } finally {
-      setIsLoadingMore(false);
-      hideLoading();
     }
   };
 
@@ -759,7 +788,7 @@ export default function Home() {
                   }}
                 >
                   <span className="rw-badge-veg">100% VEG</span>
-                  {item.category && (
+                  {(item.category_name || item.category) && (
                     <span
                       style={{
                         fontSize: "0.75rem",
@@ -767,7 +796,7 @@ export default function Home() {
                         fontWeight: 700,
                       }}
                     >
-                      {item.category}
+                      {item.category_name || item.category}
                     </span>
                   )}
                 </div>

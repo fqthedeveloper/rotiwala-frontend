@@ -120,8 +120,11 @@ export const getPublicCategories = async () => {
 
 export const getPublicMenuItems = async (params = {}) => {
   const normalized = { ...params };
-  if (params.shop) normalized.shop_id = params.shop;
-  if (params.shopId) normalized.shop_id = params.shopId;
+  const shopVal = params.shop || params.shop_id || params.shopId;
+  if (shopVal) {
+    normalized.shop = shopVal;
+    normalized.shop_id = shopVal;
+  }
 
   const query = new URLSearchParams(normalized).toString();
   const url = `/menu/public/items/${query ? `?${query}` : ""}`;

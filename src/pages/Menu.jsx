@@ -20,7 +20,7 @@ import {
   getPublicCategories,
 } from "../service/menuItemService";
 import { addToCart } from "../service/cartService";
-import { getNearestShop } from "../service/shopService";
+import { getNearestShop, getShopsPublic } from "../service/shopService";
 import { getServerImageUrl } from "../utils/imageUtils";
 import OnlineOrderStatus from "../components/order-capacity/OnlineOrderStatus";
 
@@ -32,6 +32,8 @@ const Menu = () => {
   const [shopId, setShopId] = useState(
     localStorage.getItem("selected_shop") || ""
   );
+  const [shops, setShops] = useState([]);
+  const [currentShop, setCurrentShop] = useState(null);
   const location = useLocation();
 
   const [search, setSearch] = useState("");
@@ -49,12 +51,9 @@ const Menu = () => {
     if (qShop) {
       localStorage.setItem("selected_shop", qShop);
       setShopId(qShop);
-      return;
     }
 
-    if (!shopId) {
-      initNearestShop();
-    }
+    initShopAndLocation(qShop);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
@@ -64,79 +63,90 @@ const Menu = () => {
     }
   }, [shopId]);
 
-  const initNearestShop = async () => {
-    if (!navigator.geolocation) {
-      setLoading(false);
-      return;
+  const initShopAndLocation = async (forcedShopId) => {
+    // 1. Fetch available shops immediately
+    let allShops = [];
+    try {
+      allShops = await getShopsPublic();
+      if (Array.isArray(allShops)) {
+        setShops(allShops);
+      }
+    } catch (e) {
+      console.warn("Could not fetch shops in Menu:", e);
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const nearest = await getNearestShop(
-            pos.coords.latitude,
-            pos.coords.longitude
-          );
+    // 2. Select initial shop immediately
+    let initialShopId = forcedShopId || shopId || localStorage.getItem("selected_shop");
+    let chosenShop = null;
+    if (initialShopId && allShops.length > 0) {
+      chosenShop = allShops.find((s) => String(s.id) === String(initialShopId));
+    }
+    if (!chosenShop && allShops.length > 0) {
+      chosenShop = allShops[0];
+    }
 
-          if (nearest?.id) {
-            localStorage.setItem("selected_shop", nearest.id);
-            setShopId(nearest.id);
+    if (chosenShop) {
+      setCurrentShop(chosenShop);
+      setShopId(chosenShop.id);
+      localStorage.setItem("selected_shop", chosenShop.id);
+    }
+
+    // 3. In parallel, query browser geolocation to automatically detect nearest shop
+    if (!forcedShopId && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const nearest = await getNearestShop(
+              pos.coords.latitude,
+              pos.coords.longitude
+            );
+            if (nearest?.id) {
+              localStorage.setItem("selected_shop", nearest.id);
+              setShopId(nearest.id);
+              setCurrentShop(nearest);
+            }
+          } catch (error) {
+            console.warn("Error finding nearest shop in Menu:", error);
           }
-        } catch (error) {
-          console.log(error);
-          setLoading(false);
-        }
-      },
-      () => {
-        setLoading(false);
-      }
-    );
+        },
+        (err) => {
+          console.warn("Geolocation not available in Menu:", err);
+        },
+        { timeout: 8000, maximumAge: 60000 }
+      );
+    }
   };
 
   const loadMenu = async (shopIdToLoad) => {
     try {
       setLoading(true);
-      const data = await getPublicMenuItems({ shop_id: shopIdToLoad });
+      const data = await getPublicMenuItems({ shop: shopIdToLoad, shop_id: shopIdToLoad });
 
-      if (!Array.isArray(data) || data.length === 0) {
-        setItems(FALLBACK_ROTI_MENU);
+      if (!Array.isArray(data)) {
+        setItems([]);
         return;
       }
 
       const uniqueItems = [];
       const names = new Set();
       data.forEach((item) => {
-        const key = item.name.toLowerCase().trim();
+        const key = (item.name || "").toLowerCase().trim();
         if (!names.has(key)) {
           names.add(key);
           uniqueItems.push(item);
         }
       });
-      setItems(uniqueItems.length > 0 ? uniqueItems : FALLBACK_ROTI_MENU);
+      setItems(uniqueItems);
     } catch (error) {
-      console.log(error);
-      setItems(FALLBACK_ROTI_MENU);
+      console.error("Error loading menu:", error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const FALLBACK_ROTI_MENU = [
-    { id: 101, name: "Afghani Naan", base_price: 12, category: "Afghani Special", description: "Authentic fluffy Afghani naan baked in clay tandoor.", available: true },
-    { id: 102, name: "Butter Afghani Naan", base_price: 14, category: "Afghani Special", description: "Signature Afghani naan generously brushed with amul butter.", available: true },
-    { id: 103, name: "Kotmiri Naan", base_price: 13, category: "Regular Naans", description: "Fresh coriander infused crisp tandoori naan.", available: true },
-    { id: 104, name: "Butter Naan", base_price: 15, category: "Regular Naans", description: "Classic soft tandoori naan with butter topping.", available: true },
-    { id: 105, name: "Kamachi Naan", base_price: 15, category: "Regular Naans", description: "Traditional spiced Kamachi tandoori bread.", available: true },
-    { id: 106, name: "Garlic Naan", base_price: 25, category: "Regular Naans", description: "Aromatic garlic and herb topped tandoori naan.", available: true },
-    { id: 107, name: "Chapati", base_price: 10, category: "Chapatis", description: "100% whole wheat handmade fresh chapati.", available: true },
-    { id: 108, name: "Bahubali Naan", base_price: 70, category: "Special Naans", description: "Giant Bahubali size stuffed naan loaded with rich spices.", available: true },
-    { id: 109, name: "Dubai Cheese Naan", base_price: 80, category: "Special Naans", description: "Melted cheese stuffed premium naan inspired by Middle East recipes.", available: true },
-    { id: 110, name: "Shahi Naan", base_price: 80, category: "Special Naans", description: "Royal saffron & dry fruit infused sweet rich naan.", available: true },
-    { id: 111, name: "Chur Chur Naan", base_price: 30, category: "Special Naans", description: "Ultra crisp flaky layered naan crushed with butter and paneer.", available: true },
-  ];
-
   const categories = useMemo(() => {
-    return [...new Set(items.map((i) => i.category))];
+    return [...new Set(items.map((i) => i.category_name || i.category))].filter(Boolean);
   }, [items]);
 
   const filteredItems = useMemo(() => {
@@ -152,7 +162,9 @@ const Menu = () => {
 
     if (category !== "all") {
       data = data.filter(
-        (item) => String(item.category) === String(category)
+        (item) =>
+          String(item.category_name || item.category).toLowerCase() ===
+          String(category).toLowerCase()
       );
     }
 
@@ -257,7 +269,9 @@ const Menu = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          Handpicked meals from all our shops — fresh, hot & affordable.
+          {currentShop?.name
+            ? `Freshly baked rotis & authentic naans from ${currentShop.name}`
+            : "Handpicked meals from our nearest bakery shop — fresh, hot & affordable."}
         </motion.p>
 
         <motion.div
@@ -297,6 +311,28 @@ const Menu = () => {
         </div>
 
         <div className="filter-controls">
+          {shops.length > 0 && (
+            <div className="filter-field">
+              <label>Branch / Shop</label>
+              <select
+                value={shopId}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  setShopId(newId);
+                  localStorage.setItem("selected_shop", newId);
+                  const found = shops.find((s) => String(s.id) === String(newId));
+                  if (found) setCurrentShop(found);
+                }}
+              >
+                {shops.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="filter-field">
             <label>Category</label>
             <select
@@ -306,7 +342,7 @@ const Menu = () => {
               <option value="all">All Categories</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
-                  Category {cat}
+                  {cat}
                 </option>
               ))}
             </select>
@@ -395,6 +431,28 @@ const Menu = () => {
               </div>
 
               <div className="drawer-body">
+                {shops.length > 0 && (
+                  <div className="filter-field">
+                    <label>Branch / Shop</label>
+                    <select
+                      value={shopId}
+                      onChange={(e) => {
+                        const newId = e.target.value;
+                        setShopId(newId);
+                        localStorage.setItem("selected_shop", newId);
+                        const found = shops.find((s) => String(s.id) === String(newId));
+                        if (found) setCurrentShop(found);
+                      }}
+                    >
+                      {shops.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="filter-field">
                   <label>Category</label>
                   <select
@@ -404,7 +462,7 @@ const Menu = () => {
                     <option value="all">All Categories</option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
-                        Category {cat}
+                        {cat}
                       </option>
                     ))}
                   </select>
@@ -536,6 +594,18 @@ const Menu = () => {
               <div className="m-food-body">
                 <div className="m-food-top">
                   <h4>{item.name}</h4>
+                  {(item.category_name || item.category) && (
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        color: "#998075",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {item.category_name || item.category}
+                    </span>
+                  )}
                 </div>
 
                 <p className="m-food-desc">
@@ -546,7 +616,19 @@ const Menu = () => {
 
                 <div className="m-food-footer">
                   <div className="m-food-price">
-                    ₹ {parseFloat(item.base_price).toFixed(2)}
+                    ₹ {parseFloat(item.final_price || item.base_price).toFixed(2)}
+                    {item.has_discount && (
+                      <span
+                        style={{
+                          textDecoration: "line-through",
+                          opacity: 0.5,
+                          fontSize: "0.8em",
+                          marginLeft: 6,
+                        }}
+                      >
+                        ₹ {parseFloat(item.original_price || item.base_price).toFixed(2)}
+                      </span>
+                    )}
                   </div>
                   <motion.button
                     className="m-add-btn"
