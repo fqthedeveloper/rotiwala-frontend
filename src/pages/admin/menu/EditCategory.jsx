@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Upload, X, Check } from 'lucide-react';
 import { getCategoryById, updateCategory } from '../../../service/categoryService';
+import { compressImageForUpload } from '../../../utils/imageCompressor';
 import './CSS/MenuItems.css';
 
 const EditCategory = () => {
@@ -26,43 +27,54 @@ const EditCategory = () => {
 
   useEffect(() => {
     document.title = 'Edit Category | Roti Wala';
+
+    const loadCategory = async () => {
+      try {
+        setFetching(true);
+        const data = await getCategoryById(id);
+        setFormData({
+          name: data.name || '',
+          is_active: data.is_active !== undefined ? data.is_active : true,
+        });
+
+        if (data.image_url || data.image) {
+          setImagePreview(data.image_url || data.image);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error('Failed to load category details');
+        navigate(`${basePath}/categories`);
+      } finally {
+        setFetching(false);
+      }
+    };
+
     loadCategory();
   }, [id]);
-
-  const loadCategory = async () => {
-    try {
-      setFetching(true);
-      const data = await getCategoryById(id);
-      setFormData({
-        name: data.name || '',
-        is_active: data.is_active !== undefined ? data.is_active : true,
-      });
-      if (data.image) {
-        setImagePreview(data.image);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to load category data');
-      navigate(`${basePath}/categories`);
-    } finally {
-      setFetching(false);
-    }
-  };
 
   const handleTextChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 25 * 1024 * 1024) {
         toast.error(`Image size is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Maximum allowed is 25 MB.`);
         return;
       }
-      setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+
+      try {
+        let compressed = file;
+        if (file.size > 350 * 1024) {
+          compressed = await compressImageForUpload(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.88 });
+        }
+        setImageFile(compressed);
+      } catch (err) {
+        setImageFile(file);
+      }
     }
   };
 
@@ -83,7 +95,8 @@ const EditCategory = () => {
     data.append('name', formData.name.trim());
     data.append('is_active', formData.is_active);
     if (imageFile) {
-      data.append('image', imageFile);
+      const finalImage = await compressImageForUpload(imageFile, { maxWidth: 1200, maxHeight: 1200, quality: 0.88 });
+      data.append('image', finalImage);
     }
 
     try {

@@ -8,6 +8,7 @@ import { ArrowLeft, Upload, X, Check, Utensils } from 'lucide-react';
 import { createMenuItem } from '../../../service/menuItemService';
 import { getCategories } from '../../../service/categoryService';
 import { getShops } from '../../../service/shopService';
+import { compressImageForUpload } from '../../../utils/imageCompressor';
 import './CSS/MenuItems.css';
 
 const AddMenuItem = () => {
@@ -65,21 +66,38 @@ const AddMenuItem = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 25 * 1024 * 1024) {
         toast.error(`Image size is ${(file.size / (1024 * 1024)).toFixed(1)} MB. Please select an image under 25 MB.`);
         return;
       }
-      const sizeMB = file.size / (1024 * 1024);
-      const sizeStr = sizeMB >= 1 ? `${sizeMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`;
-      setImageFile(file);
-      setImageMeta({ name: file.name, sizeStr, isLarge: sizeMB > 5 });
+      const rawSizeMB = file.size / (1024 * 1024);
+      const rawSizeStr = rawSizeMB >= 1 ? `${rawSizeMB.toFixed(1)} MB` : `${Math.round(file.size / 1024)} KB`;
       setImagePreview(URL.createObjectURL(file));
 
-      if (sizeMB > 5) {
-        toast.success(`High-res PNG (${sizeStr}) accepted. It will be compressed & optimized automatically upon upload.`, { duration: 4000 });
+      try {
+        let compressed = file;
+        if (file.size > 350 * 1024) {
+          const toastId = toast.loading('Optimizing image for fast upload...');
+          compressed = await compressImageForUpload(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.88 });
+          toast.dismiss(toastId);
+        }
+        setImageFile(compressed);
+        const optSizeKB = Math.round(compressed.size / 1024);
+        const optSizeStr = optSizeKB > 1024 ? `${(optSizeKB / 1024).toFixed(1)} MB` : `${optSizeKB} KB`;
+        setImageMeta({
+          name: file.name,
+          rawSize: rawSizeStr,
+          sizeStr: optSizeStr,
+          isOptimized: compressed.size < file.size,
+        });
+        toast.success(`Image optimized & ready (${optSizeStr})`);
+      } catch (err) {
+        console.error('Compression error:', err);
+        setImageFile(file);
+        setImageMeta({ name: file.name, sizeStr: rawSizeStr, isOptimized: false });
       }
     }
   };
@@ -123,7 +141,9 @@ const AddMenuItem = () => {
       data.append('shop', formData.shop);
     }
     if (imageFile) {
-      data.append('image', imageFile);
+      // Final guarantee against 413 Entity Too Large
+      const finalImage = await compressImageForUpload(imageFile, { maxWidth: 1200, maxHeight: 1200, quality: 0.88 });
+      data.append('image', finalImage);
     }
 
     try {
@@ -139,10 +159,13 @@ const AddMenuItem = () => {
       navigate(`${basePath}/menu-items`);
     } catch (error) {
       console.error(error);
+      const is413 = error.response?.status === 413 || error.message?.includes('413');
       Swal.fire({
         icon: 'error',
-        title: 'Creation Failed',
-        text: error.response?.data?.detail || error.response?.data?.image?.[0] || 'Something went wrong while adding the item.',
+        title: is413 ? 'Payload Too Large (413)' : 'Creation Failed',
+        text: is413
+          ? 'Server rejected file size (Nginx 413). The image is now auto-compressed to prevent this.'
+          : error.response?.data?.detail || error.response?.data?.image?.[0] || 'Something went wrong while adding the item.',
       });
     } finally {
       setLoading(false);
