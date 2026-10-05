@@ -1,19 +1,42 @@
 /**
- * Centralized Server Image URL Resolver for Roti Wala Web Frontend.
+ * Centralized Server Image URL Resolver for Roti Wala Frontend.
  *
- * Ensures all dish, category, and shop images load directly from the
- * production backend server (https://backend.alidarbar.in) over HTTPS,
- * preventing relative path 404s, Mixed Content blocking, and missing placeholder errors.
+ * Automatically resolves image paths based on current environment:
+ * - When running locally (127.0.0.1:8000 or localhost), points to local backend.
+ * - When running in production, points to production backend (backend.alidarbar.in).
  */
 
-// Production API host origin
-export const BACKEND_SERVER_ORIGIN = "https://backend.alidarbar.in";
+export const getBackendOrigin = () => {
+  const apiUrl = import.meta.env?.VITE_API_URL || "";
+  if (apiUrl) {
+    try {
+      if (apiUrl.startsWith("http://") || apiUrl.startsWith("https://")) {
+        const parsed = new URL(apiUrl);
+        return parsed.origin;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+  ) {
+    return "http://127.0.0.1:8000";
+  }
+
+  return "https://backend.alidarbar.in";
+};
+
+export const BACKEND_SERVER_ORIGIN = getBackendOrigin();
 
 /**
- * Returns a fully qualified, HTTPS server-side image URL.
+ * Returns a fully qualified server-side image URL.
  *
  * @param {string} rawUrl - Raw image path or URL from backend API
- * @returns {string} Fully qualified HTTPS image URL
+ * @returns {string} Fully qualified image URL
  */
 export const getServerImageUrl = (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== "string") {
@@ -28,29 +51,17 @@ export const getServerImageUrl = (rawUrl) => {
     url = mdMatch[1];
   }
 
+  const backendOrigin = getBackendOrigin();
+
+  // If already absolute URL
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
   // Handle relative paths (e.g. /media/menu_items/... or media/menu_items/...)
   if (url.startsWith("/")) {
-    url = `${BACKEND_SERVER_ORIGIN}${url}`;
-  } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = `${BACKEND_SERVER_ORIGIN}/${url}`;
+    return `${backendOrigin}${url}`;
   }
 
-  // Map any local/test hostnames to production server origin
-  if (
-    url.includes("127.0.0.1:8000") ||
-    url.includes("localhost:8000") ||
-    url.includes("testserver")
-  ) {
-    url = url
-      .replace(/https?:\/\/127\.0\.0\.1:8000/i, BACKEND_SERVER_ORIGIN)
-      .replace(/https?:\/\/localhost:8000/i, BACKEND_SERVER_ORIGIN)
-      .replace(/https?:\/\/testserver/i, BACKEND_SERVER_ORIGIN);
-  }
-
-  // Always enforce HTTPS to prevent browser Mixed Content blocking
-  if (url.startsWith("http://")) {
-    url = url.replace(/^http:\/\//i, "https://");
-  }
-
-  return url;
+  return `${backendOrigin}/${url}`;
 };

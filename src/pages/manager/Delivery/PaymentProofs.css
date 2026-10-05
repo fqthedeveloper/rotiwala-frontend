@@ -21,6 +21,7 @@
 .pp-container {
   width: 100%;
   animation: ppFadeIn 0.3s ease-out;
+  padding-bottom: 3rem;
 }
 
 @keyframes ppFadeIn {
@@ -315,11 +316,14 @@
   border-radius: var(--pp-radius);
   border: 1px solid var(--pp-gray-200);
   box-shadow: var(--pp-shadow-md);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pp-table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -365,12 +369,15 @@
   color: var(--pp-dark);
   font-family: inherit;
   font-size: 0.92rem;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .pp-shop-tag {
   font-size: 0.74rem;
   color: var(--pp-slate);
   display: block;
+  white-space: nowrap;
 }
 
 /* Driver cell */
@@ -378,6 +385,7 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  white-space: nowrap;
 }
 
 .pp-driver-avatar {
@@ -402,6 +410,7 @@
   align-items: center;
   gap: 3px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .pp-driver-phone:hover {
@@ -418,6 +427,7 @@
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .pp-badge.paid-upi {
@@ -503,6 +513,13 @@
   }
 }
 
+@media (min-width: 1200px) {
+  .pp-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+}
+
 .pp-card {
   background: #ffffff;
   border-radius: var(--pp-radius);
@@ -530,6 +547,17 @@
   padding-bottom: 0.65rem;
 }
 
+.pp-card-customer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
 .pp-card-driver-row {
   display: flex;
   align-items: center;
@@ -544,6 +572,57 @@
   background: var(--pp-gray-50);
   border-radius: 10px;
   padding: 0.6rem 0.85rem;
+}
+
+.pp-card-proof-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pp-card-proof-thumb-wrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f172a;
+  cursor: pointer;
+  border: 1.5px solid #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.pp-card-proof-thumb-wrap:hover {
+  border-color: #16a34a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.pp-card-proof-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.pp-card-proof-thumb-wrap:hover .pp-card-proof-img {
+  transform: scale(1.05);
+}
+
+.pp-card-proof-zoom-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pp-card-footer {
@@ -617,4 +696,73 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN ACROSS ALL DEVICES
+   ========================================================= */
+
+@media (max-width: 767.98px) {
+  .pp-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .pp-stat-card {
+    padding: 0.85rem 0.75rem;
+    gap: 0.65rem;
+    border-radius: 12px;
+  }
+
+  .pp-stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .pp-stat-content h4 {
+    font-size: 1.25rem;
+  }
+
+  .pp-stat-content span {
+    font-size: 0.7rem;
+  }
+
+  .pp-controls-card {
+    padding: 0.75rem;
+    gap: 0.65rem;
+    border-radius: 12px;
+  }
+
+  .pp-pills-bar {
+    gap: 0.35rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pp-pill {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.76rem;
+  }
+
+  .pp-table-card {
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pp-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .pp-stat-content h4 {
+    font-size: 1.15rem;
+  }
+
+  .pp-lightbox-dialog {
+    max-width: 95vw;
+    border-radius: 14px;
+  }
 }

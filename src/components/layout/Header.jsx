@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import MobileMenu from "./MobileMenu";
 import "./Header.css";
-import Logo from "../../assets/react.svg";
+import Logo from "../../assets/logo.png";
 import { getCartCount } from "../../service/cartService";
 import { FaMapMarkerAlt, FaShoppingCart, FaBars, FaUser } from "react-icons/fa";
 

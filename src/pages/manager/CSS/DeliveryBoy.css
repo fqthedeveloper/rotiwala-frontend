@@ -768,3 +768,363 @@
   margin-top: 2px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+/* ============================================================
+   DELIVERY BOY CLICKABLE TRIGGERS & DETAIL MODAL
+   ============================================================ */
+
+.dm-clickable-name,
+.dm-clickable-phone {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.dm-clickable-name:hover .dm-boy-name {
+  color: #d97706 !important;
+  text-decoration: underline;
+}
+
+.dm-clickable-phone:hover {
+  opacity: 0.8;
+}
+
+.dm-clickable-phone:hover .dm-phone-text {
+  text-decoration: underline;
+  color: #2563eb !important;
+}
+
+/* Modal Overlay */
+.db-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Modal Container */
+.db-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 950px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: dbModalSlideIn 0.25s ease-out;
+}
+
+@keyframes dbModalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal Header */
+.db-modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.db-header-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.db-header-name {
+  font-size: 1.15rem;
+  color: #0f172a;
+}
+
+.db-modal-close {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.db-modal-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Modal Body */
+.db-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Stat Metrics Grid */
+.db-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.db-metric-card {
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.db-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.db-metric-card.stat-km {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+}
+
+.db-metric-card.stat-today {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+}
+
+.db-metric-card.stat-orders {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
+.db-metric-card.stat-cash {
+  border-left: 4px solid #8b5cf6;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+}
+
+.db-metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-km .db-metric-icon { background: #dbeafe; color: #2563eb; }
+.stat-today .db-metric-icon { background: #d1fae5; color: #059669; }
+.stat-orders .db-metric-icon { background: #fef3c7; color: #d97706; }
+.stat-cash .db-metric-icon { background: #ede9fe; color: #7c3aed; }
+
+.db-metric-label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.db-metric-val {
+  margin: 2px 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.db-metric-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* Tabs Bar */
+.db-tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.db-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.db-tab-btn:hover {
+  color: #d97706;
+}
+
+.db-tab-btn.active {
+  color: #d97706;
+  border-bottom-color: #d97706;
+  background: #fef3c7;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Filter Bar */
+.db-filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.db-search-box {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.db-search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.88rem;
+}
+
+.db-select-filter {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.db-select-filter select {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* Table Container */
+.db-table-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.db-table-container table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.db-table-container thead th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+}
+
+.db-table-container tbody td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+/* Mobile Orders List */
+.db-mobile-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-order-card {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Footer */
+.db-modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #f8fafc;
+}
+
+@media (max-width: 576px) {
+  .db-modal-container {
+    max-height: 96vh;
+    border-radius: 12px;
+  }
+  .db-modal-header {
+    padding: 14px 16px;
+  }
+  .db-modal-body {
+    padding: 14px 16px;
+  }
+  .db-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .db-metric-card {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .db-metric-val {
+    font-size: 1.1rem;
+  }
+  .db-tab-btn {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+}

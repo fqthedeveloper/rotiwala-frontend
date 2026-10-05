@@ -8,6 +8,7 @@ import {
   getItemsByCategoryPublic,
 } from "../../../service/menuItemService";
 import { addItemToCart } from "../../../service/walkInService";
+import VariantSelectModal from "../../../components/menu/VariantSelectModal";
 
 import "./CSS/MenuPanel.css";
 
@@ -20,6 +21,7 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(null);
   const [addedItems, setAddedItems] = useState(new Set());
+  const [variantModalItem, setVariantModalItem] = useState(null);
 
   // load categories
   async function loadCategories() {
@@ -65,6 +67,12 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
       Swal.fire("Select Customer", "Please select a draft customer first.", "warning");
       return;
     }
+
+    if (product.has_variants && product.variants && product.variants.length > 0) {
+      setVariantModalItem(product);
+      return;
+    }
+
     if (adding === product.id) return;
 
     try {
@@ -103,6 +111,30 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
         newSet.delete(product.id);
         return newSet;
       });
+    }
+  }
+
+  async function handleVariantAdd(item, selectedVariant, quantity) {
+    if (!selectedCart) {
+      Swal.fire("Select Customer", "Please select a draft customer first.", "warning");
+      return;
+    }
+
+    try {
+      await addItemToCart(selectedCart.id, item.id, quantity, selectedVariant.id);
+      setVariantModalItem(null);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: `${item.name} (${selectedVariant.name}) × ${quantity} Added!`,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      refreshCart();
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "Unable to add item.", "error");
     }
   }
 
@@ -170,20 +202,31 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
                     <h4>{item.name}</h4>
                     {item.description && <p>{item.description}</p>}
                     <div className="menu-bottom-horizontal">
-                      <div className="menu-price">₹{Number(item.base_price).toFixed(2)}</div>
+                      <div className="menu-price">
+                        {item.has_variants && item.min_price != null
+                          ? (item.min_price === item.max_price
+                              ? `₹${Number(item.min_price).toFixed(2)}`
+                              : `₹${Number(item.min_price).toFixed(2)} - ₹${Number(item.max_price).toFixed(2)}`)
+                          : `₹${Number(item.base_price).toFixed(2)}`}
+                      </div>
                       <button
                         className={`add-cart-btn ${adding === item.id ? "adding" : ""}`}
                         disabled={!item.is_available || adding === item.id}
                         onClick={() => addProduct(item)}
                       >
-                        {adding === item.id ? (
+                        {item.has_variants && item.variants?.length > 0 ? (
+                          <>
+                            <FaPlus /> Options
+                          </>
+                        ) : adding === item.id ? (
                           <FaSync className="spin" />
                         ) : addedItems.has(item.id) ? (
                           <FaCheck />
                         ) : (
                           <FaPlus />
                         )}
-                        {adding === item.id ? "Adding" : addedItems.has(item.id) ? "Added" : "Add"}
+                        {(!item.has_variants || !item.variants?.length) &&
+                          (adding === item.id ? "Adding" : addedItems.has(item.id) ? "Added" : "Add")}
                       </button>
                     </div>
                   </div>
@@ -193,6 +236,14 @@ export default function MenuPanel({ selectedCart, refreshCart }) {
           </div>
         </div>
       )}
+
+      {/* ============ VARIANT SELECTION MODAL ============ */}
+      <VariantSelectModal
+        item={variantModalItem}
+        isOpen={!!variantModalItem}
+        onClose={() => setVariantModalItem(null)}
+        onAddToCart={handleVariantAdd}
+      />
     </div>
   );
 }

@@ -20,10 +20,12 @@ import {
   DollarSign,
   AlertCircle,
   FileCheck,
+  User,
 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 import { getAssignmentsWithProofs } from '../../../service/deliveryService';
+import DeliveryBoyDetailModal from './DeliveryBoyDetailModal';
 import './PaymentProofs.css';
 
 const PaymentProofs = () => {
@@ -34,6 +36,7 @@ const PaymentProofs = () => {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
   const [previewData, setPreviewData] = useState(null); // { url, assignment }
+  const [selectedBoy, setSelectedBoy] = useState(null); // { id, full_name, phone }
 
   const loadAssignments = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
@@ -84,6 +87,8 @@ const PaymentProofs = () => {
         String(a.order || '').toLowerCase().includes(q) ||
         a.delivery_boy_name?.toLowerCase().includes(q) ||
         a.delivery_boy_phone?.includes(q) ||
+        a.customer_name?.toLowerCase().includes(q) ||
+        a.customer_phone?.includes(q) ||
         a.shop_name?.toLowerCase().includes(q);
 
       const matchesProofOnly = filter !== 'proof' || !!a.payment_proof;
@@ -238,12 +243,12 @@ const PaymentProofs = () => {
         {/* Filter Pills */}
         <div className="pp-pills-bar">
           {[
-            { key: 'all', label: 'All' },
-            { key: 'paid', label: '✅ Paid' },
-            { key: 'unpaid', label: '❌ Unpaid' },
-            { key: 'upi', label: '📱 UPI' },
-            { key: 'cash', label: '💵 Cash' },
-            { key: 'proof', label: '📷 With Proof' },
+            { key: 'all', label: `All (${stats.total})` },
+            { key: 'paid', label: `✅ Paid (${stats.paidCount})` },
+            { key: 'unpaid', label: `❌ Unpaid (${Math.max(0, stats.total - stats.paidCount)})` },
+            { key: 'upi', label: `📱 UPI (${stats.upiCount})` },
+            { key: 'cash', label: `💵 Cash (${Math.max(0, stats.total - stats.upiCount)})` },
+            { key: 'proof', label: `📷 With Proof (${stats.proofCount})` },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -326,12 +331,12 @@ const PaymentProofs = () => {
                 <thead>
                   <tr>
                     <th style={{ width: '45px' }}>#</th>
-                    <th>Order</th>
+                    <th>Order Details</th>
                     <th>Delivery Boy</th>
                     <th>Amount</th>
                     <th>Status</th>
                     <th>Payment Proof</th>
-                    <th>Collected At</th>
+                    <th>Collected Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -342,31 +347,61 @@ const PaymentProofs = () => {
                         <div className="pp-order-num">
                           {a.order_number || `Order #${a.order}`}
                         </div>
+                        {a.customer_name && (
+                          <div className="text-muted small d-flex align-items-center gap-1 mt-0">
+                            <span>{a.customer_name}</span>
+                            {a.customer_phone && <span className="text-secondary">• {a.customer_phone}</span>}
+                          </div>
+                        )}
                         {a.shop_name && <span className="pp-shop-tag">{a.shop_name}</span>}
                       </td>
                       <td>
                         <div className="pp-driver-wrap">
-                          <div className="pp-driver-avatar">
+                          <button
+                            type="button"
+                            className="btn p-0 border-0 bg-transparent text-start pp-driver-avatar"
+                            onClick={() => setSelectedBoy({
+                              id: a.delivery_boy,
+                              full_name: a.delivery_boy_name,
+                              phone: a.delivery_boy_phone,
+                            })}
+                            title="Click to view delivery history & KM details"
+                            style={{ cursor: 'pointer' }}
+                          >
                             {(a.delivery_boy_name || 'DB')
                               .split(' ')
                               .map((n) => n[0])
                               .join('')
                               .substring(0, 2)
                               .toUpperCase()}
-                          </div>
+                          </button>
                           <div>
-                            <div className="fw-bold text-dark line-clamp-1">
-                              {a.delivery_boy_name || `Boy #${a.delivery_boy}`}
-                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-link p-0 text-start text-decoration-none fw-bold text-dark line-clamp-1"
+                              onClick={() => setSelectedBoy({
+                                id: a.delivery_boy,
+                                full_name: a.delivery_boy_name,
+                                phone: a.delivery_boy_phone,
+                              })}
+                              title="Click to view delivery history & KM details"
+                            >
+                              <span className="text-primary">{a.delivery_boy_name || `Boy #${a.delivery_boy}`}</span>
+                            </button>
                             {a.delivery_boy_phone ? (
-                              <a
-                                href={`tel:${a.delivery_boy_phone}`}
-                                className="pp-driver-phone"
-                                title="Call Driver"
+                              <button
+                                type="button"
+                                className="btn btn-link p-0 text-start text-decoration-none pp-driver-phone"
+                                onClick={() => setSelectedBoy({
+                                  id: a.delivery_boy,
+                                  full_name: a.delivery_boy_name,
+                                  phone: a.delivery_boy_phone,
+                                })}
+                                title="Click to view delivery history & KM details"
                               >
                                 <Phone size={10} />
                                 {a.delivery_boy_phone}
-                              </a>
+                              </button>
                             ) : (
                               <span className="text-muted small">—</span>
                             )}
@@ -375,9 +410,23 @@ const PaymentProofs = () => {
                       </td>
                       <td>
                         {a.collected_amount ? (
-                          <span className="fw-bold text-success fs-6">
-                            ₹{a.collected_amount}
-                          </span>
+                          <div>
+                            <span className="fw-bold text-success fs-6">
+                              ₹{a.collected_amount}
+                            </span>
+                            <small className="text-muted d-block" style={{ fontSize: '0.7rem' }}>
+                              Collected
+                            </small>
+                          </div>
+                        ) : a.total_amount ? (
+                          <div>
+                            <span className="fw-bold text-dark fs-6">
+                              ₹{a.total_amount}
+                            </span>
+                            <small className="text-muted d-block" style={{ fontSize: '0.7rem' }}>
+                              Order Total
+                            </small>
+                          </div>
                         ) : (
                           <span className="text-muted small">—</span>
                         )}
@@ -469,29 +518,76 @@ const PaymentProofs = () => {
                     <div>{renderStatusBadge(a)}</div>
                   </div>
 
+                  {/* Customer Row */}
+                  {(a.customer_name || a.customer_phone) && (
+                    <div className="pp-card-customer-row">
+                      <div className="d-flex align-items-center gap-2">
+                        <User size={14} className="text-secondary flex-shrink-0" />
+                        <span className="fw-bold text-dark">{a.customer_name || 'Customer'}</span>
+                        {a.customer_phone && (
+                          <span className="text-muted small">• {a.customer_phone}</span>
+                        )}
+                      </div>
+                      {a.customer_phone && (
+                        <a
+                          href={`tel:${a.customer_phone}`}
+                          className="btn btn-sm btn-outline-success rounded-pill px-2 py-0 d-flex align-items-center gap-1 small"
+                          title="Call Customer"
+                        >
+                          <Phone size={11} /> Call
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   {/* Driver Row */}
                   <div className="pp-card-driver-row">
                     <div className="pp-driver-wrap">
-                      <div className="pp-driver-avatar">
+                      <button
+                        type="button"
+                        className="btn p-0 border-0 bg-transparent text-start pp-driver-avatar"
+                        onClick={() => setSelectedBoy({
+                          id: a.delivery_boy,
+                          full_name: a.delivery_boy_name,
+                          phone: a.delivery_boy_phone,
+                        })}
+                        title="Click to view delivery history & KM details"
+                        style={{ cursor: 'pointer' }}
+                      >
                         {(a.delivery_boy_name || 'DB')
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
                           .substring(0, 2)
                           .toUpperCase()}
-                      </div>
+                      </button>
                       <div>
-                        <div className="fw-bold text-dark fs-6">
-                          {a.delivery_boy_name || `Boy #${a.delivery_boy}`}
-                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-start text-decoration-none fw-bold text-dark fs-6"
+                          onClick={() => setSelectedBoy({
+                            id: a.delivery_boy,
+                            full_name: a.delivery_boy_name,
+                            phone: a.delivery_boy_phone,
+                          })}
+                          title="Click to view delivery history & KM details"
+                        >
+                          <span className="text-primary">{a.delivery_boy_name || `Boy #${a.delivery_boy}`}</span>
+                        </button>
                         {a.delivery_boy_phone && (
-                          <a
-                            href={`tel:${a.delivery_boy_phone}`}
-                            className="pp-driver-phone"
+                          <button
+                            type="button"
+                            className="btn btn-link p-0 text-start text-decoration-none pp-driver-phone"
+                            onClick={() => setSelectedBoy({
+                              id: a.delivery_boy,
+                              full_name: a.delivery_boy_name,
+                              phone: a.delivery_boy_phone,
+                            })}
+                            title="Click to view delivery history & KM details"
                           >
                             <Phone size={10} />
                             {a.delivery_boy_phone}
-                          </a>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -510,10 +606,10 @@ const PaymentProofs = () => {
                   <div className="pp-card-amount-row">
                     <div className="d-flex flex-column">
                       <small className="text-muted" style={{ fontSize: '0.72rem' }}>
-                        COLLECTED AMOUNT
+                        {a.collected_amount ? 'COLLECTED AMOUNT' : 'ORDER TOTAL'}
                       </small>
-                      <span className="fw-bold text-success fs-5">
-                        {a.collected_amount ? `₹${a.collected_amount}` : '—'}
+                      <span className={`fw-bold fs-5 ${a.collected_amount ? 'text-success' : 'text-dark'}`}>
+                        {a.collected_amount ? `₹${a.collected_amount}` : (a.total_amount ? `₹${a.total_amount}` : '—')}
                       </span>
                     </div>
                     <div>
@@ -533,14 +629,27 @@ const PaymentProofs = () => {
 
                   {/* Proof Action or Notice */}
                   {a.payment_proof ? (
-                    <button
-                      type="button"
-                      className="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-bold"
-                      onClick={() => openPreview(a)}
-                    >
-                      <Eye size={15} />
-                      <span>View Payment Screenshot Proof</span>
-                    </button>
+                    <div className="pp-card-proof-box">
+                      <div className="pp-card-proof-thumb-wrap" onClick={() => openPreview(a)}>
+                        <img
+                          src={a.payment_proof}
+                          alt="Proof"
+                          className="pp-card-proof-img"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <span className="pp-card-proof-zoom-badge">
+                          <Eye size={12} /> Tap to Zoom
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-bold"
+                        onClick={() => openPreview(a)}
+                      >
+                        <Eye size={15} />
+                        <span>View Screenshot Proof</span>
+                      </button>
+                    </div>
                   ) : (
                     <div className="text-muted small text-center py-1">
                       {a.payment_mode === 'cash'
@@ -669,6 +778,16 @@ const PaymentProofs = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delivery Boy Details & History Modal */}
+      {selectedBoy && (
+        <DeliveryBoyDetailModal
+          boyId={selectedBoy.id}
+          boyName={selectedBoy.full_name}
+          boyPhone={selectedBoy.phone}
+          onClose={() => setSelectedBoy(null)}
+        />
+      )}
     </div>
   );
 };

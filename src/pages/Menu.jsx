@@ -23,6 +23,7 @@ import { addToCart } from "../service/cartService";
 import { getNearestShop, getShopsPublic } from "../service/shopService";
 import { getServerImageUrl } from "../utils/imageUtils";
 import OnlineOrderStatus from "../components/order-capacity/OnlineOrderStatus";
+import VariantSelectModal from "../components/menu/VariantSelectModal";
 
 import "./CSS/Menu.css";
 
@@ -42,6 +43,7 @@ const Menu = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [variantModalItem, setVariantModalItem] = useState(null);
 
   useEffect(() => {
     document.title = "Menu - Roti Wala";
@@ -199,6 +201,10 @@ const Menu = () => {
   }, [items, search, category, sortBy, maxPrice, availableOnly]);
 
   const handleAddCart = async (item) => {
+    if (item.has_variants && item.variants && item.variants.length > 0) {
+      setVariantModalItem(item);
+      return;
+    }
     try {
       await addToCart(item.id, 1);
       window.dispatchEvent(new Event("cartUpdated"));
@@ -207,6 +213,27 @@ const Menu = () => {
         title: "Added To Cart",
         text: `${item.name} added successfully`,
         timer: 1200,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: error.response?.data?.error || "Unable to add item",
+      });
+    }
+  };
+
+  const handleVariantAddToCart = async (item, selectedVariant, quantity) => {
+    try {
+      await addToCart(item.id, quantity, selectedVariant.id);
+      window.dispatchEvent(new Event("cartUpdated"));
+      setVariantModalItem(null);
+      Swal.fire({
+        icon: "success",
+        title: "Added To Cart",
+        text: `${item.name} (${selectedVariant.name}) × ${quantity} added successfully`,
+        timer: 1400,
         showConfirmButton: false,
       });
     } catch (error) {
@@ -616,18 +643,28 @@ const Menu = () => {
 
                 <div className="m-food-footer">
                   <div className="m-food-price">
-                    ₹ {parseFloat(item.final_price || item.base_price).toFixed(2)}
-                    {item.has_discount && (
-                      <span
-                        style={{
-                          textDecoration: "line-through",
-                          opacity: 0.5,
-                          fontSize: "0.8em",
-                          marginLeft: 6,
-                        }}
-                      >
-                        ₹ {parseFloat(item.original_price || item.base_price).toFixed(2)}
-                      </span>
+                    {item.has_variants && item.min_price != null ? (
+                      item.min_price === item.max_price ? (
+                        <>₹ {parseFloat(item.min_price).toFixed(2)}</>
+                      ) : (
+                        <>₹ {parseFloat(item.min_price).toFixed(2)} - ₹ {parseFloat(item.max_price).toFixed(2)}</>
+                      )
+                    ) : (
+                      <>
+                        ₹ {parseFloat(item.final_price || item.base_price).toFixed(2)}
+                        {item.has_discount && (
+                          <span
+                            style={{
+                              textDecoration: "line-through",
+                              opacity: 0.5,
+                              fontSize: "0.8em",
+                              marginLeft: 6,
+                            }}
+                          >
+                            ₹ {parseFloat(item.original_price || item.base_price).toFixed(2)}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                   <motion.button
@@ -636,7 +673,7 @@ const Menu = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <FaShoppingCart /> Add
+                    <FaShoppingCart /> {item.has_variants && item.variants?.length > 0 ? "Options" : "Add"}
                   </motion.button>
                 </div>
               </div>
@@ -644,6 +681,14 @@ const Menu = () => {
           ))}
         </motion.div>
       )}
+
+      {/* ============ VARIANT SELECTION MODAL ============ */}
+      <VariantSelectModal
+        item={variantModalItem}
+        isOpen={!!variantModalItem}
+        onClose={() => setVariantModalItem(null)}
+        onAddToCart={handleVariantAddToCart}
+      />
     </div>
   );
 };

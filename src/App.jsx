@@ -55,6 +55,8 @@ const getPageTitle = (pathname) => {
     "/admin/shops/add-shop": "Add Shop - Roti Wala",
     "/admin/upi-settings": "UPI Settings - Roti Wala",
     "/manager/upi-settings": "UPI Settings - Roti Wala",
+    "/admin/delivery": "Delivery Management - Roti Wala",
+    "/manager/delivery": "Delivery Management - Roti Wala",
     "/admin/managers": "Managers - Roti Wala",
     "/admin/managers/add": "Add Manager - Roti Wala",
     "/admin/categories": "Categories - Roti Wala",
@@ -357,6 +359,7 @@ function App() {
         <Route path="managers/add" element={<AddManager />} />
         <Route path="managers/edit/:id" element={<EditManager />} />
         <Route path="upi-settings" element={<UPISettings />} />
+        <Route path="delivery" element={<DeliveryManagement />} />
         <Route path="categories" element={<Categories />} />
         <Route path="categories/add" element={<AddCategory />} />
         <Route path="menu-items" element={<MenuItems />} />

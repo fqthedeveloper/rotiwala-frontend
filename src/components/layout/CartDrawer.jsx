@@ -17,7 +17,7 @@ const getCartItemDetails = (item) => {
     item.menu_item || item.menu_item_details || item.product || {};
   const quantity = Math.max(1, toAmount(item.quantity));
   const unitPrice = toAmount(
-    item.item_price ?? item.price ?? product.base_price ?? product.price,
+    item.unit_price ?? item.item_price ?? item.price ?? product.base_price ?? product.price,
   );
 
   const rawImage =
@@ -26,12 +26,16 @@ const getCartItemDetails = (item) => {
     product.image_url ||
     product.image;
 
+  const baseName = item.item_name || product.name || item.name || "Menu item";
+  const variantName = item.variant_name || (typeof item.variant === "object" ? item.variant?.name : "");
+
   return {
     id: item.id,
-    name: item.item_name || product.name || item.name || "Menu item",
+    name: variantName ? `${baseName} (${variantName})` : baseName,
     image: rawImage ? getServerImageUrl(rawImage) : logo,
     quantity,
     unitPrice,
+    variantName,
     total: toAmount(item.total_price ?? item.item_total) || unitPrice * quantity,
   };
 };

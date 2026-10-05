@@ -34,6 +34,7 @@ import "./CSS/Home.css";
 import Marquee from "../components/Home/Marquee";
 import VideoSlideshow from "../components/Home/VideoSlideshow";
 import TestimonialSection from "../components/Home/TestimonialSection";
+import VariantSelectModal from "../components/menu/VariantSelectModal";
 
 import { getNearestShop, getShopsPublic } from "../service/shopService";
 import {
@@ -142,6 +143,7 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [locationDenied, setLocationDenied] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [variantModalItem, setVariantModalItem] = useState(null);
   const [stats, setStats] = useState([
     { value: 0, suffix: "+", label: "Shops", icon: <FaStore /> },
     { value: 0, suffix: "+", label: "Menu Items", icon: <FaUtensils /> },
@@ -331,6 +333,10 @@ export default function Home() {
   };
 
   const handleAddCart = async (item) => {
+    if (item.has_variants && item.variants && item.variants.length > 0) {
+      setVariantModalItem(item);
+      return;
+    }
     showLoading("Adding to cart...", "cool", "sm");
     try {
       await addToCart(item.id, 1);
@@ -341,6 +347,34 @@ export default function Home() {
         title: "Added To Cart",
         text: `${item.name} added successfully`,
         timer: 1200,
+        showConfirmButton: false,
+        background: "#17110c",
+        color: "#f7ead2",
+      });
+    } catch (error) {
+      hideLoading();
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: error.response?.data?.error || "Unable to add item",
+        background: "#17110c",
+        color: "#f7ead2",
+      });
+    }
+  };
+
+  const handleVariantAddToCart = async (item, selectedVariant, quantity) => {
+    showLoading("Adding to cart...", "cool", "sm");
+    try {
+      await addToCart(item.id, quantity, selectedVariant.id);
+      window.dispatchEvent(new Event("cartUpdated"));
+      hideLoading();
+      setVariantModalItem(null);
+      Swal.fire({
+        icon: "success",
+        title: "Added To Cart",
+        text: `${item.name} (${selectedVariant.name}) × ${quantity} added successfully`,
+        timer: 1400,
         showConfirmButton: false,
         background: "#17110c",
         color: "#f7ead2",
@@ -526,13 +560,6 @@ export default function Home() {
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
             <FaTruck /> <span>40 min Delivery</span>
-          </motion.div>
-          <motion.div
-            className="rw-tag rw-tag-rating"
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <FaStar /> <span>4.9 Rating</span>
           </motion.div>
         </motion.div>
 
@@ -733,9 +760,8 @@ export default function Home() {
         <motion.div
           className="rw-empty-state"
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
         >
           <div className="rw-empty-state-icon">🫓</div>
           <h3>No menu items available</h3>
@@ -751,18 +777,34 @@ export default function Home() {
           )}
         </motion.div>
       ) : (
-        <motion.div className="rw-foods" data-testid="popular-menu-grid">
+        <motion.div
+          key={activeCategory}
+          className="rw-foods"
+          data-testid="popular-menu-grid"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.05 },
+            },
+          }}
+        >
           {displayItems.map((item, index) => (
             <motion.article
               key={item.id}
               className="rw-food"
-              initial={{ opacity: 0, y: 44 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.15 }}
-              transition={{
-                delay: (index % 8) * 0.05,
-                duration: 0.55,
-                ease: EASE,
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.45,
+                    ease: EASE,
+                  },
+                },
               }}
               whileHover={{ y: -10 }}
             >
@@ -772,6 +814,10 @@ export default function Home() {
                   alt={item.name}
                   className="rw-food-img"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/logo.png";
+                  }}
                 />
                 <span className="rw-food-badge">
                   <FaFire /> {item.is_special ? "Special" : "Hot"}
@@ -806,10 +852,13 @@ export default function Home() {
                     "Freshly baked in traditional clay tandoor on order."}
                 </p>
                 <div className="rw-food-meta">
-                  <h3>₹ {item.base_price || item.price}</h3>
-                  <div className="rw-food-stars">
-                    <FaStar /> 4.{8 + (index % 2)}
-                  </div>
+                  <h3>
+                    {item.has_variants && item.min_price != null
+                      ? (item.min_price === item.max_price
+                          ? `₹ ${item.min_price}`
+                          : `₹ ${item.min_price} - ₹ ${item.max_price}`)
+                      : `₹ ${item.base_price || item.price}`}
+                  </h3>
                 </div>
                 <motion.button
                   data-testid={`add-cart-btn-${item.id}`}
@@ -818,7 +867,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                 >
-                  <FaShoppingCart /> Add To Cart
+                  <FaShoppingCart /> {item.has_variants && item.variants?.length > 0 ? "Select Options" : "Add To Cart"}
                 </motion.button>
               </div>
             </motion.article>
@@ -980,6 +1029,14 @@ export default function Home() {
           View Cart <FaShoppingCart />
         </button>
       </div>
+
+      {/* ============ VARIANT SELECTION MODAL ============ */}
+      <VariantSelectModal
+        item={variantModalItem}
+        isOpen={!!variantModalItem}
+        onClose={() => setVariantModalItem(null)}
+        onAddToCart={handleVariantAddToCart}
+      />
     </div>
   );
 }

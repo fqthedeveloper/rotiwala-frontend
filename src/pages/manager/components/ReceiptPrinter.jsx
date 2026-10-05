@@ -16,13 +16,28 @@ import {
   FaPhone,
   FaShoppingBag,
   FaMoneyBill,
-  FaClock
+  FaClock,
+  FaQrcode,
+  FaTruck
 } from 'react-icons/fa';
 import { generateReceipt, printReceipt, downloadReceiptPDF, downloadReceiptText } from '../../../service/orderService';
 import Swal from 'sweetalert2';
 import './CSS/ReceiptPrinter.css';
 
-const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
+// Small top-right toast that doesn't block or dim the background
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2200,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  }
+});
+
+const ReceiptPrinter = ({ orderId, orderType, onClose, onPrinted }) => {
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -52,6 +67,9 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
       setReceiptData(data);
       setReceiptText(data.receipt_text);
       setError(null);
+      if (onPrinted) {
+        onPrinted(orderId);
+      }
     } catch (err) {
       console.error('Load receipt error:', err);
       setError(err.message || 'Failed to load receipt');
@@ -117,7 +135,7 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
 
   // Method 3: Print as PDF (fallback)
   const printAsPDF = () => {
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    const printWindow = window.open('', '_blank', 'width=420,height=650');
     if (!printWindow) {
       Swal.fire('Error', 'Please allow popups for printing', 'error');
       return;
@@ -126,20 +144,51 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
     const styles = `
       body { 
         font-family: 'Courier New', monospace; 
-        white-space: pre; 
+        white-space: pre-wrap; 
         padding: 20px;
         margin: 0;
         background: white;
       }
       .receipt-container {
-        max-width: 300px;
+        max-width: 320px;
         margin: 0 auto;
+      }
+      .receipt-qr-box {
+        text-align: center;
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px dashed #666;
+      }
+      .receipt-qr-box img {
+        width: 140px;
+        height: 140px;
+        display: block;
+        margin: 0 auto 6px;
+      }
+      .receipt-qr-title {
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+      .receipt-qr-sub {
+        font-size: 10px;
+        color: #555;
+        margin-top: 3px;
       }
       @media print {
         body { padding: 0; }
         .no-print { display: none; }
       }
     `;
+
+    const qrHtml = (receiptData?.is_delivery && receiptData?.qr_code) ? `
+      <div class="receipt-qr-box">
+        <img src="data:image/png;base64,${receiptData.qr_code}" alt="Delivery QR Code" />
+        <div class="receipt-qr-title">DRIVER SCAN FOR DELIVERY PICKUP</div>
+        ${receiptData?.parcel_number ? `<div class="receipt-qr-sub">Parcel: ${receiptData.parcel_number}</div>` : ''}
+        ${receiptData?.delivery_address ? `<div class="receipt-qr-sub">Address: ${receiptData.delivery_address}</div>` : ''}
+      </div>
+    ` : '';
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -151,6 +200,7 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
         <body>
           <div class="receipt-container">
             <pre>${receiptText}</pre>
+            ${qrHtml}
             <button class="no-print" onclick="window.print()" style="
               display: block;
               margin: 20px auto;
@@ -184,7 +234,7 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
     
     // Check if user is manager
     if (userRole !== 'manager' && userRole !== 'super_admin') {
-      Swal.fire('Error', 'Only managers can print receipts directly', 'error');
+      Toast.fire({ icon: 'error', title: 'Only managers can print receipts' });
       return;
     }
 
@@ -210,16 +260,15 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
       }
 
       if (printed) {
-        Swal.fire({
+        if (onPrinted) onPrinted(orderId);
+        Toast.fire({
           icon: 'success',
-          title: 'Receipt Printed',
-          timer: 2000,
-          showConfirmButton: false
+          title: 'Receipt Printed'
         });
       }
     } catch (error) {
       console.error('Print error:', error);
-      Swal.fire('Error', 'Failed to print. Please try again.', 'error');
+      Toast.fire({ icon: 'error', title: 'Failed to print. Please try again.' });
     } finally {
       setPrinting(false);
     }
@@ -227,13 +276,12 @@ const ReceiptPrinter = ({ orderId, orderType, onClose }) => {
 
 const handleDownloadPDF = async () => {
   if (!receiptData?.order_number) {
-    Swal.fire('Error', 'Receipt data not available', 'error');
+    Toast.fire({ icon: 'error', title: 'Receipt data not available' });
     return;
   }
 
   setDownloading(true);
   try {
-    // Use the simple window.open method
     const token = localStorage.getItem("access");
     if (!token) {
       throw new Error('Please login again');
@@ -242,7 +290,6 @@ const handleDownloadPDF = async () => {
     const baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
     const url = `${baseURL}/orders/receipt/${orderId}/download/pdf/?bill_type=${selectedBillType}`;
     
-    // Use fetch to download with proper headers
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -265,16 +312,13 @@ const handleDownloadPDF = async () => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
     
-    Swal.fire({
+    Toast.fire({
       icon: 'success',
-      title: 'Download Started',
-      text: 'Your PDF receipt is being downloaded',
-      timer: 2000,
-      showConfirmButton: false
+      title: 'PDF Bill Downloaded'
     });
   } catch (error) {
     console.error('Download PDF error:', error);
-    Swal.fire('Error', error.message || 'Failed to download PDF. Please try again.', 'error');
+    Toast.fire({ icon: 'error', title: error.message || 'Failed to download PDF' });
   } finally {
     setDownloading(false);
   }
@@ -283,28 +327,25 @@ const handleDownloadPDF = async () => {
 // Download Text - Manager only
 const handleDownloadText = async () => {
   if (userRole !== 'manager' && userRole !== 'super_admin') {
-    Swal.fire('Error', 'Only managers can download text receipts', 'error');
+    Toast.fire({ icon: 'error', title: 'Only managers can download text receipts' });
     return;
   }
 
   if (!receiptData?.order_number) {
-    Swal.fire('Error', 'Receipt data not available', 'error');
+    Toast.fire({ icon: 'error', title: 'Receipt data not available' });
     return;
   }
 
   setDownloading(true);
   try {
     await downloadReceiptText(orderId, selectedBillType);
-    Swal.fire({
+    Toast.fire({
       icon: 'success',
-      title: 'Download Started',
-      text: 'Your text receipt is being downloaded',
-      timer: 2000,
-      showConfirmButton: false
+      title: 'Text Bill Downloaded'
     });
   } catch (error) {
     console.error('Download Text error:', error);
-    Swal.fire('Error', 'Failed to download text. Please try again.', 'error');
+    Toast.fire({ icon: 'error', title: 'Failed to download text bill' });
   } finally {
     setDownloading(false);
   }
@@ -313,15 +354,12 @@ const handleDownloadText = async () => {
   // Copy receipt text to clipboard
   const handleCopyText = () => {
     navigator.clipboard.writeText(receiptText).then(() => {
-      Swal.fire({
+      Toast.fire({
         icon: 'success',
-        title: 'Copied!',
-        text: 'Receipt text copied to clipboard',
-        timer: 1500,
-        showConfirmButton: false
+        title: 'Receipt Text Copied'
       });
     }).catch(() => {
-      Swal.fire('Error', 'Failed to copy text', 'error');
+      Toast.fire({ icon: 'error', title: 'Failed to copy text' });
     });
   };
 
@@ -368,23 +406,17 @@ const handleDownloadText = async () => {
             <span className="value">#{receiptData?.order_number}</span>
           </div>
           <div className="receipt-info-item">
-            <span className="label">Type</span>
-            <span className={`value type-badge ${receiptData?.order_type}`}>
-              {receiptData?.order_type?.toUpperCase()}
+            <span className="label">Mode</span>
+            <span className={`value type-badge ${receiptData?.is_delivery ? "delivery" : "pickup"}`}>
+              {receiptData?.is_delivery ? "DELIVERY" : (receiptData?.order_type === "walkin" ? "WALK-IN" : "ONLINE PICKUP")}
             </span>
           </div>
-         <span className="value">
-            {receiptData?.ordered_at &&
-              new Date(receiptData.ordered_at).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-                timeZone: "Asia/Kolkata",
-              })}
-          </span>
+          <div className="receipt-info-item">
+            <span className="label">Date</span>
+            <span className="value date-val">
+              {receiptData?.ordered_at || "-"}
+            </span>
+          </div>
           <div className="receipt-info-item">
             <span className="label">Amount</span>
             <span className="value amount">₹{receiptData?.total_amount}</span>
@@ -407,6 +439,19 @@ const handleDownloadText = async () => {
           </div>
         </div>
 
+        {/* Delivery Address Banner */}
+        {receiptData?.is_delivery && receiptData?.delivery_address && (
+          <div className="receipt-delivery-info">
+            <FaTruck className="icon" />
+            <div className="delivery-text">
+              <strong>Delivery Address:</strong> {receiptData.delivery_address}
+              {receiptData?.delivery_fee > 0 && (
+                <span className="delivery-fee-badge"> • Delivery Fee: ₹{Number(receiptData.delivery_fee).toFixed(2)}</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Bill Type Selector */}
         <div className="bill-type-section">
           <button 
@@ -416,12 +461,40 @@ const handleDownloadText = async () => {
             <FaClipboardList /> Bill Type: {selectedBillType.charAt(0).toUpperCase() + selectedBillType.slice(1)}
             {showBillOptions ? <FaChevronUp /> : <FaChevronDown />}
           </button>
-
         </div>
 
         {/* Receipt Text */}
         <div className="receipt-text-container">
           <pre className="receipt-text">{receiptText}</pre>
+          {receiptData?.is_delivery && receiptData?.qr_code && (
+            <div className="receipt-qr-card">
+              <div className="receipt-qr-header">
+                <FaQrcode className="qr-icon" />
+                <span>Driver Delivery QR Code</span>
+              </div>
+              <div className="receipt-qr-body">
+                <img 
+                  src={`data:image/png;base64,${receiptData.qr_code}`} 
+                  alt="Delivery QR Code" 
+                  className="receipt-qr-image" 
+                />
+                <div className="receipt-qr-instructions">
+                  <p className="qr-inst-bold">Scan to Take Out for Delivery</p>
+                  <p className="qr-inst-sub">Driver opens the mobile app, selects scan QR on the deliveries screen, and scans this code.</p>
+                  {receiptData?.parcel_number && (
+                    <div className="qr-parcel-tag">
+                      <strong>Parcel No:</strong> {receiptData.parcel_number}
+                    </div>
+                  )}
+                  {receiptData?.delivery_address && (
+                    <div className="qr-address-tag">
+                      <strong>Address:</strong> {receiptData.delivery_address}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Download Options */}

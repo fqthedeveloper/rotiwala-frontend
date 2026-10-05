@@ -115,6 +115,46 @@
   color: #92400e;
 }
 
+.type-badge.delivery {
+  background: #ffedd5;
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.type-badge.pickup {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 700;
+}
+
+/* Delivery Address Banner in Modal */
+.receipt-delivery-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #fff7ed;
+  border-bottom: 1px solid #fed7aa;
+  font-size: 12px;
+  color: #9a3412;
+}
+
+.receipt-delivery-info .icon {
+  font-size: 16px;
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.receipt-delivery-info .delivery-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.delivery-fee-badge {
+  font-weight: 700;
+  color: #c2410c;
+}
+
 /* Customer Info */
 .receipt-customer-info {
   display: flex;
@@ -211,6 +251,84 @@
   word-wrap: break-word;
   margin: 0;
   color: #1f2937;
+}
+
+/* Delivery QR Card in Modal */
+.receipt-qr-card {
+  margin-top: 18px;
+  padding: 16px;
+  background: #ffffff;
+  border: 2px dashed #f97316;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);
+}
+
+.receipt-qr-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #ea580c;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ffedd5;
+  padding-bottom: 6px;
+}
+
+.receipt-qr-header .qr-icon {
+  font-size: 18px;
+}
+
+.receipt-qr-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.receipt-qr-image {
+  width: 130px;
+  height: 130px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 4px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.receipt-qr-instructions {
+  flex: 1;
+  min-width: 180px;
+}
+
+.qr-inst-bold {
+  font-weight: 700;
+  font-size: 13px;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.qr-inst-sub {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+}
+
+.qr-parcel-tag,
+.qr-address-tag {
+  font-size: 11px;
+  color: #374151;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.qr-parcel-tag strong,
+.qr-address-tag strong {
+  color: #ea580c;
 }
 
 /* Download Options */

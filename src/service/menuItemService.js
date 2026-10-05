@@ -25,7 +25,7 @@ export const createMenuItem = async (formData, onUploadProgress) => {
 };
 
 export const updateMenuItem = async (id, formData, onUploadProgress) => {
-  const res = await api.put(`/menu/items/${id}/`, formData, {
+  const res = await api.patch(`/menu/items/${id}/`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

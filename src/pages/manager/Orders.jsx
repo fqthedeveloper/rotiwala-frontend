@@ -32,6 +32,7 @@ import {
   FaVolumeUp,
   FaVolumeMute,
   FaPlus,
+  FaEllipsisV,
 } from "react-icons/fa";
 
 
@@ -98,8 +99,26 @@ const OrderCard = memo(({
   onCancelOnline,
   onAssignDriver,
   onHandToDriver,
+  isPrinted,
+  onMarkPrinted,
 }) => {
   const [loadingAction, setLoadingAction] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
 
   const handleAction = async (action, id) => {
     setLoadingAction(action);
@@ -141,17 +160,23 @@ const OrderCard = memo(({
 
     const actionButtons = [];
 
-    // Print button â€” always visible
-    actionButtons.push(
-      <button
-        key="print"
-        className="btn-action print"
-        onClick={() => onPrint(order)}
-        disabled={loadingAction !== null}
-      >
-        <FaPrint /> Receipt
-      </button>
-    );
+    // First time only: show Receipt button in bottom actions until printed
+    if (!isPrinted) {
+      actionButtons.push(
+        <button
+          key="print"
+          className="btn-action print"
+          onClick={() => {
+            onPrint(order);
+            if (onMarkPrinted) onMarkPrinted(order.id);
+          }}
+          disabled={loadingAction !== null}
+          title="Print receipt"
+        >
+          <FaPrint /> Receipt
+        </button>
+      );
+    }
 
     if (isPreparingStaff) {
       // ---- Kitchen staff: only kitchen-relevant actions ----
@@ -168,7 +193,7 @@ const OrderCard = memo(({
           actionButtons.push(
             <button key="ready" className="btn-action ready" {...commonProps("ready")}>
               {loadingAction === "ready" ? <span className="spinner-sm" /> : <FaBoxOpen />}
-              Mark Ready ðŸ””
+              Mark Ready 🔔
             </button>
           );
           break;
@@ -176,7 +201,7 @@ const OrderCard = memo(({
           break;
       }
     } else {
-      // ---- Manager: all actions ----
+      // ---- Manager: only necessary progression buttons ----
 
       // Payment collection button for unpaid orders
       if (payment_status !== "paid" && status !== "collected") {
@@ -192,23 +217,13 @@ const OrderCard = memo(({
         );
       }
 
-      // Status-specific actions
+      // Status progression actions
       switch (status) {
         case "pending":
           actionButtons.push(
             <button key="accept" className="btn-action accept" {...commonProps("accept")}>
               {loadingAction === "accept" ? <span className="spinner-sm" /> : <FaCheck />}
               Accept
-            </button>,
-            <button
-              key="reject"
-              className="btn-action reject"
-              onClick={() => (onCancelOnline ? onCancelOnline(order) : handleReject(id))}
-              disabled={loadingAction !== null}
-              title="Reject or cancel this online order"
-            >
-              {loadingAction === "reject" ? <span className="spinner-sm" /> : <FaTimes />}
-              Reject
             </button>
           );
           break;
@@ -273,55 +288,6 @@ const OrderCard = memo(({
         default:
           break;
       }
-
-      // Online order manager controls: Cancel with reason (Shop Issue vs Customer Fault)
-      if (
-        order.order_type !== "walkin" &&
-        ["accepted", "preparing", "ready"].includes(status)
-      ) {
-        actionButtons.push(
-          <button
-            key="cancel-online"
-            className="btn-action cancel"
-            onClick={() => onCancelOnline && onCancelOnline(order)}
-            disabled={loadingAction !== null}
-            title="Cancel online order (Shop Issue vs Customer Fault)"
-          >
-            <FaBan /> Cancel Order
-          </button>
-        );
-      }
-
-      // Manager controls: Edit items/details/payment method (Cash/UPI)
-      if (
-        ["pending", "accepted", "preparing", "ready"].includes(status)
-      ) {
-        actionButtons.push(
-          <button
-            key="edit-order"
-            className="btn-action edit"
-            onClick={() => onEditWalkIn && onEditWalkIn(order)}
-            disabled={loadingAction !== null}
-            title="Edit items, customer details, or payment method (Cash / UPI)"
-          >
-            <FaEdit /> Edit Order
-          </button>
-        );
-
-        if (order.order_type === "walkin") {
-          actionButtons.push(
-            <button
-              key="cancel-walkin"
-              className="btn-action cancel"
-              onClick={() => onCancelWalkIn && onCancelWalkIn(order)}
-              disabled={loadingAction !== null}
-              title="Cancel this walk-in order with a reason"
-            >
-              <FaBan /> Cancel
-            </button>
-          );
-        }
-      }
     }
 
     return actionButtons;
@@ -354,7 +320,84 @@ const OrderCard = memo(({
           </div>
           <small>{order.ordered_at ? formatDateTime(order.ordered_at) : "-"}</small>
         </div>
-        <span className={`status-badge ${order.status}`}>{order.status}</span>
+        <div className="order-header-right">
+          <span className={`status-badge ${order.status}`}>{order.status}</span>
+          
+          {/* Three-dots (kebab) menu for Edit, Cancel, Reject, and Reprint */}
+          <div className="kebab-menu-container" ref={menuRef}>
+            <button
+              className={`btn-kebab-menu ${menuOpen ? "active" : ""}`}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              title="More options"
+              aria-label="More options"
+            >
+              <FaEllipsisV />
+            </button>
+            {menuOpen && (
+              <div className="kebab-dropdown-menu">
+                {/* Edit Order */}
+                {!isPreparingStaff && ["pending", "accepted", "preparing", "ready"].includes(order.status) && (
+                  <button
+                    className="dropdown-item edit"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onEditWalkIn && onEditWalkIn(order);
+                    }}
+                    title="Edit items, customer details, or payment method"
+                  >
+                    <FaEdit /> Edit Order
+                  </button>
+                )}
+
+                {/* Reprint Receipt (if already printed) */}
+                {isPrinted && (
+                  <button
+                    className="dropdown-item print"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onPrint(order);
+                    }}
+                    title="Reprint receipt"
+                  >
+                    <FaPrint /> Reprint Receipt
+                  </button>
+                )}
+
+                {/* Reject Order (for pending orders) */}
+                {!isPreparingStaff && order.status === "pending" && (
+                  <button
+                    className="dropdown-item reject"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onCancelOnline ? onCancelOnline(order) : handleReject(order.id);
+                    }}
+                    title="Reject order"
+                  >
+                    <FaTimes /> Reject Order
+                  </button>
+                )}
+
+                {/* Cancel Order (for accepted, preparing, ready orders) */}
+                {!isPreparingStaff && ["accepted", "preparing", "ready"].includes(order.status) && (
+                  <button
+                    className="dropdown-item cancel"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (order.order_type === "walkin") {
+                        onCancelWalkIn && onCancelWalkIn(order);
+                      } else {
+                        onCancelOnline && onCancelOnline(order);
+                      }
+                    }}
+                    title="Cancel order"
+                  >
+                    <FaBan /> Cancel Order
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Customer & Order Info */}
@@ -677,6 +720,19 @@ const FilterBar = ({ search, setSearch, selectedDate, setSelectedDate, onRefresh
   );
 };
 
+// Small top-right toast that doesn't block or dim the background
+const Toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2200,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  }
+});
+
 // ---------- Main Component ----------
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -695,6 +751,30 @@ export default function Orders() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedOrderType, setSelectedOrderType] = useState('online');
+
+  // Printed receipts tracking state (persisted in localStorage)
+  const [printedOrderIds, setPrintedOrderIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("rotiwala_printed_order_ids");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  const markOrderPrinted = useCallback((orderId) => {
+    if (!orderId) return;
+    setPrintedOrderIds((prev) => {
+      const next = new Set(prev);
+      next.add(String(orderId));
+      try {
+        localStorage.setItem("rotiwala_printed_order_ids", JSON.stringify(Array.from(next)));
+      } catch (e) {
+        console.error("Error storing printed order ids:", e);
+      }
+      return next;
+    });
+  }, []);
 
   // Walk-in order edit state
   const [editingWalkInOrder, setEditingWalkInOrder] = useState(null);
@@ -774,8 +854,19 @@ export default function Orders() {
         default: return;
       }
       await loadOrders();
+      const actionTitles = {
+        accept: "Order Accepted",
+        preparing: "Start Preparing",
+        ready: "Order Ready",
+        payment: "Payment Recorded",
+        collected: "Order Completed",
+      };
+      Toast.fire({
+        icon: "success",
+        title: actionTitles[action] || "Order Updated",
+      });
     } catch (error) {
-      Swal.fire("Error", error?.response?.data?.error || "Action failed", "error");
+      Toast.fire({ icon: "error", title: error?.response?.data?.error || "Action failed" });
     }
   }, [loadOrders]);
 
@@ -783,8 +874,12 @@ export default function Orders() {
     try {
       await rejectOrder(id, reason);
       await loadOrders();
+      Toast.fire({
+        icon: "info",
+        title: "Order Rejected",
+      });
     } catch {
-      Swal.fire("Error", "Unable to reject order", "error");
+      Toast.fire({ icon: "error", title: "Unable to reject order" });
     }
   }, [loadOrders]);
 
@@ -850,7 +945,8 @@ export default function Orders() {
     setSelectedOrderId(order.id);
     setSelectedOrderType(order.order_type || 'online');
     setShowReceipt(true);
-  }, []);
+    markOrderPrinted(order.id);
+  }, [markOrderPrinted]);
 
   // ----- Delivery Driver Assignment Handler -----
   const handleAssignDriver = useCallback(async (order) => {
@@ -909,12 +1005,10 @@ export default function Orders() {
               Swal.showLoading();
               try {
                 const res = await autoAssignDelivery(order.id);
-                Swal.fire({
+                Swal.close();
+                Toast.fire({
                   icon: "success",
-                  title: "Driver Assigned!",
-                  text: `Order #${order.order_number} auto-assigned to ${res.delivery_boy_name || "driver"}.`,
-                  timer: 2500,
-                  showConfirmButton: false,
+                  title: `Auto-assigned to ${res.delivery_boy_name || "driver"}`,
                 });
                 await loadOrders();
               } catch (err) {
@@ -940,18 +1034,16 @@ export default function Orders() {
       if (formValues && formValues.boyId) {
         Swal.showLoading();
         await assignDeliveryBoy(order.id, formValues.boyId);
-        Swal.fire({
+        Swal.close();
+        Toast.fire({
           icon: "success",
-          title: "Driver Assigned!",
-          text: `Delivery driver assigned successfully to Order #${order.order_number}.`,
-          timer: 2500,
-          showConfirmButton: false,
+          title: `Driver assigned to #${order.order_number}`,
         });
         await loadOrders();
       }
     } catch (err) {
       console.error(err);
-      Swal.fire("Error", err?.response?.data?.error || "Failed to assign delivery driver", "error");
+      Toast.fire({ icon: "error", title: err?.response?.data?.error || "Failed to assign driver" });
     }
   }, [loadOrders]);
 
@@ -978,16 +1070,13 @@ export default function Orders() {
     if (isConfirmed) {
       try {
         await collectedOrder(order.id);
-        Swal.fire({
+        Toast.fire({
           icon: "success",
-          title: "Dispatched!",
-          text: `Order #${order.order_number} marked handed over to ${driverName}.`,
-          timer: 2000,
-          showConfirmButton: false,
+          title: `Dispatched to ${driverName}`,
         });
         await loadOrders();
       } catch (err) {
-        Swal.fire("Error", err?.response?.data?.error || "Failed to update order status", "error");
+        Toast.fire({ icon: "error", title: err?.response?.data?.error || "Failed to dispatch order" });
       }
     }
   }, [loadOrders]);
@@ -1178,6 +1267,8 @@ export default function Orders() {
                 onCancelOnline={(ord) => setCancellingOnlineOrder(ord)}
                 onAssignDriver={handleAssignDriver}
                 onHandToDriver={handleHandToDriver}
+                isPrinted={printedOrderIds.has(String(order.id)) || Boolean(order.is_printed)}
+                onMarkPrinted={markOrderPrinted}
               />
             ))
           )}
@@ -1222,6 +1313,7 @@ export default function Orders() {
             setSelectedOrderId(null);
             setSelectedOrderType('online');
           }}
+          onPrinted={markOrderPrinted}
         />
       )}
     </div>

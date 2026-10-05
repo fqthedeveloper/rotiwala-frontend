@@ -7,22 +7,24 @@ import api from './api';
 // ============================================================
 
 /**
- * Get all delivery boys for the manager's shop
+ * Get all delivery boys for the manager's shop (or filtered by shop for admin)
  */
-export const getDeliveryBoys = async () => {
-  const response = await api.get('/delivery/boys/');
+export const getDeliveryBoys = async (params = {}) => {
+  const response = await api.get('/delivery/boys/', { params });
   return response.data;
 };
 
 /**
  * Create a new delivery boy profile
- * @param {Object} data - { phone, full_name } (no user ID needed)
+ * @param {Object} data - { phone, full_name, shop? }
  */
 export const createDeliveryBoy = async (data) => {
-  const response = await api.post('/delivery/boys/', {
+  const payload = {
     phone: data.phone,
     full_name: data.full_name,
-  });
+  };
+  if (data.shop) payload.shop = data.shop;
+  const response = await api.post('/delivery/boys/', payload);
   return response.data;
 };
 
@@ -51,6 +53,15 @@ export const toggleOnline = async (id) => {
  */
 export const toggleAvailable = async (id) => {
   const response = await api.post(`/delivery/boys/${id}/toggle_available/`);
+  return response.data;
+};
+
+/**
+ * Get delivery boy complete history (orders, km/distance, statistics)
+ * @param {number} id
+ */
+export const getDeliveryBoyHistory = async (id) => {
+  const response = await api.get(`/delivery/boys/${id}/history/`);
   return response.data;
 };
 

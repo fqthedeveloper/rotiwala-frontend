@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Upload, X, Check, Utensils } from 'lucide-react';
+import { ArrowLeft, Upload, X, Check, Utensils, Plus, Trash2, Layers } from 'lucide-react';
 import { createMenuItem } from '../../../service/menuItemService';
 import { getCategories } from '../../../service/categoryService';
 import { getShops } from '../../../service/shopService';
@@ -60,6 +60,38 @@ const AddMenuItem = () => {
 
     loadData();
   }, []);
+
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState([]);
+
+  const handleToggleVariants = (e) => {
+    const checked = e.target.checked;
+    setHasVariants(checked);
+    if (checked && variants.length === 0) {
+      setVariants([
+        { name: 'Normal / Medium', price: formData.base_price || '', is_available: true },
+        { name: 'Large', price: '', is_available: true },
+        { name: 'Butter', price: '', is_available: true },
+      ]);
+    }
+  };
+
+  const handleAddVariant = () => {
+    setVariants((prev) => [
+      ...prev,
+      { name: '', price: '', is_available: true },
+    ]);
+  };
+
+  const handleRemoveVariant = (index) => {
+    setVariants((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVariantChange = (index, field, value) => {
+    setVariants((prev) =>
+      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
+    );
+  };
 
   const handleTextChange = (e) => {
     const { name, value } = e.target;
@@ -125,17 +157,43 @@ const AddMenuItem = () => {
       toast.error('Please enter the dish name');
       return;
     }
-    if (!formData.base_price || Number(formData.base_price) <= 0) {
-      toast.error('Please enter a valid price');
-      return;
+    let basePriceToSave = formData.base_price;
+    let validVariants = [];
+
+    if (hasVariants) {
+      validVariants = variants
+        .map((v) => ({
+          name: v.name.trim(),
+          price: Number(v.price),
+          is_available: v.is_available !== false,
+        }))
+        .filter((v) => v.name && v.price > 0);
+
+      if (validVariants.length === 0) {
+        toast.error('Please add at least one variant with a valid name and price');
+        return;
+      }
+      if (!basePriceToSave || Number(basePriceToSave) <= 0) {
+        basePriceToSave = validVariants[0].price;
+      }
+    } else {
+      if (!formData.base_price || Number(formData.base_price) <= 0) {
+        toast.error('Please enter a valid price');
+        return;
+      }
     }
 
     const data = new FormData();
     data.append('category', formData.category);
     data.append('name', formData.name.trim());
     data.append('description', formData.description.trim());
-    data.append('base_price', formData.base_price);
+    data.append('base_price', basePriceToSave);
     data.append('is_available', formData.is_available);
+    data.append('is_active', true);
+
+    if (hasVariants && validVariants.length > 0) {
+      data.append('variants', JSON.stringify(validVariants));
+    }
 
     if (userRole === 'super_admin' && formData.shop) {
       data.append('shop', formData.shop);
@@ -257,18 +315,93 @@ const AddMenuItem = () => {
 
               {/* Price */}
               <div className="menu-form-group">
-                <label className="menu-form-label">Price (₹) *</label>
+                <label className="menu-form-label">
+                  {hasVariants ? 'Base / Starting Price (₹)' : 'Price (₹) *'}
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   name="base_price"
                   className="menu-form-input"
-                  placeholder="e.g. 25.00"
+                  placeholder={hasVariants ? 'Optional (auto-set from first variant)' : 'e.g. 25.00'}
                   value={formData.base_price}
                   onChange={handleTextChange}
-                  required
+                  required={!hasVariants}
                 />
+              </div>
+
+              {/* Product Variants (Optional) */}
+              <div className="menu-form-group" style={{ gridColumn: '1 / -1' }}>
+                <div className="p-3 rounded-3 border" style={{ background: '#fdfbf7', borderColor: '#e2d9cc' }}>
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <label className="d-flex align-items-center gap-2 m-0 fw-bold text-dark" style={{ cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={hasVariants}
+                        onChange={handleToggleVariants}
+                        style={{ width: '18px', height: '18px', accentColor: '#731322' }}
+                      />
+                      <Layers size={18} className="text-warning" />
+                      <span>Has Different Variants (e.g. Normal, Large, Butter)</span>
+                    </label>
+                    {hasVariants && (
+                      <button
+                        type="button"
+                        onClick={handleAddVariant}
+                        className="btn btn-sm btn-outline-dark d-inline-flex align-items-center gap-1 rounded-pill px-3"
+                      >
+                        <Plus size={14} /> Add Variant
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="small text-muted mb-2">
+                    Enable this if this food item comes in multiple sizes or varieties (e.g. Afghani Naan: Normal ₹15, Large ₹25, Butter ₹35). Customers will select a variant before adding to cart.
+                  </p>
+
+                  {hasVariants && (
+                    <div className="d-flex flex-column gap-2 mt-2">
+                      {variants.map((variant, idx) => (
+                        <div
+                          key={idx}
+                          className="d-flex align-items-center gap-2 p-2 rounded-2 bg-white border"
+                        >
+                          <input
+                            type="text"
+                            placeholder="Variant Name (e.g. Normal, Large, Butter)"
+                            className="form-control form-control-sm"
+                            value={variant.name}
+                            onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
+                            required
+                          />
+                          <div className="input-group input-group-sm" style={{ maxWidth: '160px' }}>
+                            <span className="input-group-text">₹</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Price"
+                              className="form-control"
+                              value={variant.price}
+                              onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger p-1"
+                            onClick={() => handleRemoveVariant(idx)}
+                            title="Remove variant"
+                            disabled={variants.length <= 1}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Description */}

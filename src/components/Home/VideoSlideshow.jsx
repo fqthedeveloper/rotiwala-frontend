@@ -125,19 +125,19 @@ const VideoSlideshow = () => {
     const currentVideo = videos[currentIndex];
 
     if (currentVideo.video_type === 'upload' && currentVideo.full_video_src) {
+      video.muted = isMuted;
+
       if (video.src !== currentVideo.full_video_src) {
         video.src = currentVideo.full_video_src;
         video.poster = currentVideo.full_poster || '';
         video.load();
       }
 
-      video.muted = isMuted;
-
       if (isPlaying) {
         const playPromise = video.play();
         if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn('Autoplay prevented or interrupted:', err);
+          playPromise.catch(() => {
+            // Browser autoplay prevented or interrupted without user gesture
           });
         }
       } else {
@@ -168,9 +168,8 @@ const VideoSlideshow = () => {
     }
   };
 
-  // HTML5 Video error fallback: if video fails to play, auto-skip after 3s
+  // HTML5 Video error fallback: if video fails to play, auto-skip after 3s (only if multiple videos)
   const handleVideoError = () => {
-    console.error('Video failed to play, scheduling advance...');
     if (videos.length > 1) {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = setTimeout(() => {
@@ -493,6 +492,7 @@ const VideoSlideshow = () => {
               ref={videoRef}
               playsInline
               preload="auto"
+              poster={currentVideo?.full_poster || ''}
               autoPlay={isPlaying}
               muted={isMuted}
               loop={videos.length === 1} // Continuous loop if single video

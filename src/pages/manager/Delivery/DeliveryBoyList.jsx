@@ -11,15 +11,17 @@ import {
   createDeliveryBoy, updateDeliveryBoy, getOrderTracking,
 } from '../../../service/deliveryService';
 import DeliveryTrackingMap from './DeliveryTrackingMap';
+import DeliveryBoyDetailModal from './DeliveryBoyDetailModal';
 import '../CSS/DeliveryBoy.css';
 
-const DeliveryBoyList = () => {
+const DeliveryBoyList = ({ shopId, shops, isSuperAdmin }) => {
   const [boys, setBoys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBoy, setEditingBoy] = useState(null);
   const [formData, setFormData] = useState({ full_name: '', phone: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [selectedBoyDetail, setSelectedBoyDetail] = useState(null);
 
   const [trackingModal, setTrackingModal] = useState({
     open: false,
@@ -48,7 +50,8 @@ const DeliveryBoyList = () => {
   const loadBoys = async () => {
     setLoading(true);
     try {
-      const data = await getDeliveryBoys();
+      const params = shopId ? { shop: shopId } : {};
+      const data = await getDeliveryBoys(params);
       // Ensure current assignments are sorted newest first ("upside"), oldest last ("downside")
       const sortedBoys = (data || []).map((boy) => {
         if (boy.current_assignments && Array.isArray(boy.current_assignments)) {
@@ -71,7 +74,7 @@ const DeliveryBoyList = () => {
 
   useEffect(() => {
     loadBoys();
-  }, []);
+  }, [shopId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -92,7 +95,9 @@ const DeliveryBoyList = () => {
         await updateDeliveryBoy(editingBoy.id, { full_name: formData.full_name, phone: formData.phone });
         Swal.fire('Updated', 'Delivery boy updated successfully', 'success');
       } else {
-        await createDeliveryBoy({ full_name: formData.full_name, phone: formData.phone });
+        const payload = { full_name: formData.full_name, phone: formData.phone };
+        if (shopId) payload.shop = shopId;
+        await createDeliveryBoy(payload);
         Swal.fire('Added', 'Delivery boy added successfully', 'success');
       }
       resetForm();
@@ -221,8 +226,30 @@ const DeliveryBoyList = () => {
                 boys.map((boy, index) => (
                   <tr key={boy.id}>
                     <td>{index + 1}</td>
-                    <td><strong className="dm-boy-name">{boy.full_name}</strong></td>
-                    <td><span className="d-flex align-items-center"><FaPhoneAlt size={10} className="me-2 text-muted" />{boy.phone}</span></td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-start text-decoration-none dm-clickable-name"
+                        onClick={() => setSelectedBoyDetail(boy)}
+                        title="Click to view delivery history & KM details"
+                      >
+                        <strong className="dm-boy-name text-primary">{boy.full_name}</strong>
+                        <span className="badge bg-light text-primary border ms-1 small">Details</span>
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-start text-decoration-none text-dark dm-clickable-phone"
+                        onClick={() => setSelectedBoyDetail(boy)}
+                        title="Click to view delivery history & KM details"
+                      >
+                        <span className="d-flex align-items-center">
+                          <FaPhoneAlt size={10} className="me-2 text-primary" />
+                          <span className="dm-phone-text">{boy.phone}</span>
+                        </span>
+                      </button>
+                    </td>
                     <td><span className={`badge dm-status-badge ${boy.is_online ? 'bg-success' : 'bg-secondary'}`}>{boy.is_online ? <><FaCheck className="me-1" /> Online</> : <><FaTimes className="me-1" /> Offline</>}</span></td>
                     <td><span className={`badge dm-status-badge ${boy.is_available ? 'bg-success' : 'bg-danger'}`}>{boy.is_available ? 'Available' : 'Busy'}</span></td>
                     <td><span className="fw-medium">{boy.total_deliveries}</span></td>
@@ -271,7 +298,30 @@ const DeliveryBoyList = () => {
             <div className="card mb-3 dm-card-item" key={boy.id}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-start mb-2">
-                  <div><strong className="dm-boy-name">{boy.full_name}</strong><div className="text-muted small d-flex align-items-center mt-1"><FaPhoneAlt size={10} className="me-2" />{boy.phone}</div></div>
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-start text-decoration-none dm-clickable-name"
+                      onClick={() => setSelectedBoyDetail(boy)}
+                      title="Click to view delivery history & KM details"
+                    >
+                      <strong className="dm-boy-name text-primary">{boy.full_name}</strong>
+                      <span className="badge bg-light text-primary border ms-1 small">Details</span>
+                    </button>
+                    <div className="mt-1">
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-start text-decoration-none text-muted small dm-clickable-phone"
+                        onClick={() => setSelectedBoyDetail(boy)}
+                        title="Click to view delivery history & KM details"
+                      >
+                        <span className="d-flex align-items-center">
+                          <FaPhoneAlt size={10} className="me-2 text-primary" />
+                          <span className="dm-phone-text">{boy.phone}</span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                   <span className="text-muted small">#{index + 1}</span>
                 </div>
                 <div className="d-flex flex-wrap gap-2 mb-3">
@@ -366,6 +416,16 @@ const DeliveryBoyList = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Delivery Boy Details & History Modal */}
+      {selectedBoyDetail && (
+        <DeliveryBoyDetailModal
+          boyId={selectedBoyDetail.id}
+          boyName={selectedBoyDetail.full_name}
+          boyPhone={selectedBoyDetail.phone}
+          onClose={() => setSelectedBoyDetail(null)}
+        />
       )}
     </div>
   );

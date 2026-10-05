@@ -152,10 +152,16 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
           </div>
 
           {expandedSections.orders && (
-            <NavLink to="/admin/orders" onClick={closeSidebar}>
-              <i className="bi bi-bag"></i>
-              Orders
-            </NavLink>
+            <>
+              <NavLink to="/admin/orders" onClick={closeSidebar}>
+                <i className="bi bi-bag"></i>
+                Orders
+              </NavLink>
+              <NavLink to="/admin/delivery" onClick={closeSidebar}>
+                <i className="bi bi-truck"></i>
+                Delivery
+              </NavLink>
+            </>
           )}
 
           {/* ===== Customers ===== */}

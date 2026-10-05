@@ -163,7 +163,14 @@ const Cart = () => {
                 <div className="card-body">
                   <div className="item-row">
                     <div className="item-details">
-                      <h5 className="item-name">{item.item_name}</h5>
+                      <h5 className="item-name">
+                        {item.item_name}
+                        {item.variant_name && (
+                          <span className="badge bg-light text-dark border ms-2" style={{ fontSize: "0.8rem", fontWeight: 600 }}>
+                            {item.variant_name}
+                          </span>
+                        )}
+                      </h5>
                       <p className="item-price-text">Price: ₹{item.item_price}</p>
                     </div>
 

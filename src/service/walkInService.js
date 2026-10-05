@@ -12,6 +12,14 @@ export const searchCustomer = async (phone) => {
   return response.data;
 };
 
+export const getOrCreateCustomer = async (phone, name = "") => {
+  const response = await api.post("/orders/customer-search/", {
+    phone,
+    name,
+  });
+  return response.data;
+};
+
 /*
 =========================================
 CREATE NEW WALK-IN CART
@@ -57,11 +65,15 @@ export const updateWalkInCart = async (cartId, data) => {
 ADD ITEM TO CART
 =========================================
 */
-export const addItemToCart = async (cartId, menuItem, quantity = 1) => {
-  const response = await api.post(`/orders/walkin/cart/${cartId}/add-item/`, {
+export const addItemToCart = async (cartId, menuItem, quantity = 1, variantId = null) => {
+  const payload = {
     menu_item: menuItem,
     quantity,
-  });
+  };
+  if (variantId) {
+    payload.variant = variantId;
+  }
+  const response = await api.post(`/orders/walkin/cart/${cartId}/add-item/`, payload);
   return response.data;
 };
 
@@ -84,6 +96,16 @@ DELETE CART ITEM
 */
 export const deleteCartItem = async (itemId) => {
   const response = await api.delete(`/orders/walkin/cart/item/${itemId}/delete/`);
+  return response.data;
+};
+
+/*
+=========================================
+CLEAR ALL CART ITEMS
+=========================================
+*/
+export const clearWalkInCartItems = async (cartId) => {
+  const response = await api.post(`/orders/walkin/cart/${cartId}/clear-items/`);
   return response.data;
 };
 

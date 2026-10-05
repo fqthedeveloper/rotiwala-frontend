@@ -26,6 +26,7 @@ import {
   updateMenuItem,
 } from '../../../service/menuItemService';
 import { getCategories } from '../../../service/categoryService';
+import { getServerImageUrl } from '../../../utils/imageUtils';
 import './CSS/MenuItems.css';
 
 const MenuItems = () => {
@@ -346,16 +347,39 @@ const MenuItems = () => {
               <div className="menu-item-image-wrapper">
                 {item.image_url || item.image ? (
                   <img
-                    src={item.image_url || item.image}
+                    src={getServerImageUrl(item.image_url || item.image)}
                     alt={item.name}
                     className="menu-item-img"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextElementSibling) {
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }
+                    }}
                   />
-                ) : (
-                  <div className="menu-item-img-placeholder">
-                    <Utensils size={36} />
-                  </div>
+                ) : null}
+                <div
+                  className="menu-item-img-placeholder"
+                  style={{ display: item.image_url || item.image ? 'none' : 'flex' }}
+                >
+                  <Utensils size={36} />
+                </div>
+                <span className="menu-item-price-tag">
+                  {item.has_variants && item.min_price != null
+                    ? (item.min_price === item.max_price
+                        ? `₹${item.min_price}`
+                        : `₹${item.min_price} - ₹${item.max_price}`)
+                    : `₹${item.base_price}`}
+                </span>
+                {item.has_variants && (
+                  <span
+                    className="badge text-white position-absolute"
+                    style={{ top: 12, left: 12, fontSize: '0.7rem', zIndex: 2, background: 'rgba(115, 19, 34, 0.9)', backdropFilter: 'blur(4px)' }}
+                  >
+                    <Layers size={11} className="me-1 text-warning" />
+                    {item.variants?.length || 0} Variants
+                  </span>
                 )}
-                <span className="menu-item-price-tag">₹{item.base_price}</span>
                 {item.category_name && (
                   <span className="menu-item-category-tag">
                     <Tag size={11} className="me-1" />
@@ -437,7 +461,7 @@ const MenuItems = () => {
                     <div className="d-flex align-items-center gap-3">
                       {item.image_url || item.image ? (
                         <img
-                          src={item.image_url || item.image}
+                          src={getServerImageUrl(item.image_url || item.image)}
                           alt={item.name}
                           style={{
                             width: 46,
@@ -445,23 +469,28 @@ const MenuItems = () => {
                             borderRadius: 10,
                             objectFit: 'cover',
                           }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: 10,
-                            background: '#fef3c7',
-                            color: '#d97706',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextElementSibling) {
+                              e.target.nextElementSibling.style.display = 'flex';
+                            }
                           }}
-                        >
-                          <Utensils size={20} />
-                        </div>
-                      )}
+                        />
+                      ) : null}
+                      <div
+                        style={{
+                          width: 46,
+                          height: 46,
+                          borderRadius: 10,
+                          background: '#fef3c7',
+                          color: '#d97706',
+                          display: item.image_url || item.image ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Utensils size={20} />
+                      </div>
                       <div>
                         <div className="fw-bold text-dark">{item.name}</div>
                         {item.description && (
@@ -478,7 +507,23 @@ const MenuItems = () => {
                     </span>
                   </td>
                   <td>
-                    <span className="fw-bold text-dark fs-6">₹{item.base_price}</span>
+                    <div>
+                      <span className="fw-bold text-dark fs-6">
+                        {item.has_variants && item.min_price != null
+                          ? (item.min_price === item.max_price
+                              ? `₹${item.min_price}`
+                              : `₹${item.min_price} - ₹${item.max_price}`)
+                          : `₹${item.base_price}`}
+                      </span>
+                      {item.has_variants && (
+                        <div className="mt-1">
+                          <span className="badge bg-light text-dark border" style={{ fontSize: '0.72rem' }}>
+                            <Layers size={10} className="me-1 text-warning" />
+                            {item.variants?.length || 0} Variants
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <button

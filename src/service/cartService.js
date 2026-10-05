@@ -13,14 +13,19 @@ export const getCart = async () => {
 
 export const addToCart = async (
   menuItemId,
-  quantity = 1
+  quantity = 1,
+  variantId = null
 ) => {
+  const payload = {
+    menu_item: menuItemId,
+    quantity,
+  };
+  if (variantId) {
+    payload.variant = variantId;
+  }
   const response = await api.post(
     "/cart/add/",
-    {
-      menu_item: menuItemId,
-      quantity,
-    }
+    payload
   );
 
   return response.data;

@@ -346,7 +346,14 @@ export default function CartPanel({
               >
 
                 <div className="cart-details">
-                  <h5>{item.item_name}</h5>
+                  <h5>
+                    {item.item_name}
+                    {item.variant_name && (
+                      <span className="badge bg-light text-dark border ms-2" style={{ fontSize: "0.72rem", padding: "3px 6px" }}>
+                        {item.variant_name}
+                      </span>
+                    )}
+                  </h5>
                   <span className="cart-unit">
                     ₹{Number(item.item_price).toFixed(2)} each
                   </span>
