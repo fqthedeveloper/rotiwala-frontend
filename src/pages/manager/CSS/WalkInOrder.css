@@ -1332,10 +1332,10 @@
     box-shadow: none;
   }
 
-  /* TOP HALF: 48% height, fixed static header, scrollable cart items */
+  /* TOP HALF: 40% height for cart station, sleek & space-efficient */
   .pos-mobile-upper-half {
-    height: 48%;
-    max-height: 48%;
+    height: 40%;
+    max-height: 40%;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -1346,21 +1346,26 @@
   }
 
   .pos-mobile-upper-half .pos-header-bar {
-    padding: 6px 12px;
+    padding: 4px 10px;
     background: #ffffff;
     border-bottom: 1px solid #f0eee9;
     flex-shrink: 0;
   }
 
   .pos-mobile-upper-half .pos-summary-info {
-    padding: 3px 12px 5px;
+    padding: 2px 10px 3px;
     background: #ffffff;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     border-bottom: 1px solid #dcd6d0;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
+  }
+
+  .pos-mobile-upper-half .pos-info-row {
+    padding: 1px 0;
+    font-size: 0.74rem;
   }
 
   .pos-mobile-upper-half .pos-cart-section {
@@ -1369,7 +1374,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 0 12px 4px;
+    padding: 0 10px 2px;
     background: #ffffff;
   }
 
@@ -1384,9 +1389,9 @@
   .pos-mobile-upper-half .pos-table-head {
     display: flex;
     align-items: center;
-    padding: 3px 0 4px;
+    padding: 2px 0 3px;
     border-bottom: 1.5px solid #292524;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-style: italic;
     font-weight: 800;
     color: #1c1917;
@@ -1395,6 +1400,11 @@
 
   .pos-mobile-upper-half .pos-table-head span {
     text-decoration: underline;
+  }
+
+  .pos-mobile-upper-half .pos-cart-row {
+    padding: 4px 0;
+    font-size: 0.80rem;
   }
 
   .pos-mobile-upper-half .pos-cart-items-scroll {
@@ -1411,36 +1421,46 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 3px 0 2px;
+    padding: 2px 0;
     border-top: 1px dashed #e7e5e4;
     margin-top: auto;
   }
 
   /* SOLID HORIZONTAL DIVIDER BETWEEN HALVES */
   .pos-solid-divider {
-    height: 2.5px;
+    height: 2px;
     background: #292524;
     width: 100%;
     flex-shrink: 0;
     margin: 0;
   }
 
-  /* BOTTOM HALF: 52% remaining, Menu grid + floating action dock + bottom bar */
+  /* BOTTOM HALF: 60% height for menu, cards fully visible without being cut off */
   .pos-mobile-lower-half {
+    height: 60%;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    padding-bottom: 96px; /* space for fixed pos-bottom-bar */
+    padding-bottom: 78px; /* space for compact pos-bottom-bar */
     background: #fbf9f6;
     box-sizing: border-box;
   }
 
   .pos-mobile-lower-half .pos-control-toggles {
     flex-shrink: 0;
-    padding: 6px 10px 4px;
+    padding: 4px 8px 3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .pos-mobile-lower-half .pos-pill-btn {
+    padding: 3px 9px;
+    font-size: 0.72rem;
   }
 
   .pos-mobile-lower-half .pos-menu-body {
@@ -1449,9 +1469,9 @@
     display: flex !important;
     flex-direction: row !important;
     align-items: stretch !important;
-    gap: 8px !important;
+    gap: 6px !important;
     overflow: hidden !important;
-    padding: 2px 8px 8px !important;
+    padding: 2px 8px 6px !important;
     box-sizing: border-box !important;
   }
 
@@ -1460,25 +1480,132 @@
     min-width: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 6px !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
     padding-right: 2px !important;
-    padding-bottom: 20px !important;
+    padding-bottom: 30px !important; /* ensures last card scrolls completely into view */
     box-sizing: border-box !important;
   }
 
+  /* Compact & fully visible cards on mobile */
+  .pos-mobile-lower-half .pos-menu-card {
+    min-height: auto !important;
+    padding: 6px 10px 5px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .pos-mobile-lower-half .pos-card-title {
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 2px !important;
+    padding-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+
+  .pos-mobile-lower-half .pos-card-body-row {
+    margin-bottom: 2px !important;
+  }
+
+  .pos-mobile-lower-half .pos-card-variant-circle {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .pos-mobile-lower-half .pos-circle-code {
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+  }
+
+  .pos-mobile-lower-half .pos-card-price-num {
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+  }
+
+  .pos-mobile-lower-half .pos-card-subvariants {
+    margin-top: 2px !important;
+    padding-top: 3px !important;
+    gap: 4px !important;
+  }
+
+  .pos-mobile-lower-half .pos-subvariant-pill {
+    padding: 2px 7px !important;
+    font-size: 0.68rem !important;
+  }
+
+  /* Prominent & evenly distributed Action Strip covering full height down the screen */
   .pos-mobile-lower-half .pos-action-strip {
     position: static !important;
-    width: 42px !important;
+    width: 48px !important;
+    height: 100% !important;
     flex-shrink: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    justify-content: space-between !important;
     align-items: center !important;
     z-index: 10 !important;
-    padding-top: 2px !important;
+    padding: 2px 0 6px !important;
     box-sizing: border-box !important;
+  }
+
+  .pos-mobile-lower-half .pos-strip-btn {
+    width: 44px !important;
+    height: 44px !important;
+    max-height: 15% !important;
+    aspect-ratio: 1 / 1 !important;
+    font-size: 1.12rem !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    border: 1.5px solid #d4cdc5 !important;
+    background: #ffffff !important;
+    color: var(--pos-primary) !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .pos-mobile-lower-half .pos-strip-btn.active {
+    background: var(--pos-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--pos-primary) !important;
+  }
+
+  .pos-mobile-lower-half .pos-strip-btn.highlight {
+    background: #fef3c7 !important;
+    border-color: #d97706 !important;
+    color: #92400e !important;
+  }
+
+  /* ALL button styling inside strip */
+  .pos-mobile-lower-half .pos-strip-btn:last-child {
+    font-size: 0.90rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px !important;
+  }
+
+  /* Sleek & Compact Fixed Bottom Bar on Mobile */
+  .pos-bottom-bar {
+    padding: 5px 10px 7px !important;
+    gap: 5px !important;
+  }
+
+  .pos-payment-btn {
+    padding: 4px 0 !important;
+    font-size: 0.74rem !important;
+  }
+
+  .pos-action-footer {
+    gap: 8px !important;
+  }
+
+  .pos-btn-save,
+  .pos-btn-bill {
+    padding: 6px 0 !important;
+    font-size: 0.90rem !important;
   }
 
   /* Hide Desktop-only Elements on Mobile */
