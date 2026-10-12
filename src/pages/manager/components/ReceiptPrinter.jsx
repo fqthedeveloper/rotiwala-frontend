@@ -408,9 +408,23 @@ const handleDownloadText = async () => {
           <div className="receipt-info-item">
             <span className="label">Mode</span>
             <span className={`value type-badge ${receiptData?.is_delivery ? "delivery" : "pickup"}`}>
-              {receiptData?.is_delivery ? "DELIVERY" : (receiptData?.order_type === "walkin" ? "WALK-IN" : "ONLINE PICKUP")}
+              {receiptData?.is_delivery
+                ? "DELIVERY"
+                : (receiptData?.order_type === "walkin"
+                  ? (receiptData?.order_taking_method === "call" ? "WALK-IN (CALL)" : "WALK-IN (COUNTER)")
+                  : "ONLINE PICKUP")}
             </span>
           </div>
+          {receiptData?.order_type === "walkin" && (
+            <div className="receipt-info-item">
+              <span className="label">Prep</span>
+              <span className="value">
+                {receiptData?.prep_time && receiptData.prep_time !== "NOW"
+                  ? receiptData.prep_time
+                  : "NOW"}
+              </span>
+            </div>
+          )}
           <div className="receipt-info-item">
             <span className="label">Date</span>
             <span className="value date-val">
@@ -435,7 +449,13 @@ const handleDownloadText = async () => {
           </div>
           <div className="customer-detail">
             <FaMoneyBill className="icon" />
-            <span>{receiptData?.payment_method?.toUpperCase()} - {receiptData?.payment_status?.toUpperCase()}</span>
+            <span>
+              {(() => {
+                const pm = (receiptData?.payment_method || "cash").toLowerCase();
+                const pmText = pm === "parts" ? "SPLIT / PARTS" : pm === "credit" ? "CREDIT" : pm.toUpperCase();
+                return `${pmText} - ${receiptData?.payment_status?.toUpperCase()}`;
+              })()}
+            </span>
           </div>
         </div>
 

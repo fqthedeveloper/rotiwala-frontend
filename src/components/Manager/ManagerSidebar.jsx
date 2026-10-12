@@ -6,7 +6,7 @@ import { logoutConfirm } from "../../utils/alerts";
 import { FaTruck } from 'react-icons/fa';
 
 
-const ManagerSidebar = ({ isOpen, closeSidebar }) => {
+const ManagerSidebar = ({ isOpen, closeSidebar, isCollapsed = false }) => {
   const navigate = useNavigate();
 
   const [expandedSections, setExpandedSections] = useState(() => {
@@ -63,7 +63,7 @@ const ManagerSidebar = ({ isOpen, closeSidebar }) => {
         onClick={closeSidebar}
       />
 
-      <aside className={`admin-sidebar ${isOpen ? "open" : ""}`}>
+      <aside className={`admin-sidebar ${isOpen ? "open" : ""} ${isCollapsed ? "collapsed" : ""}`}>
         <div className="sidebar-logo">
           <h3>🍽️ Roti Waale</h3>
           <p>{isPreparingStaff ? "Kitchen Staff Panel" : "Manager Panel"}</p>

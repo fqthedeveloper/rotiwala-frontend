@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { FaBars, FaStore, FaDotCircle } from "react-icons/fa";
 import ManagerSidebar from "./ManagerSidebar";
 import "./ManagerSidebar.css";
 
 const ManagerLayout = () => {
+  const location = useLocation();
+  const isWalkIn =
+    location.pathname.includes("walkin") ||
+    location.pathname.includes("walk-in");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState(localStorage.getItem("role") || "");
   const [shopName, setShopName] = useState("");
@@ -30,7 +34,7 @@ const ManagerLayout = () => {
         <header className="admin-topbar">
           <button
             className="admin-menu-toggle d-lg-none"
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setSidebarOpen((prev) => !prev)}
             aria-label="Toggle Sidebar Navigation"
           >
             <FaBars />

@@ -14,6 +14,8 @@ import {
   FaTimesCircle,
   FaUserPlus,
   FaSpinner,
+  FaUser,
+  FaThLarge,
 } from "react-icons/fa";
 
 import {
@@ -88,6 +90,7 @@ export default function WalkInOrder() {
   // ---- Modals & Drawer ----
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [isPrepModalOpen, setIsPrepModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -109,6 +112,30 @@ export default function WalkInOrder() {
   const reconnectRef = useRef(true);
   const reconnectTimerRef = useRef(null);
 
+  // ---- Responsive Screen & View Mode ----
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Cart popup modal state (replaces sidebar layout with dedicated popup)
+  const [isCartPopupOpen, setIsCartPopupOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (isCartPopupOpen) setIsCartPopupOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCartPopupOpen]);
+
   const shopId = localStorage.getItem("selected_shop");
 
   // ==========================================
@@ -123,6 +150,9 @@ export default function WalkInOrder() {
           customer_name: "Walk-In Customer",
           customer_phone: "",
           payment_method: "cash",
+          order_taking_method: "walkin",
+          prep_timing: "now",
+          prep_time: "NOW",
           notes: "",
         });
         list = [newCart];
@@ -146,8 +176,11 @@ export default function WalkInOrder() {
     try {
       const cart = await getWalkInCart(id);
       setSelectedCart(cart);
-      if (cart.notes) setOrderNotes(cart.notes);
+      if (cart.notes !== undefined) setOrderNotes(cart.notes || "");
       if (cart.payment_method) setPaymentMethod(cart.payment_method);
+      if (cart.order_taking_method) setOrderType(cart.order_taking_method);
+      if (cart.prep_timing) setPrepTiming(cart.prep_timing);
+      if (cart.prep_time) setPrepTime(cart.prep_time);
       const phoneClean = (cart.customer_phone || "").replace("+91", "").replace(/^91/, "");
       setCustFormName(cart.customer_name || "Walk-In Customer");
       setCustFormPhone(phoneClean);
@@ -180,6 +213,9 @@ export default function WalkInOrder() {
             customer_name: "Walk-In Customer",
             customer_phone: "",
             payment_method: "cash",
+            order_taking_method: "walkin",
+            prep_timing: "now",
+            prep_time: "NOW",
             notes: "",
           });
           setCarts([fresh]);
@@ -246,6 +282,12 @@ export default function WalkInOrder() {
     }
   }, [selectedCartId, loadSelectedCart]);
 
+  // Keep a ref of selectedCartId for socket handler to avoid reconnecting on cart switch
+  const selectedCartIdRef = useRef(selectedCartId);
+  useEffect(() => {
+    selectedCartIdRef.current = selectedCartId;
+  }, [selectedCartId]);
+
   // ==========================================
   // 5. WEBSOCKET SYNC
   // ==========================================
@@ -267,14 +309,14 @@ export default function WalkInOrder() {
           const data = JSON.parse(event.data);
           if (data.type === "new_order" || data.type === "order_update") {
             loadCarts();
-            if (selectedCartId) loadSelectedCart(selectedCartId);
+            if (selectedCartIdRef.current) loadSelectedCart(selectedCartIdRef.current);
           }
         } catch {}
       };
     } catch (error) {
       console.error(error);
     }
-  }, [loadCarts, loadSelectedCart, selectedCartId]);
+  }, [loadCarts, loadSelectedCart]);
 
   useEffect(() => {
     reconnectRef.current = true;
@@ -314,6 +356,13 @@ export default function WalkInOrder() {
         variantId
       );
       setSelectedCart(updatedCart);
+      setCarts((prev) =>
+        prev.map((c) =>
+          c.id === updatedCart.id
+            ? { ...c, total_items: updatedCart.items?.reduce((s, i) => s + (Number(i.quantity) || 0), 0) || 0 }
+            : c
+        )
+      );
 
       Toast.fire({
         icon: "success",
@@ -362,6 +411,27 @@ export default function WalkInOrder() {
   const handleUpdateItemQty = async (itemId, newQty) => {
     if (newQty < 0) return;
     try {
+      // Optimistic instant feedback
+      setSelectedCart((prev) => {
+        if (!prev || !prev.items) return prev;
+        let nextItems;
+        if (newQty === 0) {
+          nextItems = prev.items.filter((i) => i.id !== itemId);
+        } else {
+          nextItems = prev.items.map((i) =>
+            i.id === itemId
+              ? { ...i, quantity: newQty, total_price: Number(i.item_price) * newQty }
+              : i
+          );
+        }
+        const total = nextItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
+        return {
+          ...prev,
+          items: nextItems,
+          total_amount: total,
+        };
+      });
+
       if (newQty === 0) {
         await deleteCartItem(itemId);
       } else {
@@ -370,6 +440,7 @@ export default function WalkInOrder() {
       if (selectedCartId) await loadSelectedCart(selectedCartId);
     } catch (e) {
       console.error(e);
+      if (selectedCartId) await loadSelectedCart(selectedCartId);
       Toast.fire({ icon: "error", title: "Failed to update item" });
     }
   };
@@ -383,6 +454,9 @@ export default function WalkInOrder() {
         customer_name: "Walk-In Customer",
         customer_phone: "",
         payment_method: "cash",
+        order_taking_method: "walkin",
+        prep_timing: "now",
+        prep_time: "NOW",
         notes: "",
       });
       await loadCarts();
@@ -467,6 +541,8 @@ export default function WalkInOrder() {
     try {
       await updateWalkInCart(selectedCart.id, {
         notes: orderNotes,
+        prep_timing: prepTiming,
+        prep_time: prepTime,
       });
       await loadSelectedCart(selectedCart.id);
       setIsPrepModalOpen(false);
@@ -476,14 +552,48 @@ export default function WalkInOrder() {
     }
   };
 
+  // Toggle order taking method (Walk-In Counter vs Call)
+  const handleToggleOrderTakingMethod = async (method) => {
+    setOrderType(method);
+    if (!selectedCart) return;
+    try {
+      await updateWalkInCart(selectedCart.id, { order_taking_method: method });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Toggle prep timing (Now vs Later)
+  const handleTogglePrepTiming = async (timing) => {
+    setPrepTiming(timing);
+    if (timing === "now") {
+      setPrepTime("NOW");
+      if (selectedCart) {
+        try {
+          await updateWalkInCart(selectedCart.id, { prep_timing: "now", prep_time: "NOW" });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    } else {
+      setIsPrepModalOpen(true);
+    }
+  };
+
   // ==========================================
   // 12. UPDATE PAYMENT METHOD
   // ==========================================
   const handleSelectPaymentMethod = async (method) => {
     setPaymentMethod(method);
+    if (method === "pending" || method === "credit") {
+      setPaymentStatus("unpaid");
+    } else {
+      setPaymentStatus("paid");
+    }
     if (!selectedCart) return;
     try {
-      await updateWalkInCart(selectedCart.id, { payment_method: method });
+      const backendMethod = method === "pending" ? "credit" : method;
+      await updateWalkInCart(selectedCart.id, { payment_method: backendMethod });
     } catch (e) {
       console.error(e);
     }
@@ -500,8 +610,13 @@ export default function WalkInOrder() {
 
     try {
       setPlacingOrder(true);
+      const isUnpaid = paymentMethod === "pending" || paymentMethod === "credit";
       const payload = {
-        payment_status: paymentStatus,
+        payment_status: isUnpaid ? "unpaid" : "paid",
+        payment_method: paymentMethod === "pending" ? "credit" : paymentMethod,
+        order_taking_method: orderType,
+        prep_timing: prepTiming,
+        prep_time: prepTime,
       };
       if (selectedDiscountId) {
         payload.discount_id = selectedDiscountId;
@@ -517,6 +632,7 @@ export default function WalkInOrder() {
       });
 
       const placedOrderId = res.order?.id;
+      setIsCartPopupOpen(false);
       await loadCarts();
 
       if (isBillAndPrint && placedOrderId) {
@@ -536,7 +652,7 @@ export default function WalkInOrder() {
   };
 
   // ==========================================
-  // 14. FILTERED MENU ITEMS
+  // 14. FILTERED MENU ITEMS & DEDICATED VARIANT CARDS
   // ==========================================
   const filteredMenuItems = useMemo(() => {
     let list = menuItems;
@@ -545,10 +661,35 @@ export default function WalkInOrder() {
     }
     const q = searchQuery.toLowerCase().trim();
     if (q) {
-      list = list.filter((item) => item.name.toLowerCase().includes(q));
+      list = list.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.variants?.some((v) => v.name?.toLowerCase().includes(q))
+      );
     }
     return list;
   }, [menuItems, selectedCategoryId, searchQuery]);
+
+  // Check if customer details (phone or custom name) were added
+  const hasCustomerDetails = useMemo(() => {
+    if (!selectedCart) return false;
+    const phone = (selectedCart.customer_phone || "").replace("+91", "").trim();
+    const name = (selectedCart.customer_name || "").trim();
+    const isDefaultName =
+      !name ||
+      name.toLowerCase() === "walk-in customer" ||
+      name.toLowerCase() === "walk-in";
+    return phone.length > 0 || !isDefaultName;
+  }, [selectedCart]);
+
+  // Total Items in active cart
+  const totalItems = useMemo(() => {
+    if (!selectedCart?.items) return 0;
+    return selectedCart.items.reduce(
+      (sum, item) => sum + (Number(item.quantity) || 0),
+      0
+    );
+  }, [selectedCart]);
 
   // Grand Total calculation
   const grandTotal = useMemo(() => {
@@ -561,24 +702,56 @@ export default function WalkInOrder() {
     return num % 1 === 0 ? num.toFixed(1) : num.toFixed(2);
   };
 
-  // Variant shortener helper for cards
-  const getDisplayVariants = (item) => {
-    if (!item.variants || item.variants.length === 0) return [];
-    return item.variants
-      .filter((v) => {
-        if (v.is_active === false || v.is_available === false) return false;
-        const isNormal = /normal|regular|medium/i.test(v.name);
-        if (isNormal && Number(v.price) === Number(item.base_price)) return false;
-        return true;
-      })
-      .map((v) => {
-        let shortName = v.name;
-        if (/butter/i.test(shortName)) shortName = "Butter";
-        else if (/large/i.test(shortName)) shortName = "Large";
-        else if (/small/i.test(shortName)) shortName = "Small";
-        else if (/btr\/gh/i.test(shortName)) shortName = "Btr/Gh";
-        return { ...v, shortName };
-      });
+  // Short 2-word label helper for variant pills (e.g. "Butter", "Large", "Batter")
+  const getShortVariantLabel = (rawName) => {
+    const name = (rawName || "").trim();
+    if (/batter/i.test(name) && /large/i.test(name)) return "Batter";
+    if (/butter/i.test(name) && /large/i.test(name)) return "Butter";
+    if (/butter/i.test(name)) return "Butter";
+    if (/batter/i.test(name)) return "Batter";
+    if (/large/i.test(name)) return "Large";
+    if (/small/i.test(name)) return "Small";
+    if (/half/i.test(name)) return "Half";
+    if (/full/i.test(name)) return "Full";
+    if (/regular|normal|medium/i.test(name)) return "Normal";
+    const words = name.split(/\s+/);
+    return words[0] || name;
+  };
+
+  // Helper to generate short alphabetical kitchen/cashier codes (e.g. AN, AB, LA, LAB, LK, LG)
+  const getVariantShortCode = (item, variant) => {
+    const rawItemName = (item?.name || item?.item_name || "").trim();
+    const varName = (variant?.name || variant?.variant_name || "").trim();
+
+    // Check if item name itself has "Large" or "Small"
+    let itemName = rawItemName;
+    let itemHasLarge = /large/i.test(itemName);
+    if (/^large\s+/i.test(itemName)) {
+      itemName = itemName.replace(/^large\s+/i, "");
+    }
+
+    const itemWords = itemName.split(/\s+/).filter(Boolean);
+    const itemInitial = (itemWords[0] || "A").charAt(0).toUpperCase();
+
+    const isLarge = itemHasLarge || /large/i.test(varName);
+    const isButter = /butter/i.test(varName) || /butter/i.test(rawItemName);
+    const isBatter = /batter/i.test(varName) || /batter/i.test(rawItemName);
+
+    if (isLarge && (isButter || isBatter)) {
+      return `L${itemInitial}B`;
+    }
+    if (isLarge) {
+      return `L${itemInitial}`;
+    }
+    if (isButter || isBatter) {
+      return `${itemInitial}B`;
+    }
+    if (!varName || /normal|regular|medium/i.test(varName)) {
+      return `${itemInitial}N`;
+    }
+
+    const varInitial = varName.charAt(0).toUpperCase();
+    return `${itemInitial}${varInitial}`;
   };
 
   // Item display name helper that extracts base name and variant badge
@@ -595,47 +768,78 @@ export default function WalkInOrder() {
     return { base, variant };
   };
 
-  // Menu cards component reusable across Mobile and Desktop pane
+  // Menu cards component: 1 card per item, showing Normal variant + sub-pills for other variants
   const renderMenuCards = () => (
     <>
       {filteredMenuItems.map((item) => {
-        const variants = getDisplayVariants(item);
+        const activeVariants = (item.variants || []).filter(
+          (v) => v.is_active !== false && v.is_available !== false
+        );
+
+        // Find primary "Normal" variant (or first variant if no normal)
+        const primaryVariant =
+          activeVariants.find((v) => /normal|regular|medium/i.test(v.name)) ||
+          (activeVariants.length > 0 ? activeVariants[0] : null);
+
+        // The remaining variants to display under the main row
+        const otherVariants = activeVariants.filter(
+          (v) => v.id !== primaryVariant?.id
+        );
+
         const isOutOfStock = !item.is_available;
+        const mainPrice = primaryVariant
+          ? Number(primaryVariant.price)
+          : Number(item.base_price);
+        const primaryCode = getVariantShortCode(item, primaryVariant || null);
 
         return (
           <div
             key={item.id}
             className={`pos-menu-card ${isOutOfStock ? "unavailable" : ""}`}
-            onClick={() => !isOutOfStock && handleAddItem(item, null)}
-            title={`Tap to add ${item.name}`}
+            onClick={() =>
+              !isOutOfStock && handleAddItem(item, primaryVariant || null)
+            }
+            title={`Tap to add ${item.name}${primaryVariant ? ` (${primaryVariant.name})` : ""}`}
           >
-            <div className="pos-card-title">{item.name.toUpperCase()}</div>
-            <div className="pos-card-base-price">
-              {Math.round(item.base_price) === Number(item.base_price)
-                ? Math.round(item.base_price)
-                : Number(item.base_price).toFixed(1)}
+            <div className="pos-card-title">{item.name}</div>
+
+            <div className="pos-card-body-row">
+              <div
+                className="pos-card-variant-circle"
+                title={`Variant: ${primaryVariant ? primaryVariant.name : "Normal"} (${primaryCode})`}
+              >
+                <span className="pos-circle-code">{primaryCode}</span>
+              </div>
+
+              <div className="pos-card-price-num">
+                {Math.round(mainPrice)}
+              </div>
             </div>
 
-            {variants.length > 0 && (
-              <div className="pos-card-chips">
-                {variants.map((v) => (
-                  <button
-                    key={v.id}
-                    className="pos-variant-chip"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddItem(item, v);
-                    }}
-                    title={`Tap to add ${item.name} (${v.name})`}
-                  >
-                    <span className="pos-chip-name">{v.shortName}</span>
-                    <span className="pos-chip-price">
-                      {Math.round(v.price) === Number(v.price)
-                        ? Math.round(v.price)
-                        : Number(v.price).toFixed(1)}
-                    </span>
-                  </button>
-                ))}
+            {/* Underneath: Other variants as sleek preference pills with shortcode */}
+            {otherVariants.length > 0 && (
+              <div className="pos-card-subvariants">
+                {otherVariants.map((v) => {
+                  const code = getVariantShortCode(item, v);
+                  const label = getShortVariantLabel(v.name);
+
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      className="pos-subvariant-pill"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddItem(item, v);
+                      }}
+                      title={`Add ${item.name} (${v.name}) [${code}] - ₹${Math.round(v.price)}`}
+                    >
+                      <span className="pos-pill-code">{code}</span>
+                      <span className="pos-pill-sep">·</span>
+                      <span className="pos-pill-label">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -648,8 +852,7 @@ export default function WalkInOrder() {
     <div className="pos-wrapper">
       <div className="pos-layout-outer">
         {/* ========================================================
-            DESKTOP & TABLET LEFT PANE: EXPANDED MENU HUB
-            (Visible on screens >= 768px)
+            DESKTOP MENU HUB (Left Pane >= 992px)
             ======================================================== */}
         <section className="pos-desktop-menu-pane">
           <div className="pos-desktop-toolbar">
@@ -679,7 +882,7 @@ export default function WalkInOrder() {
                 className={`pos-desktop-cat-pill ${selectedCategoryId === "all" ? "active" : ""}`}
                 onClick={() => setSelectedCategoryId("all")}
               >
-                ALL ({menuItems.length})
+                ALL ({filteredMenuItems.length})
               </button>
               {categories.map((cat) => (
                 <button
@@ -699,20 +902,28 @@ export default function WalkInOrder() {
         </section>
 
         {/* ========================================================
-            RIGHT STATION (Desktop) / MAIN PHONE FRAME (Mobile)
+            DESKTOP CART STATION (Right Pane >= 992px)
+            Side-by-side dedicated POS workstation
             ======================================================== */}
-        <div className="pos-device-frame">
-          {/* ---- Top Header Bar ---- */}
+        <aside className="pos-desktop-cart-pane">
+          {/* Header */}
           <header className="pos-header-bar">
             <button
-              className="pos-icon-btn"
+              type="button"
+              className="pos-header-draft-btn"
               onClick={() => setIsDrawerOpen(true)}
-              title="Open Customers & Drafts"
+              title="Open Customers & Draft Carts"
             >
               <FaBars />
+              <span>Drafts ({carts.length})</span>
             </button>
 
+            <div className="pos-header-title">
+              <span className="pos-header-station-name">Cart Station</span>
+            </div>
+
             <button
+              type="button"
               className="pos-icon-btn"
               onClick={() => navigate("/manager/orders")}
               title="Order History / Orders List"
@@ -731,7 +942,7 @@ export default function WalkInOrder() {
             </button>
           </header>
 
-          {/* ---- Customer & Prep Time Summary Info ---- */}
+          {/* Customer & Prep Info Rows */}
           <section className="pos-summary-info">
             <div
               className="pos-info-row"
@@ -754,8 +965,10 @@ export default function WalkInOrder() {
                     fontWeight: 700,
                     padding: "1px 6px",
                     borderRadius: 4,
-                    background: selectedCart.customer_trust_score < 80 ? "#fee2e2" : "#ecfdf5",
-                    color: selectedCart.customer_trust_score < 80 ? "#b91c1c" : "#047857",
+                    background:
+                      selectedCart.customer_trust_score < 80 ? "#fee2e2" : "#ecfdf5",
+                    color:
+                      selectedCart.customer_trust_score < 80 ? "#b91c1c" : "#047857",
                   }}
                 >
                   {selectedCart.customer_trust_score} pts
@@ -779,7 +992,20 @@ export default function WalkInOrder() {
               onClick={() => setIsPrepModalOpen(true)}
               title="Tap to edit prep time & notes"
             >
-              <span className="pos-info-label">Prep Time:</span>
+              <span className="pos-info-label">Mode:</span>
+              <span
+                className="pos-info-value"
+                style={{
+                  flex: "none",
+                  fontWeight: 700,
+                  color: orderType === "call" ? "#c2410c" : "#15803d",
+                }}
+              >
+                {orderType === "call" ? "📞 Call" : "🚶 Walk-In"}
+              </span>
+              <span className="pos-info-label" style={{ marginLeft: 8 }}>
+                Prep:
+              </span>
               <span className="pos-info-value" style={{ flex: "none" }}>
                 {prepTime}
               </span>
@@ -790,7 +1016,7 @@ export default function WalkInOrder() {
             </div>
           </section>
 
-          {/* ---- Active Cart Table ---- */}
+          {/* Cart Table Area */}
           <section className="pos-cart-section">
             <div className="pos-cart-table">
               <div className="pos-table-head">
@@ -804,7 +1030,7 @@ export default function WalkInOrder() {
               <div className="pos-cart-items-scroll">
                 {!selectedCart?.items || selectedCart.items.length === 0 ? (
                   <div className="pos-cart-empty">
-                    No items in cart. Tap items to add.
+                    No items in cart. Click menu items to add.
                   </div>
                 ) : (
                   selectedCart.items.map((item) => {
@@ -813,35 +1039,65 @@ export default function WalkInOrder() {
                     return (
                       <div key={item.id} className="pos-cart-row">
                         <div className="pos-cart-item-name" title={item.item_name}>
+                          <span className="pos-cart-code-tag">
+                            {getVariantShortCode({ name: base }, { name: variant })}
+                          </span>
                           <span className="pos-cart-base-name">
                             {base.toUpperCase()}
                           </span>
                           {variant && (
                             <span className="pos-cart-variant-tag">
-                              {variant}
+                              ({variant})
                             </span>
                           )}
                         </div>
 
                         <span className="pos-cart-item-price">
-                          {formatPrice(item.item_price)}
+                          ₹{formatPrice(item.item_price)}
                         </span>
 
-                        <span className="pos-cart-item-qty">
-                          x {item.quantity}
-                        </span>
+                        <div className="pos-cart-qty-ctrl">
+                          <button
+                            type="button"
+                            className="pos-qty-mini-btn"
+                            onClick={() =>
+                              handleUpdateItemQty(item.id, item.quantity - 1)
+                            }
+                            title="Decrease quantity"
+                          >
+                            <FaMinus />
+                          </button>
+                          <span
+                            className="pos-qty-num"
+                            onClick={() => setEditingItem(item)}
+                            title="Click to type custom quantity"
+                          >
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            className="pos-qty-mini-btn"
+                            onClick={() =>
+                              handleUpdateItemQty(item.id, item.quantity + 1)
+                            }
+                            title="Increase quantity"
+                          >
+                            <FaPlus />
+                          </button>
+                        </div>
 
                         <span className="pos-cart-item-amt">
-                          {formatPrice(item.total_price)}
+                          ₹{formatPrice(item.total_price)}
                         </span>
 
                         <span className="pos-cart-item-action">
                           <button
-                            className="pos-cart-edit-btn"
-                            onClick={() => setEditingItem(item)}
-                            title="Edit quantity"
+                            type="button"
+                            className="pos-cart-delete-btn"
+                            onClick={() => handleUpdateItemQty(item.id, 0)}
+                            title="Remove item"
                           >
-                            <FaEdit />
+                            <FaTrash />
                           </button>
                         </span>
                       </div>
@@ -861,21 +1117,23 @@ export default function WalkInOrder() {
             )}
           </section>
 
-          {/* ---- Solid Dark Divider Line ---- */}
+          {/* Solid Divider */}
           <div className="pos-solid-divider" />
 
-          {/* ---- Controls: [WALK IN | CALL] & [NOW | LATER] ---- */}
+          {/* Controls: [WALK IN | CALL] & [NOW | LATER] */}
           <div className="pos-control-toggles">
             <div className="pos-pill-toggle">
               <button
+                type="button"
                 className={`pos-pill-btn ${orderType === "walkin" ? "active" : ""}`}
-                onClick={() => setOrderType("walkin")}
+                onClick={() => handleToggleOrderTakingMethod("walkin")}
               >
                 WALK IN
               </button>
               <button
+                type="button"
                 className={`pos-pill-btn ${orderType === "call" ? "active" : ""}`}
-                onClick={() => setOrderType("call")}
+                onClick={() => handleToggleOrderTakingMethod("call")}
               >
                 CALL
               </button>
@@ -883,100 +1141,30 @@ export default function WalkInOrder() {
 
             <div className="pos-pill-toggle">
               <button
+                type="button"
                 className={`pos-pill-btn ${prepTiming === "now" ? "active" : ""}`}
-                onClick={() => {
-                  setPrepTiming("now");
-                  setPrepTime("NOW");
-                }}
+                onClick={() => handleTogglePrepTiming("now")}
               >
                 NOW
               </button>
               <button
+                type="button"
                 className={`pos-pill-btn ${prepTiming === "later" ? "active" : ""}`}
-                onClick={() => {
-                  setPrepTiming("later");
-                  setIsPrepModalOpen(true);
-                }}
+                onClick={() => handleTogglePrepTiming("later")}
               >
                 LATER
               </button>
             </div>
           </div>
 
-          {/* ---- Mobile Menu Body (Only visible on screens < 768px) ---- */}
-          <div className="pos-menu-body">
-            {isSearchOpen && (
-              <div className="pos-search-bar" style={{ margin: "0 0 8px 0" }}>
-                <FaSearch style={{ color: "#78716c", fontSize: "0.85rem" }} />
-                <input
-                  type="text"
-                  placeholder="Search menu..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                />
-                {searchQuery && (
-                  <button
-                    className="pos-search-clear"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div className="pos-menu-grid">
-              {renderMenuCards()}
-            </div>
-
-            {/* Mobile Vertical Floating Action Strip on Right */}
-            <div className="pos-action-strip">
-              <button
-                className="pos-strip-btn"
-                onClick={() => setIsPrepModalOpen(true)}
-                title="Add / Edit Note"
-              >
-                Note
-              </button>
-
-              <button
-                className={`pos-strip-btn ${isSearchOpen ? "active" : ""}`}
-                onClick={() => setIsSearchOpen((prev) => !prev)}
-                title="Search Menu"
-              >
-                <FaSearch />
-              </button>
-
-              <button
-                className="pos-strip-btn"
-                onClick={() => {
-                  setSearchQuery("");
-                  setIsSearchOpen(false);
-                  setSelectedCategoryId("all");
-                }}
-                title="Clear Search & Filter"
-              >
-                C
-              </button>
-
-              <button
-                className={`pos-strip-btn ${selectedCategoryId === "all" ? "active" : ""}`}
-                onClick={() => setSelectedCategoryId("all")}
-                title="Show All Items"
-              >
-                ALL
-              </button>
-            </div>
-          </div>
-
-          {/* ---- Fixed Bottom Payment & Action Bar ---- */}
+          {/* Bottom Payment & Action Bar */}
           <footer className="pos-bottom-bar">
             {/* Payment Segmented Pill */}
             <div className="pos-payment-segment">
-              {["cash", "upi", "credit", "parts"].map((method) => (
+              {["cash", "upi", "credit", "parts", "pending"].map((method) => (
                 <button
                   key={method}
+                  type="button"
                   className={`pos-payment-btn ${paymentMethod === method ? "active" : ""}`}
                   onClick={() => handleSelectPaymentMethod(method)}
                 >
@@ -988,6 +1176,7 @@ export default function WalkInOrder() {
             {/* Action Buttons: [SAVE] and [BILL - Total] */}
             <div className="pos-action-footer">
               <button
+                type="button"
                 className="pos-btn-save"
                 disabled={placingOrder || !selectedCart?.items?.length}
                 onClick={() => handlePlaceOrder(false)}
@@ -1000,6 +1189,371 @@ export default function WalkInOrder() {
               </button>
 
               <button
+                type="button"
+                className="pos-btn-bill"
+                disabled={placingOrder || !selectedCart?.items?.length}
+                onClick={() => handlePlaceOrder(true)}
+              >
+                BILL - {grandTotal > 0 ? (grandTotal % 1 === 0 ? grandTotal : grandTotal.toFixed(1)) : 0}
+              </button>
+            </div>
+          </footer>
+        </aside>
+
+        {/* ========================================================
+            MOBILE WORKSTATION (Single Screen Mobile View < 992px)
+            Exact layout as shown in user reference
+            ======================================================== */}
+        <div className="pos-device-frame pos-mobile-frame">
+          {/* ========================================================
+              TOP HALF: CART & BILLING (Static Header + Scrolling Items)
+              ======================================================== */}
+          <div className="pos-mobile-upper-half">
+            {/* ---- Top Header Bar ---- */}
+            <header className="pos-header-bar">
+              <div className="pos-header-title">
+                {carts.length > 1 && (
+                  <span
+                    className="pos-header-draft-pill"
+                    onClick={() => setIsDrawerOpen(true)}
+                    title="Switch draft customer"
+                  >
+                    {carts.length} Drafts
+                  </span>
+                )}
+              </div>
+            </header>
+
+            {/* ---- Customer & Prep Time Summary Info ---- */}
+            <section className="pos-summary-info">
+              {/* Customer Detail: HIDDEN until customer name or phone is added! */}
+              {hasCustomerDetails && (
+                <div
+                  className="pos-info-row pos-customer-row"
+                  onClick={() => setIsCustomerModalOpen(true)}
+                  title="Tap to edit customer"
+                >
+                  <span className="pos-info-label">Customer:</span>
+                  <span className="pos-info-value">
+                    {selectedCart?.customer_name || "Customer"}
+                    {selectedCart?.customer_phone
+                      ? ` / ${selectedCart.customer_phone.replace("+91", "")}`
+                      : ""}
+                  </span>
+                  {selectedCart?.customer_trust_score !== undefined && (
+                    <span className="pos-trust-badge">
+                      {selectedCart.customer_trust_score} pts
+                    </span>
+                  )}
+                  <span className="pos-info-edit-icon">
+                    <FaEdit />
+                  </span>
+                </div>
+              )}
+
+              {/* Prep Time Row */}
+              <div
+                className="pos-info-row pos-prep-row"
+                onClick={() => setIsPrepModalOpen(true)}
+                title="Tap to edit prep time & notes"
+              >
+                <span className="pos-info-label">Prep Time:</span>
+                <span className="pos-info-value">{prepTime || "NOW"}</span>
+                <span className="pos-info-edit-icon">
+                  <FaEdit />
+                </span>
+              </div>
+            </section>
+
+            {/* ---- Active Cart Table with Static Header & Half-Screen Scroll ---- */}
+            <section className="pos-cart-section">
+              <div className="pos-cart-table">
+                {/* Static Underlined Italic Table Heading */}
+                <div className="pos-table-head">
+                  <span className="pos-th-item">ITEM</span>
+                  <span className="pos-th-price">PRICE</span>
+                  <span className="pos-th-mult">x</span>
+                  <span className="pos-th-qty">QTY</span>
+                  <span className="pos-th-amt">AMT</span>
+                  <span className="pos-th-action"></span>
+                </div>
+
+                {/* Smooth Scrollable Cart Items Container */}
+                <div className="pos-cart-items-scroll">
+                  {!selectedCart?.items || selectedCart.items.length === 0 ? (
+                    <div className="pos-cart-empty">
+                      No items in cart. Tap menu items below to add.
+                    </div>
+                  ) : (
+                    selectedCart.items.map((item) => {
+                      const { base, variant } = getItemDisplayName(item);
+                      const unitPrice = Number(item.item_price || 0);
+                      const totalAmt = Number(item.total_price || 0);
+
+                      return (
+                        <div key={item.id} className="pos-cart-row">
+                          <div className="pos-cart-item-name" title={item.item_name}>
+                            <span className="pos-cart-code-tag">
+                              {getVariantShortCode({ name: base }, { name: variant })}
+                            </span>
+                            <span className="pos-cart-base-name">
+                              {base.toUpperCase()}
+                            </span>
+                            {variant && (
+                              <span className="pos-cart-variant-tag">
+                                ({variant})
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="pos-cart-item-price">
+                            {unitPrice % 1 === 0 ? unitPrice.toFixed(1) : unitPrice.toFixed(2)}
+                          </span>
+
+                          <span className="pos-cart-item-mult">x</span>
+
+                          <span
+                            className="pos-cart-item-qty"
+                            onClick={() => setEditingItem(item)}
+                            title="Tap to edit quantity"
+                          >
+                            {item.quantity}
+                          </span>
+
+                          <span className="pos-cart-item-amt">
+                            {totalAmt % 1 === 0 ? totalAmt.toFixed(1) : totalAmt.toFixed(2)}
+                          </span>
+
+                          <span className="pos-cart-item-action">
+                            <button
+                              type="button"
+                              className="pos-cart-edit-btn"
+                              onClick={() => setEditingItem(item)}
+                              title="Edit quantity"
+                            >
+                              <FaEdit />
+                            </button>
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Cart Sub-Row: Clear All Items [x] and NOTE: */}
+              <div className="pos-cart-subrow">
+                {selectedCart?.items?.length > 0 ? (
+                  <button
+                    type="button"
+                    className="pos-clear-items-btn"
+                    onClick={handleClearAllItems}
+                  >
+                    Clear All Items <FaTimesCircle style={{ fontSize: "0.92rem" }} />
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                <div
+                  className="pos-cart-note-badge"
+                  onClick={() => setIsPrepModalOpen(true)}
+                  title="Tap to add / edit order note"
+                >
+                  <span className="pos-note-label">NOTE:</span>
+                  <span className="pos-note-text">
+                    {orderNotes || ""}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* ---- Solid Dark Divider Line Between Halves ---- */}
+          <div className="pos-solid-divider" />
+
+          {/* ========================================================
+              BOTTOM HALF: MENU & DOCK (Toggles + Half Screen Menu Scroll)
+              ======================================================== */}
+          <div className="pos-mobile-lower-half">
+            {/* Controls: [WALK IN | CALL] & [NOW | LATER] */}
+            <div className="pos-control-toggles">
+              <div className="pos-pill-toggle">
+                <button
+                  type="button"
+                  className={`pos-pill-btn ${orderType === "walkin" ? "active" : ""}`}
+                  onClick={() => handleToggleOrderTakingMethod("walkin")}
+                >
+                  WALK IN
+                </button>
+                <button
+                  type="button"
+                  className={`pos-pill-btn ${orderType === "call" ? "active" : ""}`}
+                  onClick={() => handleToggleOrderTakingMethod("call")}
+                >
+                  CALL
+                </button>
+              </div>
+
+              <div className="pos-pill-toggle">
+                <button
+                  type="button"
+                  className={`pos-pill-btn ${prepTiming === "now" ? "active" : ""}`}
+                  onClick={() => handleTogglePrepTiming("now")}
+                >
+                  NOW
+                </button>
+                <button
+                  type="button"
+                  className={`pos-pill-btn ${prepTiming === "later" ? "active" : ""}`}
+                  onClick={() => handleTogglePrepTiming("later")}
+                >
+                  LATER
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Search Bar (when toggled on) */}
+            {isSearchOpen && (
+              <div className="pos-search-bar">
+                <FaSearch style={{ color: "#78716c", fontSize: "0.85rem" }} />
+                <input
+                  type="text"
+                  placeholder="Search menu..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="pos-search-clear"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Menu Body: Half-Screen Scrollable Menu Grid + Right Floating Action Dock */}
+            <div className="pos-menu-body">
+              <div className="pos-menu-grid">
+                {renderMenuCards()}
+              </div>
+
+              {/* Right Vertical Floating Action Strip Dock */}
+              <div className="pos-action-strip">
+                {/* 1. History / Drafts */}
+                <button
+                  type="button"
+                  className="pos-strip-btn"
+                  onClick={() => setIsDrawerOpen(true)}
+                  title="Drafts & Orders"
+                >
+                  <span style={{ position: "relative", display: "inline-block" }}>
+                    <FaReceipt />
+                    <FaClock
+                      style={{
+                        position: "absolute",
+                        bottom: -2,
+                        right: -3,
+                        fontSize: "0.55rem",
+                      }}
+                    />
+                  </span>
+                </button>
+
+                {/* 2. Customer Detail */}
+                <button
+                  type="button"
+                  className={`pos-strip-btn ${hasCustomerDetails ? "highlight" : ""}`}
+                  onClick={() => setIsCustomerModalOpen(true)}
+                  title="Customer Details"
+                >
+                  <FaUser />
+                </button>
+
+                {/* 3. Note / Prep */}
+                <button
+                  type="button"
+                  className={`pos-strip-btn ${orderNotes ? "highlight" : ""}`}
+                  onClick={() => setIsPrepModalOpen(true)}
+                  title="Order Note & Prep Time"
+                >
+                  <FaEdit />
+                </button>
+
+                {/* 4. Search */}
+                <button
+                  type="button"
+                  className={`pos-strip-btn ${isSearchOpen ? "active" : ""}`}
+                  onClick={() => setIsSearchOpen((prev) => !prev)}
+                  title="Search Menu"
+                >
+                  <FaSearch />
+                </button>
+
+                {/* 5. Category Selector */}
+                <button
+                  type="button"
+                  className={`pos-strip-btn ${selectedCategoryId !== "all" ? "active" : ""}`}
+                  onClick={() => setIsCategoryModalOpen(true)}
+                  title="Categories"
+                >
+                  <FaThLarge />
+                </button>
+
+                {/* 6. ALL Items */}
+                <button
+                  type="button"
+                  className={`pos-strip-btn ${selectedCategoryId === "all" ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedCategoryId("all");
+                    setSearchQuery("");
+                    setIsSearchOpen(false);
+                  }}
+                  title="Show All Items"
+                >
+                  ALL
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ---- Fixed Bottom Payment & Action Bar ---- */}
+          <footer className="pos-bottom-bar">
+            {/* Payment Segmented Pill (CASH | UPI | CREDIT | PARTS | PENDING) */}
+            <div className="pos-payment-segment">
+              {["cash", "upi", "credit", "parts", "pending"].map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  className={`pos-payment-btn ${paymentMethod === method ? "active" : ""}`}
+                  onClick={() => handleSelectPaymentMethod(method)}
+                >
+                  {method.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {/* Action Buttons: [SAVE] and [BILL - Total] */}
+            <div className="pos-action-footer">
+              <button
+                type="button"
+                className="pos-btn-save"
+                disabled={placingOrder || !selectedCart?.items?.length}
+                onClick={() => handlePlaceOrder(false)}
+              >
+                {placingOrder ? (
+                  <FaSpinner className="spin" />
+                ) : (
+                  "SAVE"
+                )}
+              </button>
+
+              <button
+                type="button"
                 className="pos-btn-bill"
                 disabled={placingOrder || !selectedCart?.items?.length}
                 onClick={() => handlePlaceOrder(true)}
@@ -1010,6 +1564,299 @@ export default function WalkInOrder() {
           </footer>
         </div>
       </div>
+
+      {/* ========================================================
+          CART POPUP MODAL (DEDICATED MODAL POPUP, NOT SIDEBAR)
+          ======================================================== */}
+      {isCartPopupOpen && (
+        <div
+          className="pos-cart-modal-backdrop"
+          onClick={() => setIsCartPopupOpen(false)}
+        >
+          <div
+            className="pos-device-frame pos-cart-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ---- Top Header Bar ---- */}
+            <header className="pos-header-bar">
+              <button
+                type="button"
+                className="pos-icon-btn"
+                onClick={() => setIsDrawerOpen(true)}
+                title="Open Customers & Drafts"
+              >
+                <FaBars />
+              </button>
+
+              <div className="pos-header-title">
+                <span className="pos-header-station-name">Cart Station</span>
+                {carts.length > 1 && (
+                  <span
+                    className="pos-header-draft-pill"
+                    onClick={() => setIsDrawerOpen(true)}
+                    title="Switch draft customer"
+                  >
+                    {carts.length} Drafts
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="pos-icon-btn pos-cart-close-btn"
+                onClick={() => setIsCartPopupOpen(false)}
+                title="Close Cart"
+              >
+                <FaTimes />
+              </button>
+            </header>
+
+            {/* ---- Customer & Prep Time Summary Info ---- */}
+            <section className="pos-summary-info">
+              <div
+                className="pos-info-row"
+                onClick={() => setIsCustomerModalOpen(true)}
+                title="Tap to search or edit customer"
+                style={{ cursor: "pointer" }}
+              >
+                <span className="pos-info-label">Customer Detail:</span>
+                <span className="pos-info-value">
+                  {selectedCart?.customer_name || "Walk-In Customer"}
+                  {selectedCart?.customer_phone
+                    ? ` / ${selectedCart.customer_phone.replace("+91", "")}`
+                    : ""}
+                </span>
+                {selectedCart?.customer_trust_score !== undefined && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      padding: "1px 6px",
+                      borderRadius: 4,
+                      background: selectedCart.customer_trust_score < 80 ? "#fee2e2" : "#ecfdf5",
+                      color: selectedCart.customer_trust_score < 80 ? "#b91c1c" : "#047857",
+                    }}
+                  >
+                    {selectedCart.customer_trust_score} pts
+                  </span>
+                )}
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    color: "var(--pos-primary)",
+                    fontSize: "0.85rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <FaEdit />
+                </span>
+              </div>
+
+              <div
+                className="pos-info-row"
+                onClick={() => setIsPrepModalOpen(true)}
+                title="Tap to edit prep time & notes"
+              >
+                <span className="pos-info-label">Mode:</span>
+                <span
+                  className="pos-info-value"
+                  style={{
+                    flex: "none",
+                    fontWeight: 700,
+                    color: orderType === "call" ? "#c2410c" : "#15803d",
+                  }}
+                >
+                  {orderType === "call" ? "📞 Call" : "🚶 Walk-In"}
+                </span>
+                <span className="pos-info-label" style={{ marginLeft: 8 }}>
+                  Prep:
+                </span>
+                <span className="pos-info-value" style={{ flex: "none" }}>
+                  {prepTime}
+                </span>
+                <span className="pos-info-label" style={{ marginLeft: 8 }}>
+                  Note:
+                </span>
+                <span className="pos-info-value">{orderNotes || "None"}</span>
+              </div>
+            </section>
+
+            {/* ---- Active Cart Table ---- */}
+            <section className="pos-cart-section">
+              <div className="pos-cart-table">
+                <div className="pos-table-head">
+                  <span className="pos-th-item">ITEM</span>
+                  <span className="pos-th-price">PRICE</span>
+                  <span className="pos-th-qty">QTY</span>
+                  <span className="pos-th-amt">AMT</span>
+                  <span className="pos-th-action"></span>
+                </div>
+
+                <div className="pos-cart-items-scroll">
+                  {!selectedCart?.items || selectedCart.items.length === 0 ? (
+                    <div className="pos-cart-empty">
+                      No items in cart. Tap items to add.
+                    </div>
+                  ) : (
+                    selectedCart.items.map((item) => {
+                      const { base, variant } = getItemDisplayName(item);
+
+                      return (
+                        <div key={item.id} className="pos-cart-row">
+                          <div className="pos-cart-item-name" title={item.item_name}>
+                            <span className="pos-cart-code-tag">
+                              {getVariantShortCode({ name: base }, { name: variant })}
+                            </span>
+                            <span className="pos-cart-base-name">
+                              {base.toUpperCase()}
+                            </span>
+                            {variant && (
+                              <span className="pos-cart-variant-tag">
+                                ({variant})
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="pos-cart-item-price">
+                            ₹{formatPrice(item.item_price)}
+                          </span>
+
+                          <div className="pos-cart-qty-ctrl">
+                            <button
+                              type="button"
+                              className="pos-qty-mini-btn"
+                              onClick={() => handleUpdateItemQty(item.id, item.quantity - 1)}
+                              title="Decrease quantity"
+                            >
+                              <FaMinus />
+                            </button>
+                            <span
+                              className="pos-qty-num"
+                              onClick={() => setEditingItem(item)}
+                              title="Tap to type custom quantity"
+                            >
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              className="pos-qty-mini-btn"
+                              onClick={() => handleUpdateItemQty(item.id, item.quantity + 1)}
+                              title="Increase quantity"
+                            >
+                              <FaPlus />
+                            </button>
+                          </div>
+
+                          <span className="pos-cart-item-amt">
+                            ₹{formatPrice(item.total_price)}
+                          </span>
+
+                          <span className="pos-cart-item-action">
+                            <button
+                              type="button"
+                              className="pos-cart-delete-btn"
+                              onClick={() => handleUpdateItemQty(item.id, 0)}
+                              title="Remove item"
+                            >
+                              <FaTrash />
+                            </button>
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {selectedCart?.items?.length > 0 && (
+                <button
+                  className="pos-clear-items-btn"
+                  onClick={handleClearAllItems}
+                >
+                  Clear All Items <FaTimesCircle style={{ fontSize: "0.95rem" }} />
+                </button>
+              )}
+            </section>
+
+            {/* ---- Solid Dark Divider Line ---- */}
+            <div className="pos-solid-divider" />
+
+            {/* ---- Controls: [WALK IN | CALL] & [NOW | LATER] ---- */}
+            <div className="pos-control-toggles">
+              <div className="pos-pill-toggle">
+                <button
+                  className={`pos-pill-btn ${orderType === "walkin" ? "active" : ""}`}
+                  onClick={() => handleToggleOrderTakingMethod("walkin")}
+                >
+                  WALK IN
+                </button>
+                <button
+                  className={`pos-pill-btn ${orderType === "call" ? "active" : ""}`}
+                  onClick={() => handleToggleOrderTakingMethod("call")}
+                >
+                  CALL
+                </button>
+              </div>
+
+              <div className="pos-pill-toggle">
+                <button
+                  className={`pos-pill-btn ${prepTiming === "now" ? "active" : ""}`}
+                  onClick={() => handleTogglePrepTiming("now")}
+                >
+                  NOW
+                </button>
+                <button
+                  className={`pos-pill-btn ${prepTiming === "later" ? "active" : ""}`}
+                  onClick={() => handleTogglePrepTiming("later")}
+                >
+                  LATER
+                </button>
+              </div>
+            </div>
+
+            {/* ---- Fixed Bottom Payment & Action Bar ---- */}
+            <footer className="pos-bottom-bar">
+              {/* Payment Segmented Pill */}
+              <div className="pos-payment-segment">
+                {["cash", "upi", "credit", "parts"].map((method) => (
+                  <button
+                    key={method}
+                    className={`pos-payment-btn ${paymentMethod === method ? "active" : ""}`}
+                    onClick={() => handleSelectPaymentMethod(method)}
+                  >
+                    {method.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Action Buttons: [SAVE] and [BILL - Total] */}
+              <div className="pos-action-footer">
+                <button
+                  className="pos-btn-save"
+                  disabled={placingOrder || !selectedCart?.items?.length}
+                  onClick={() => handlePlaceOrder(false)}
+                >
+                  {placingOrder ? (
+                    <FaSpinner className="spin" />
+                  ) : (
+                    "SAVE"
+                  )}
+                </button>
+
+                <button
+                  className="pos-btn-bill"
+                  disabled={placingOrder || !selectedCart?.items?.length}
+                  onClick={() => handlePlaceOrder(true)}
+                >
+                  BILL - {grandTotal > 0 ? (grandTotal % 1 === 0 ? grandTotal : grandTotal.toFixed(1)) : 0}
+                </button>
+              </div>
+            </footer>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================
           MODAL 1: EDIT CUSTOMER DETAILS
@@ -1266,6 +2113,56 @@ export default function WalkInOrder() {
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL 2.5: SELECT CATEGORY (Mobile Dock ⊞)
+          ======================================================== */}
+      {isCategoryModalOpen && (
+        <div
+          className="pos-modal-backdrop"
+          onClick={() => setIsCategoryModalOpen(false)}
+        >
+          <div
+            className="pos-modal-card pos-cat-picker-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pos-modal-header">
+              <h3>Select Category</h3>
+              <button
+                className="pos-modal-close"
+                onClick={() => setIsCategoryModalOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="pos-cat-picker-grid">
+              <button
+                type="button"
+                className={`pos-cat-picker-btn ${selectedCategoryId === "all" ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedCategoryId("all");
+                  setIsCategoryModalOpen(false);
+                }}
+              >
+                ALL ({filteredMenuItems.length})
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`pos-cat-picker-btn ${selectedCategoryId === c.id ? "active" : ""}`}
+                  onClick={() => {
+                    setSelectedCategoryId(c.id);
+                    setIsCategoryModalOpen(false);
+                  }}
+                >
+                  {c.name}
+                </button>
+              ))}
             </div>
           </div>
         </div>

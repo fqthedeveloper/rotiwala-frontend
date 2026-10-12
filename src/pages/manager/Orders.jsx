@@ -310,9 +310,36 @@ const OrderCard = memo(({
                 Token #{order.token_number}
               </span>
             )}
-            <span className={`order-type-badge ${order.order_type}`}>
-              {order.order_type}
-            </span>
+            {order.order_type === "walkin" ? (
+              order.order_taking_method === "call" ? (
+                <span className="order-taking-badge call" title="Order taken via Phone Call">
+                  <FaPhone style={{ fontSize: "0.68rem", marginRight: 4 }} /> Call Order
+                </span>
+              ) : (
+                <span className="order-taking-badge walkin" title="Direct Counter Walk-In">
+                  🚶 Walk-In Counter
+                </span>
+              )
+            ) : (
+              <span className="order-type-badge online">
+                🌐 Online
+              </span>
+            )}
+            {order.order_type === "walkin" && (
+              <span
+                className={`prep-timing-badge ${order.prep_time && order.prep_time !== "NOW" ? "later" : "now"}`}
+                title={`Prep timing: ${order.prep_time || "NOW"}`}
+              >
+                {order.prep_time && order.prep_time !== "NOW" ? (
+                  <>
+                    <FaClock style={{ fontSize: "0.68rem", marginRight: 4 }} />
+                    {order.prep_time}
+                  </>
+                ) : (
+                  "⚡ NOW"
+                )}
+              </span>
+            )}
             <span className={`delivery-option-badge ${isDelivery ? "delivery" : "pickup"}`}>
               {isDelivery ? <FaTruck /> : <FaHome />}
               {isDelivery ? "Delivery" : "Pickup"}
@@ -437,7 +464,13 @@ const OrderCard = memo(({
         <div className="detail-row">
           <span>Payment</span>
           <strong className="payment-method-text">
-            {order.payment_method?.toLowerCase() === "upi" ? "📱 UPI" : "💵 Cash"}
+            {(() => {
+              const pm = (order.payment_method || "cash").toLowerCase();
+              if (pm === "upi") return "📱 UPI";
+              if (pm === "credit") return "💳 Credit (Udhaar)";
+              if (pm === "parts") return "🤝 Split / Parts";
+              return "💵 Cash";
+            })()}
           </strong>
         </div>
         <div className="detail-row">
@@ -447,7 +480,22 @@ const OrderCard = memo(({
           </strong>
         </div>
         <div className="detail-divider" />
-        <div className="detail-row"><span>Order Type</span><strong className="order-type-text">{order.order_type}</strong></div>
+        <div className="detail-row">
+          <span>Order Mode</span>
+          <strong className="order-type-text">
+            {order.order_type === "walkin"
+              ? (order.order_taking_method === "call" ? "📞 Phone Call (Walk-In)" : "🚶 Counter Walk-In")
+              : "🌐 Online Order"}
+          </strong>
+        </div>
+        {order.order_type === "walkin" && (
+          <div className="detail-row">
+            <span>Prep Timing</span>
+            <strong>
+              {order.prep_time && order.prep_time !== "NOW" ? `🕒 Later (${order.prep_time})` : "⚡ Immediate (NOW)"}
+            </strong>
+          </div>
+        )}
 
         {/* Delivery Option & Address */}
         <div className="detail-row">

@@ -34,6 +34,7 @@ export default function EditWalkInOrderModal({
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
+  const [orderTakingMethod, setOrderTakingMethod] = useState("walkin");
   const [notes, setNotes] = useState("");
   const [availableMenuItems, setAvailableMenuItems] = useState([]);
   const [selectedMenuItem, setSelectedMenuItem] = useState("");
@@ -48,6 +49,7 @@ export default function EditWalkInOrderModal({
       setCustomerPhone(order.customer_phone || "");
       setPaymentMethod((order.payment_method || "cash").toLowerCase());
       setPaymentStatus((order.payment_status || "unpaid").toLowerCase());
+      setOrderTakingMethod((order.order_taking_method || "walkin").toLowerCase());
       setNotes(order.notes || "");
       loadShopMenu(order.shop);
     }
@@ -173,6 +175,7 @@ export default function EditWalkInOrderModal({
       const res = await updatePlacedOrder(order.id, {
         customer_name: customerName,
         customer_phone: customerPhone,
+        order_taking_method: orderTakingMethod,
         payment_method: paymentMethod,
         payment_status: paymentStatus,
         notes,
@@ -327,16 +330,64 @@ export default function EditWalkInOrderModal({
               </div>
             </div>
 
-            {/* Payment Method Selection (Cash / UPI) */}
+            {/* Order Taking Source (Counter vs Call) */}
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                <FaPhone style={{ color: "#ea580c" }} /> Order Taking Source
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setOrderTakingMethod("walkin")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: orderTakingMethod === "walkin" ? "2px solid #7e22ce" : "1.5px solid #cbd5e1",
+                    background: orderTakingMethod === "walkin" ? "#f3e8ff" : "#ffffff",
+                    color: orderTakingMethod === "walkin" ? "#6b21a8" : "#64748b",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  🚶 Counter Walk-In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderTakingMethod("call")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: orderTakingMethod === "call" ? "2px solid #ea580c" : "1.5px solid #cbd5e1",
+                    background: orderTakingMethod === "call" ? "#fff7ed" : "#ffffff",
+                    color: orderTakingMethod === "call" ? "#c2410c" : "#64748b",
+                    fontWeight: "700",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  📞 Phone Call Order
+                </button>
+              </div>
+            </div>
+
+            {/* Payment Method Selection (Cash / UPI / Credit / Parts) */}
             <div style={{ marginBottom: "14px" }}>
               <label style={{ fontSize: "12px", fontWeight: "700", color: "#334155", display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
                 <FaMoneyBillWave style={{ color: "#16a34a" }} /> Payment Method
-                <span style={{ fontSize: "11px", fontWeight: "500", color: "#64748b" }}>
-                  (Switch between Cash or UPI if client changed payment method)
-                </span>
               </label>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                 {/* Cash Option */}
                 <button
                   type="button"
@@ -344,8 +395,8 @@ export default function EditWalkInOrderModal({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    padding: "10px 14px",
+                    gap: "8px",
+                    padding: "9px 12px",
                     borderRadius: "10px",
                     border: paymentMethod === "cash" ? "2px solid #16a34a" : "1.5px solid #cbd5e1",
                     background: paymentMethod === "cash" ? "#f0fdf4" : "#ffffff",
@@ -354,32 +405,16 @@ export default function EditWalkInOrderModal({
                     textAlign: "left",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
-                      background: paymentMethod === "cash" ? "#dcfce7" : "#f1f5f9",
-                      color: paymentMethod === "cash" ? "#16a34a" : "#64748b",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "16px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <FaMoneyBillWave />
-                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "cash" ? "#15803d" : "#334155" }}>
                       💵 Cash
                     </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>
-                      Cash on Counter / Delivery
+                      Cash on Counter
                     </div>
                   </div>
                   {paymentMethod === "cash" && (
-                    <FaCheckCircle style={{ color: "#16a34a", fontSize: "16px" }} />
+                    <FaCheckCircle style={{ color: "#16a34a", fontSize: "15px" }} />
                   )}
                 </button>
 
@@ -390,8 +425,8 @@ export default function EditWalkInOrderModal({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    padding: "10px 14px",
+                    gap: "8px",
+                    padding: "9px 12px",
                     borderRadius: "10px",
                     border: paymentMethod === "upi" ? "2px solid #2563eb" : "1.5px solid #cbd5e1",
                     background: paymentMethod === "upi" ? "#eff6ff" : "#ffffff",
@@ -400,32 +435,76 @@ export default function EditWalkInOrderModal({
                     textAlign: "left",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
-                      background: paymentMethod === "upi" ? "#dbeafe" : "#f1f5f9",
-                      color: paymentMethod === "upi" ? "#2563eb" : "#64748b",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "16px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <FaQrcode />
-                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "upi" ? "#1d4ed8" : "#334155" }}>
-                      📱 UPI / QR Code
+                      📱 UPI / QR
                     </div>
                     <div style={{ fontSize: "11px", color: "#64748b" }}>
-                      Shop QR Scan / Online
+                      QR Scan / Online
                     </div>
                   </div>
                   {paymentMethod === "upi" && (
-                    <FaCheckCircle style={{ color: "#2563eb", fontSize: "16px" }} />
+                    <FaCheckCircle style={{ color: "#2563eb", fontSize: "15px" }} />
+                  )}
+                </button>
+
+                {/* Credit Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("credit")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "9px 12px",
+                    borderRadius: "10px",
+                    border: paymentMethod === "credit" ? "2px solid #854d0e" : "1.5px solid #cbd5e1",
+                    background: paymentMethod === "credit" ? "#fefce8" : "#ffffff",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "credit" ? "#854d0e" : "#334155" }}>
+                      💳 Credit
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>
+                      Udhaar / Ledger
+                    </div>
+                  </div>
+                  {paymentMethod === "credit" && (
+                    <FaCheckCircle style={{ color: "#ca8a04", fontSize: "15px" }} />
+                  )}
+                </button>
+
+                {/* Parts Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("parts")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "9px 12px",
+                    borderRadius: "10px",
+                    border: paymentMethod === "parts" ? "2px solid #9333ea" : "1.5px solid #cbd5e1",
+                    background: paymentMethod === "parts" ? "#faf5ff" : "#ffffff",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", fontSize: "13px", color: paymentMethod === "parts" ? "#7e22ce" : "#334155" }}>
+                      🤝 Parts / Split
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#64748b" }}>
+                      Partial Payment
+                    </div>
+                  </div>
+                  {paymentMethod === "parts" && (
+                    <FaCheckCircle style={{ color: "#9333ea", fontSize: "15px" }} />
                   )}
                 </button>
               </div>
